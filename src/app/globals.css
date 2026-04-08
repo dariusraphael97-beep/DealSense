@@ -1,0 +1,161 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── shadcn CSS variables ── */
+:root {
+  --background: 248 250 252;
+  --foreground: 15 23 42;
+  --card: 255 255 255;
+  --card-foreground: 15 23 42;
+  --popover: 255 255 255;
+  --popover-foreground: 15 23 42;
+  --primary: 37 99 235;
+  --primary-foreground: 255 255 255;
+  --secondary: 241 245 249;
+  --secondary-foreground: 15 23 42;
+  --muted: 241 245 249;
+  --muted-foreground: 100 116 139;
+  --accent: 241 245 249;
+  --accent-foreground: 15 23 42;
+  --destructive: 220 38 38;
+  --destructive-foreground: 255 255 255;
+  --border: 226 232 240;
+  --input: 226 232 240;
+  --ring: 37 99 235;
+  --radius: 0.75rem;
+
+  /* ── DS theme tokens (light) ── */
+  --ds-bg:               #f8fafc;
+  --ds-nav-bg:           rgba(248,250,252,0.88);
+  --ds-nav-border:       rgba(15,23,42,0.08);
+  --ds-card-bg:          rgba(255,255,255,0.85);
+  --ds-card-border:      rgba(15,23,42,0.09);
+  --ds-card-shadow:      0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+  --ds-overlay:          rgba(241,245,249,0.82);
+  --ds-input-bg:         rgba(255,255,255,0.90);
+  --ds-input-border:     rgba(15,23,42,0.14);
+  --ds-input-focus:      rgba(99,102,241,0.55);
+  --ds-input-ring:       rgba(99,102,241,0.12);
+  --ds-text-1:           rgba(15,23,42,0.92);
+  --ds-text-2:           rgba(15,23,42,0.65);
+  --ds-text-3:           rgba(15,23,42,0.45);
+  --ds-text-4:           rgba(15,23,42,0.30);
+  --ds-divider:          rgba(15,23,42,0.07);
+  --ds-grid-dim:         rgba(99,102,241,0.12);
+  --ds-grid-bright:      rgba(99,102,241,0.45);
+  --ds-fade:             #f8fafc;
+  --ds-badge-bg:         rgba(15,23,42,0.05);
+  --ds-badge-border:     rgba(15,23,42,0.10);
+  --ds-orb-indigo:       rgba(99,102,241,0.12);
+  --ds-orb-blue:         rgba(59,130,246,0.08);
+}
+
+.dark {
+  --ds-bg:               #030303;
+  --ds-nav-bg:           rgba(3,3,3,0.75);
+  --ds-nav-border:       rgba(255,255,255,0.06);
+  --ds-card-bg:          rgba(255,255,255,0.025);
+  --ds-card-border:      rgba(255,255,255,0.07);
+  --ds-card-shadow:      inset 0 1px 0 rgba(255,255,255,0.04), 0 4px 24px rgba(0,0,0,0.3);
+  --ds-overlay:          rgba(3,3,3,0.72);
+  --ds-input-bg:         rgba(255,255,255,0.04);
+  --ds-input-border:     rgba(255,255,255,0.09);
+  --ds-input-focus:      rgba(99,102,241,0.60);
+  --ds-input-ring:       rgba(99,102,241,0.12);
+  --ds-text-1:           rgba(255,255,255,0.90);
+  --ds-text-2:           rgba(255,255,255,0.60);
+  --ds-text-3:           rgba(255,255,255,0.40);
+  --ds-text-4:           rgba(255,255,255,0.25);
+  --ds-divider:          rgba(255,255,255,0.05);
+  --ds-grid-dim:         rgba(99,102,241,0.08);
+  --ds-grid-bright:      rgba(99,102,241,0.30);
+  --ds-fade:             #030303;
+  --ds-badge-bg:         rgba(255,255,255,0.04);
+  --ds-badge-border:     rgba(255,255,255,0.10);
+  --ds-orb-indigo:       rgba(99,102,241,0.15);
+  --ds-orb-blue:         rgba(59,130,246,0.10);
+}
+
+@layer base {
+  html { scroll-behavior: smooth; -webkit-font-smoothing: antialiased; }
+  body { background-color: var(--ds-bg); color: var(--ds-text-1); transition: background-color 0.25s, color 0.25s; }
+  h1, h2, h3, h4 { font-family: "Poppins", system-ui, sans-serif; }
+  @media (prefers-reduced-motion: reduce) {
+    * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+  }
+}
+
+@layer components {
+  /* ── Buttons ── */
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-6 py-3
+      text-sm font-semibold text-white shadow-btn cursor-pointer
+      hover:bg-blue-700 active:bg-blue-800
+      focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600
+      transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl border px-6 py-3
+      text-sm font-semibold cursor-pointer transition-all duration-150
+      border-slate-200 bg-white text-slate-700 shadow-card
+      hover:bg-slate-50 hover:border-slate-300
+      dark:border-white/10 dark:bg-white/[0.04] dark:text-white/70
+      dark:hover:bg-white/[0.07]
+      focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600;
+  }
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium
+      text-slate-500 dark:text-white/45 cursor-pointer
+      hover:text-slate-900 dark:hover:text-white/80
+      hover:bg-slate-100 dark:hover:bg-white/[0.05]
+      transition-colors duration-150;
+  }
+
+  /* ── Cards ── */
+  .card {
+    @apply rounded-2xl border bg-white p-6 shadow-card
+      border-slate-200
+      dark:border-white/[0.07] dark:bg-white/[0.025] dark:shadow-none;
+  }
+  .card-hover {
+    @apply card hover:shadow-card-hover hover:border-slate-300 dark:hover:border-white/10 transition-all duration-200 cursor-default;
+  }
+
+  /* ── Form ── */
+  .input {
+    @apply w-full rounded-xl border px-4 py-3 text-sm transition-all duration-150
+      bg-white border-slate-200 text-slate-900 placeholder:text-slate-400
+      focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100
+      dark:bg-white/[0.05] dark:border-white/[0.09] dark:text-white/90 dark:placeholder:text-white/25
+      dark:focus:border-indigo-500/60 dark:focus:ring-indigo-500/10;
+  }
+  .input-mono { @apply input font-mono tracking-wider; }
+  .label {
+    @apply block text-xs font-semibold mb-1.5 uppercase tracking-wide
+      text-slate-500 dark:text-white/40;
+  }
+
+  /* ── Verdict helpers ── */
+  .verdict-buy       { @apply text-verdict-buy; }
+  .verdict-negotiate { @apply text-verdict-negotiate; }
+  .verdict-walk      { @apply text-verdict-walk; }
+
+  /* ── Settings: range slider ── */
+  .range-slider {
+    @apply w-full h-1.5 rounded-full appearance-none cursor-pointer outline-none;
+    background: var(--ds-divider);
+  }
+  .range-slider::-webkit-slider-thumb {
+    @apply appearance-none w-4 h-4 rounded-full cursor-pointer;
+    background: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99,102,241,0.25);
+  }
+  .range-slider::-moz-range-thumb {
+    @apply w-4 h-4 rounded-full cursor-pointer border-0;
+    background: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99,102,241,0.25);
+  }
+}

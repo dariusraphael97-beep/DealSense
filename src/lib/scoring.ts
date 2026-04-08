@@ -1,0 +1,629 @@
+import type { CarInput, ScoreResult, PriceRange, Verdict } from "./types";
+import { getModelMSRP, getTrimMultiplier } from "./carData";
+import { getDepreciationProfile, retentionAtYear, getGeoMultiplier } from "./depreciation";
+
+/**
+ * Model-level base MSRP table.
+ * Keys are lowercase "make|model" pairs. Values are the original new MSRP
+ * for the mid-trim variant of that model (US market, recent years).
+ * Sources: manufacturer websites, Edmunds, CarGurus historical MSRP data.
+ *
+ * When a make|model match is found it's used directly.
+ * Otherwise we fall back to the make-level average, then the global default.
+ */
+const MODEL_BASE: Record<string, number> = {
+  // ── Toyota ──────────────────────────────────────────────────────────────
+  "toyota|camry":         28000,
+  "toyota|camry hybrid":  32000,
+  "toyota|corolla":       23000,
+  "toyota|corolla hybrid":26000,
+  "toyota|rav4":          30000,
+  "toyota|rav4 hybrid":   35000,
+  "toyota|rav4 prime":    42000,
+  "toyota|highlander":    38000,
+  "toyota|highlander hybrid": 47000,
+  "toyota|4runner":       40000,
+  "toyota|tacoma":        34000,
+  "toyota|tundra":        42000,
+  "toyota|sienna":        36000,
+  "toyota|venza":         34000,
+  "toyota|prius":         28000,
+  "toyota|chr":           24000,
+
+  // ── Honda ───────────────────────────────────────────────────────────────
+  "honda|civic":          24000,
+  "honda|accord":         28000,
+  "honda|cr-v":           30000,
+  "honda|hrv":            24000,
+  "honda|pilot":          38000,
+  "honda|odyssey":        36000,
+  "honda|ridgeline":      38000,
+  "honda|passport":       37000,
+  "honda|fit":            20000,
+  "honda|insight":        26000,
+
+  // ── Ford ────────────────────────────────────────────────────────────────
+  "ford|f-150":           42000,
+  "ford|f-250":           48000,
+  "ford|f-350":           52000,
+  "ford|escape":          28000,
+  "ford|explorer":        38000,
+  "ford|edge":            36000,
+  "ford|bronco":          38000,
+  "ford|bronco sport":    30000,
+  "ford|mustang":         32000,
+  "ford|mustang mach-e":  48000,
+  "ford|maverick":        24000,
+  "ford|ranger":          30000,
+  "ford|expedition":      55000,
+
+  // ── Chevrolet ───────────────────────────────────────────────────────────
+  "chevrolet|silverado 1500": 42000,
+  "chevrolet|silverado":      42000,
+  "chevrolet|equinox":        28000,
+  "chevrolet|trax":           22000,
+  "chevrolet|traverse":       36000,
+  "chevrolet|tahoe":          55000,
+  "chevrolet|suburban":       60000,
+  "chevrolet|colorado":       30000,
+  "chevrolet|malibu":         24000,
+  "chevrolet|blazer":         34000,
+  "chevrolet|bolt ev":        28000,
+  "chevrolet|camaro":         30000,
+
+  // ── GMC ─────────────────────────────────────────────────────────────────
+  "gmc|sierra 1500":  44000,
+  "gmc|sierra":       44000,
+  "gmc|terrain":      30000,
+  "gmc|acadia":       38000,
+  "gmc|yukon":        57000,
+  "gmc|yukon xl":     62000,
+  "gmc|canyon":       32000,
+
+  // ── RAM ─────────────────────────────────────────────────────────────────
+  "ram|1500":         46000,
+  "ram|2500":         52000,
+  "ram|3500":         58000,
+  "ram|promaster":    38000,
+
+  // ── Jeep ────────────────────────────────────────────────────────────────
+  "jeep|grand cherokee":  42000,
+  "jeep|cherokee":        32000,
+  "jeep|wrangler":        38000,
+  "jeep|gladiator":       42000,
+  "jeep|compass":         28000,
+  "jeep|renegade":        25000,
+
+  // ── Nissan ──────────────────────────────────────────────────────────────
+  "nissan|rogue":     30000,
+  "nissan|altima":    26000,
+  "nissan|sentra":    22000,
+  "nissan|murano":    34000,
+  "nissan|pathfinder":38000,
+  "nissan|frontier":  32000,
+  "nissan|titan":     42000,
+  "nissan|armada":    52000,
+  "nissan|leaf":      28000,
+  "nissan|kicks":     22000,
+  "nissan|maxima":    37000,
+
+  // ── Hyundai ─────────────────────────────────────────────────────────────
+  "hyundai|elantra":  22000,
+  "hyundai|sonata":   26000,
+  "hyundai|tucson":   28000,
+  "hyundai|santa fe": 32000,
+  "hyundai|palisade": 36000,
+  "hyundai|kona":     24000,
+  "hyundai|ioniq 5":  42000,
+  "hyundai|ioniq 6":  40000,
+  "hyundai|genesis":  36000,
+
+  // ── Kia ─────────────────────────────────────────────────────────────────
+  "kia|sportage":     27000,
+  "kia|sorento":      30000,
+  "kia|telluride":    36000,
+  "kia|forte":        20000,
+  "kia|k5":           25000,
+  "kia|soul":         21000,
+  "kia|seltos":       24000,
+  "kia|carnival":     34000,
+  "kia|ev6":          42000,
+
+  // ── Subaru ──────────────────────────────────────────────────────────────
+  "subaru|outback":   30000,
+  "subaru|forester":  28000,
+  "subaru|crosstrek": 26000,
+  "subaru|impreza":   22000,
+  "subaru|legacy":    24000,
+  "subaru|ascent":    36000,
+  "subaru|wrx":       30000,
+
+  // ── Mazda ───────────────────────────────────────────────────────────────
+  "mazda|cx-5":       30000,
+  "mazda|cx-50":      32000,
+  "mazda|cx-9":       38000,
+  "mazda|cx-30":      26000,
+  "mazda|mazda3":     24000,
+  "mazda|mazda6":     26000,
+  "mazda|mx-5 miata": 30000,
+
+  // ── Volkswagen ──────────────────────────────────────────────────────────
+  "volkswagen|jetta":     22000,
+  "volkswagen|passat":    26000,
+  "volkswagen|tiguan":    30000,
+  "volkswagen|atlas":     38000,
+  "volkswagen|golf":      25000,
+  "volkswagen|id.4":      42000,
+  "volkswagen|taos":      26000,
+
+  // ── BMW ─────────────────────────────────────────────────────────────────
+  "bmw|3 series":     46000,
+  "bmw|5 series":     56000,
+  "bmw|7 series":     92000,
+  "bmw|x1":           38000,
+  "bmw|x3":           47000,
+  "bmw|x5":           62000,
+  "bmw|x7":           78000,
+  "bmw|4 series":     50000,
+  "bmw|m3":           72000,
+  "bmw|m4":           75000,
+
+  // ── Mercedes-Benz ───────────────────────────────────────────────────────
+  "mercedes-benz|c-class": 46000,
+  "mercedes-benz|e-class": 58000,
+  "mercedes-benz|s-class": 114000,
+  "mercedes-benz|glc":     48000,
+  "mercedes-benz|gle":     62000,
+  "mercedes-benz|gls":     92000,
+  "mercedes-benz|a-class": 36000,
+  "mercedes-benz|cla":     38000,
+  "mercedes-benz|glb":     40000,
+
+  // ── Audi ────────────────────────────────────────────────────────────────
+  "audi|a3":    36000,
+  "audi|a4":    42000,
+  "audi|a6":    56000,
+  "audi|q3":    36000,
+  "audi|q5":    46000,
+  "audi|q7":    58000,
+  "audi|q8":    70000,
+  "audi|e-tron":68000,
+
+  // ── Lexus ───────────────────────────────────────────────────────────────
+  "lexus|es":    42000,
+  "lexus|is":    40000,
+  "lexus|rx":    48000,
+  "lexus|ux":    34000,
+  "lexus|nx":    40000,
+  "lexus|gx":    56000,
+  "lexus|lx":    90000,
+
+  // ── Acura ───────────────────────────────────────────────────────────────
+  "acura|mdx":   48000,
+  "acura|rdx":   42000,
+  "acura|tlx":   40000,
+  "acura|ilx":   28000,
+
+  // ── Tesla ───────────────────────────────────────────────────────────────
+  "tesla|model 3":   44000,
+  "tesla|model y":   50000,
+  "tesla|model s":   90000,
+  "tesla|model x":   98000,
+
+  // ── Dodge ───────────────────────────────────────────────────────────────
+  "dodge|charger":   38000,
+  "dodge|challenger":36000,
+  "dodge|durango":   40000,
+  "dodge|grand caravan": 28000,
+
+  // ── Buick ───────────────────────────────────────────────────────────────
+  "buick|encore":   26000,
+  "buick|encore gx":30000,
+  "buick|envision": 34000,
+  "buick|enclave":  42000,
+
+  // ── Cadillac ────────────────────────────────────────────────────────────
+  "cadillac|xt4":   38000,
+  "cadillac|xt5":   44000,
+  "cadillac|xt6":   50000,
+  "cadillac|escalade": 80000,
+  "cadillac|ct5":   42000,
+
+  // ── Lincoln ─────────────────────────────────────────────────────────────
+  "lincoln|corsair":  40000,
+  "lincoln|nautilus": 46000,
+  "lincoln|aviator":  54000,
+  "lincoln|navigator":78000,
+
+  // ── Volvo ───────────────────────────────────────────────────────────────
+  "volvo|xc40":   42000,
+  "volvo|xc60":   48000,
+  "volvo|xc90":   58000,
+  "volvo|s60":    40000,
+  "volvo|v60":    42000,
+
+  // ── Genesis ─────────────────────────────────────────────────────────────
+  "genesis|g70":  38000,
+  "genesis|g80":  50000,
+  "genesis|gv70": 44000,
+  "genesis|gv80": 56000,
+
+  // ── Infiniti ────────────────────────────────────────────────────────────
+  "infiniti|q50":  42000,
+  "infiniti|qx50": 38000,
+  "infiniti|qx60": 48000,
+  "infiniti|qx80": 70000,
+
+  // ── Porsche ─────────────────────────────────────────────────────────────
+  "porsche|cayenne":  70000,
+  "porsche|macan":    60000,
+  "porsche|911":     115000,
+  "porsche|taycan":   90000,
+  "porsche|panamera": 90000,
+};
+
+// Make-level fallbacks when model isn't in the table above
+const MAKE_BASE: Record<string, number> = {
+  "bmw": 55000, "mercedes-benz": 62000, "audi": 52000, "lexus": 50000,
+  "acura": 44000, "infiniti": 46000, "cadillac": 54000, "lincoln": 52000,
+  "volvo": 50000, "genesis": 48000, "porsche": 82000, "land rover": 72000,
+  "jaguar": 60000, "toyota": 32000, "honda": 30000, "ford": 40000,
+  "chevrolet": 38000, "gmc": 44000, "ram": 46000, "jeep": 38000,
+  "nissan": 30000, "hyundai": 28000, "kia": 27000, "subaru": 30000,
+  "mazda": 29000, "volkswagen": 31000, "dodge": 34000, "chrysler": 33000,
+  "buick": 36000, "mitsubishi": 25000, "tesla": 58000,
+  "default": 32000,
+};
+
+/**
+ * Lookup base new MSRP for a given make + model + optional trim.
+ * Priority: carData database → MODEL_BASE heuristic → MAKE_BASE → global default.
+ */
+function getBasePrice(make: string, model: string, trim?: string): number {
+  // 1. Try carData (has 35+ makes, 250+ models with real MSRPs)
+  const carDataMSRP = getModelMSRP(make, model);
+  if (carDataMSRP !== 32000) {
+    // Apply trim multiplier if trim provided
+    const mult = trim ? getTrimMultiplier(trim) : 1.0;
+    return Math.round(carDataMSRP * mult);
+  }
+
+  // 2. Fall back to local MODEL_BASE heuristic table
+  const m = make.toLowerCase().trim();
+  const mod = model.toLowerCase().trim().replace(/\s+/g, " ");
+  const key = `${m}|${mod}`;
+  if (MODEL_BASE[key]) {
+    const mult = trim ? getTrimMultiplier(trim) : 1.0;
+    return Math.round(MODEL_BASE[key] * mult);
+  }
+  // Partial match (e.g. "camry hybrid" → "camry")
+  const partial = Object.keys(MODEL_BASE).find(
+    (k) => k.startsWith(`${m}|`) && mod.startsWith(k.split("|")[1])
+  );
+  if (partial) {
+    const mult = trim ? getTrimMultiplier(trim) : 1.0;
+    return Math.round(MODEL_BASE[partial] * mult);
+  }
+  return MAKE_BASE[m] ?? MAKE_BASE["default"];
+}
+
+/**
+ * @deprecated — replaced by depreciation.ts per-model profiles.
+ * Kept here only as a comment marker so git blame is readable.
+ *
+ * High retention: Toyota, Honda, Subaru, Mazda, trucks/4x4s
+ * Low retention (<1.0): German luxury, British luxury, American sedans, EVs (non-Tesla)
+ */
+const MAKE_DEPRECIATION_MULTIPLIER: Record<string, number> = {
+  // Excellent retention — Japanese reliable brands
+  "toyota":     1.20,  // Best resale in class; Tacoma/4Runner hold exceptionally
+  "honda":      1.15,
+  "subaru":     1.12,
+  "mazda":      1.10,
+  "lexus":      1.10,  // Premium Toyota — strong resale
+  "acura":      1.05,
+
+  // Good retention — Korean brands have improved significantly
+  "kia":        1.05,
+  "hyundai":    1.03,
+  "genesis":    0.98,  // Luxury Hyundai — still building resale rep
+
+  // Trucks hold value very well (applies on top of make multiplier)
+  // Handled separately in getDepreciationMultiplier() for model-level
+
+  // Average retention
+  "nissan":     0.98,
+  "mitsubishi": 0.96,
+  "chrysler":   0.95,
+  "buick":      0.97,
+  "gmc":        1.03,  // Trucks help GMC overall
+  "ram":        1.05,  // RAM trucks hold well
+  "jeep":       0.98,  // Wrangler holds; Cherokee/Compass less so
+
+  // Below average — American sedans / FWD cars
+  "ford":       0.99,  // F-150 saves the brand average
+  "chevrolet":  0.98,
+  "dodge":      0.93,
+  "lincoln":    0.90,
+  "cadillac":   0.91,
+
+  // German luxury depreciates significantly — high MSRP, expensive repairs
+  "bmw":          0.78,  // ~50% value lost by yr 5; iSeeCars data
+  "mercedes-benz":0.77,
+  "audi":         0.80,
+  "volkswagen":   0.92,
+  "porsche":      0.96,  // Exception: Porsche holds better than most luxury
+
+  // Other European — fast depreciation
+  "volvo":        0.85,
+  "land rover":   0.72,  // One of the worst; Range Rover especially
+  "jaguar":       0.74,
+  "alfa romeo":   0.73,
+  "mini":         0.88,
+  "fiat":         0.82,
+
+  // Tesla holds better than most EVs; other EVs depreciate rapidly
+  "tesla":        1.05,
+
+  // Default for unknown makes
+  "default":      1.00,
+};
+
+/**
+ * Model-level overrides for vehicles with notably different depreciation
+ * from their brand average (e.g., Toyota 4Runner vs Corolla).
+ */
+const MODEL_DEPRECIATION_OVERRIDE: Record<string, number> = {
+  "toyota|4runner":       1.45,  // Legendary resale — barely depreciates
+  "toyota|tacoma":        1.40,
+  "toyota|land cruiser":  1.35,
+  "toyota|tundra":        1.20,
+  "toyota|sienna":        1.15,
+  "toyota|prius":         1.05,
+
+  "honda|ridgeline":      1.10,
+  "honda|odyssey":        1.08,
+  "honda|pilot":          1.08,
+
+  "jeep|wrangler":        1.25,  // Wrangler is exception to Jeep norm
+  "jeep|gladiator":       1.15,
+
+  "ford|f-150":           1.18,
+  "ford|bronco":          1.22,  // High demand
+  "ford|maverick":        1.10,
+
+  "chevrolet|silverado":  1.15,
+  "chevrolet|silverado 1500": 1.15,
+  "chevrolet|corvette":   1.05,
+  "chevrolet|tahoe":      1.10,
+  "chevrolet|suburban":   1.12,
+
+  "gmc|sierra":           1.15,
+  "gmc|sierra 1500":      1.15,
+  "gmc|yukon":            1.10,
+
+  "ram|1500":             1.18,
+
+  "subaru|wrx":           1.08,
+  "subaru|outback":       1.15,
+  "subaru|forester":      1.12,
+
+  "bmw|m3":               0.95,  // M-series hold better than standard BMW
+  "bmw|m4":               0.95,
+  "porsche|911":          1.15,  // 911 is a collector car — holds extremely well
+  "porsche|taycan":       0.85,  // EV Porsche depreciates more
+
+  "tesla|model 3":        1.00,
+  "tesla|model y":        1.05,
+  "tesla|model s":        0.90,  // S has depreciated more with price cuts
+  "tesla|model x":        0.88,
+};
+
+function getDepreciationMultiplier(make: string, model: string): number {
+  const m = make.toLowerCase().trim();
+  const mod = model.toLowerCase().trim().replace(/\s+/g, " ");
+  const key = `${m}|${mod}`;
+  if (MODEL_DEPRECIATION_OVERRIDE[key]) return MODEL_DEPRECIATION_OVERRIDE[key];
+  return MAKE_DEPRECIATION_MULTIPLIER[m] ?? MAKE_DEPRECIATION_MULTIPLIER["default"];
+}
+
+/**
+ * Cumulative value retention by age — baseline for an "average" vehicle.
+ * Per-make multipliers are applied on top via getDepreciationMultiplier().
+ *
+ * Year 1:  ~16% first-year drop (new → used)
+ * Year 2:  additional ~9%
+ * Year 3:  additional ~7%
+ * Years 4-6: ~5–6%/yr
+ * Years 7-10: ~4%/yr
+ * 10+: ~2-3%/yr
+ */
+function retentionFactor(ageYears: number): number {
+  if (ageYears <= 0)  return 1.00;
+  if (ageYears === 1) return 0.84;
+  if (ageYears === 2) return 0.75;
+  if (ageYears === 3) return 0.68;
+  if (ageYears === 4) return 0.63;
+  if (ageYears === 5) return 0.58;
+  if (ageYears === 6) return 0.54;
+  if (ageYears === 7) return 0.50;
+  if (ageYears === 8) return 0.46;
+  if (ageYears === 9) return 0.43;
+  if (ageYears === 10) return 0.40;
+  return Math.max(0.12, 0.40 - (ageYears - 10) * 0.025);
+}
+
+/**
+ * Mileage adjustment vs. average US driving (~13,500 mi/yr per FHWA 2023).
+ * Value impact: roughly $0.06–$0.10 per mile above/below average.
+ * The rate scales with vehicle value — high-value cars lose more per mile.
+ */
+function mileageAdjustment(mileage: number, ageYears: number, baseValue: number): number {
+  const avgMileage = Math.max(ageYears * 13500, 1);
+  const diff = mileage - avgMileage;
+  // Rate: $0.06/mi for sub-$20k cars, up to $0.10/mi for $50k+ cars
+  const rate = Math.min(0.10, Math.max(0.06, baseValue / 500000));
+  const adj = -(diff * rate);
+  // Cap at ±22% of base value
+  const cap = baseValue * 0.22;
+  return Math.max(-cap, Math.min(cap, adj));
+}
+
+export function estimateFairValue(input: CarInput): PriceRange {
+  const currentYear = new Date().getFullYear();
+  const ageYears = Math.max(0, currentYear - input.year);
+
+  // 1. MSRP anchor — carData DB > local MODEL_BASE > MAKE_BASE fallback
+  const baseNewPrice = getBasePrice(input.make, input.model, input.trim);
+
+  // 2. Per-model retention curve from real iSeeCars/CarEdge/Edmunds data
+  const profile = getDepreciationProfile(input.make, input.model);
+  const retention = retentionAtYear(profile, ageYears);
+  const midBase = baseNewPrice * retention;
+
+  // 3. Mileage adjustment using class-specific $/1k miles penalty
+  const avgMileage = Math.max(ageYears * 13500, 1);
+  const mileDelta = input.mileage - avgMileage;          // negative = below avg (good)
+  const mileAdj = -(mileDelta / 1000) * profile.mileagePenaltyPer1k;
+  // Cap adjustment at ±25% of base so extreme mileage doesn't break the model
+  const mileAdjCapped = Math.max(-midBase * 0.25, Math.min(midBase * 0.25, mileAdj));
+
+  // 4. Geographic price adjustment (coastal = higher demand = higher prices)
+  const geoMult = getGeoMultiplier(input.zipCode);
+
+  const midpoint = Math.max(500, Math.round(
+    ((midBase + mileAdjCapped) * geoMult) / 100
+  ) * 100);
+
+  // Range width: ±7% (reflects real market variance in used car pricing)
+  const spread = midpoint * 0.07;
+  return {
+    low:      Math.round((midpoint - spread) / 100) * 100,
+    high:     Math.round((midpoint + spread) / 100) * 100,
+    midpoint,
+  };
+}
+
+/**
+ * Estimate monthly payment using standard amortization formula.
+ * Defaults match typical used-car financing (2024–25) if no overrides provided.
+ */
+export function estimateMonthlyPayment(
+  price: number,
+  opts?: { apr?: number; downPct?: number; termMonths?: number }
+): number {
+  const apr = opts?.apr ?? 7.5;
+  const downPct = opts?.downPct ?? 10;
+  const termMonths = opts?.termMonths ?? 60;
+  const principal = price * (1 - downPct / 100);
+  const monthlyRate = apr / 100 / 12;
+  if (monthlyRate === 0) return Math.round(principal / termMonths);
+  const payment =
+    (principal * monthlyRate * Math.pow(1 + monthlyRate, termMonths)) /
+    (Math.pow(1 + monthlyRate, termMonths) - 1);
+  return Math.round(payment);
+}
+
+export function scoreCarDeal(input: CarInput, fairValue?: PriceRange): ScoreResult {
+  const fv = fairValue ?? estimateFairValue(input);
+  const priceDelta    = input.askingPrice - fv.midpoint;
+  const priceDeltaPct = priceDelta / fv.midpoint;
+
+  const currentYear = new Date().getFullYear();
+  const ageYears    = Math.max(0, currentYear - input.year);
+  const avgMileage  = ageYears * 13500;
+  const mileageRatio = input.mileage / Math.max(avgMileage, 1);
+
+  // ── Price vs. market (primary driver, 0-65 pts) ──────────────────────
+  let score = 65;
+  if      (priceDeltaPct <= -0.15) score += 30;   // 15%+ below — great deal
+  else if (priceDeltaPct <= -0.08) score += 20;   // 8–15% below — good deal
+  else if (priceDeltaPct <= -0.03) score += 10;   // 3–8% below — slightly good
+  else if (priceDeltaPct <=  0.03) score +=  5;   // within 3% — fair
+  else if (priceDeltaPct <=  0.08) score -=  5;   // 3–8% over — slightly high
+  else if (priceDeltaPct <=  0.15) score -= 18;   // 8–15% over — negotiate
+  else if (priceDeltaPct <=  0.25) score -= 32;   // 15–25% over — walk away territory
+  else                              score -= 45;   // >25% over — walk away
+
+  // ── Mileage adjustment (up to ±12 pts) ───────────────────────────────
+  if      (mileageRatio > 1.6)  score -= 12;
+  else if (mileageRatio > 1.3)  score -=  7;
+  else if (mileageRatio > 1.1)  score -=  3;
+  else if (mileageRatio < 0.6)  score +=  8;  // very low miles — big plus
+  else if (mileageRatio < 0.8)  score +=  4;  // low miles — moderate plus
+
+  // ── Age adjustment (up to ±8 pts) ────────────────────────────────────
+  if      (ageYears > 15) score -= 8;
+  else if (ageYears > 10) score -= 4;
+  else if (ageYears <=  2) score += 8;  // near-new
+  else if (ageYears <=  4) score += 4;  // relatively new
+
+  score = Math.max(0, Math.min(100, Math.round(score)));
+
+  // ── Verdict ──────────────────────────────────────────────────────────
+  let verdict: Verdict;
+  if      (score >= 73) verdict = "Buy";
+  else if (score >= 46) verdict = "Negotiate";
+  else                  verdict = "Walk Away";
+
+  // ── Reasons ──────────────────────────────────────────────────────────
+  const reasons: string[] = [];
+  const absDeltaK = (Math.abs(priceDelta) / 1000).toFixed(1);
+
+  if (priceDelta > 0) {
+    const pct = Math.round(priceDeltaPct * 100);
+    reasons.push(`Asking price is $${absDeltaK}k (${pct}%) above our estimated fair value of $${fv.midpoint.toLocaleString()}.`);
+  } else if (priceDelta < 0) {
+    const pct = Math.round(Math.abs(priceDeltaPct) * 100);
+    reasons.push(`Asking price is $${absDeltaK}k (${pct}%) below estimated fair value — potentially a strong deal.`);
+  } else {
+    reasons.push(`Asking price is right at estimated fair market value.`);
+  }
+
+  if (mileageRatio > 1.3) {
+    reasons.push(
+      `High mileage: ${input.mileage.toLocaleString()} mi is ${Math.round((mileageRatio - 1) * 100)}% above average for a ${ageYears}-year-old vehicle. Plan for higher maintenance costs.`
+    );
+  } else if (mileageRatio < 0.7) {
+    reasons.push(
+      `Excellent mileage: ${input.mileage.toLocaleString()} mi is well below average for its age — this adds significant value and suggests less wear.`
+    );
+  } else {
+    reasons.push(
+      `Mileage is ${mileageRatio < 1 ? "slightly below" : "typical for"} average at ${input.mileage.toLocaleString()} mi on a ${ageYears}-year-old car.`
+    );
+  }
+
+  if (ageYears <= 3) {
+    reasons.push(`${ageYears <= 1 ? "Nearly new" : `Only ${ageYears} years old`} — may still carry factory warranty or qualify for CPO certification.`);
+  } else if (ageYears > 10) {
+    reasons.push(`At ${ageYears} years old, budget for increased repair costs and consider a pre-purchase inspection by an independent mechanic.`);
+  }
+
+  const loanOpts = {
+    apr: input.loanApr,
+    downPct: input.loanDownPct,
+    termMonths: input.loanTermMonths,
+  };
+  const monthly = estimateMonthlyPayment(input.askingPrice, loanOpts);
+  const aprLabel = (input.loanApr ?? 7.5).toFixed(1);
+  const downLabel = input.loanDownPct ?? 10;
+  const termLabel = input.loanTermMonths ?? 60;
+  reasons.push(`Estimated monthly payment: ~$${monthly}/mo (${downLabel}% down, ${aprLabel}% APR, ${termLabel} months).`);
+
+  if (priceDelta > 0 && priceDeltaPct <= 0.25) {
+    reasons.push(
+      `Negotiation room: comparable ${input.year} ${input.make} ${input.model}s sell for $${fv.low.toLocaleString()}–$${fv.high.toLocaleString()}. Use that as your anchor.`
+    );
+  }
+
+  return {
+    score,
+    verdict,
+    fairValueRange: fv,
+    priceDelta,
+    priceDeltaPct,
+    monthlyPayment: monthly,
+    reasons,
+  };
+}

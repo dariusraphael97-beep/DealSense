@@ -1,0 +1,337 @@
+import { NextRequest, NextResponse } from "next/server";
+import { scoreCarDeal, estimateFairValue } from "@/lib/scoring";
+import type { CarInput, AnalysisResult, PriceRange } from "@/lib/types";
+import { fetchCraigslistPrices } from "@/lib/craigslist";
+
+/**
+ * VinAudit Market Value API — most accurate when a VIN is provided.
+ * Uses 90-day rolling window of real transaction data.
+ * Sign up at vinaudit.com/market-value-api (pay-per-use, ~$0.40/lookup).
+ */
+async function fetchVinAuditValue(input: CarInput): Promise<PriceRange | null> {
+  const apiKey = process.env.VINAUDIT_API_KEY;
+  if (!apiKey || !input.vin) return null;
+
+  try {
+    const params = new URLSearchParams({
+      key: apiKey,
+      vin: input.vin,
+      format: "json",
+      period: "90",
+    });
+    const res = await fetch(
+      `https://api.vinaudit.com/query.php?${params}`,
+      { next: { revalidate: 3600 } }
+    );
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (!data?.success || !data?.prices?.average) return null;
+
+    const { average, below, above } = data.prices as {
+      average: number;
+      below: number;
+      above: number;
+    };
+    if (!average || average < 500) return null;
+
+    return {
+      low: below ?? Math.round(average * 0.93),
+      high: above ?? Math.round(average * 1.07),
+      midpoint: average,
+    };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * MarketCheck Price Prediction API — uses ML model trained on live listings.
+ * More accurate than raw listing search. Set MARKETCHECK_API_KEY in env.
+ */
+async function fetchMarketCheckValue(input: CarInput): Promise<PriceRange | null> {
+  const apiKey = process.env.MARKETCHECK_API_KEY;
+  if (!apiKey) return null;
+
+  // 1. Try the price prediction endpoint first
+  try {
+    const params = new URLSearchParams({
+      api_key: apiKey,
+      year: String(input.year),
+      make: input.make,
+      model: input.model,
+      ...(input.trim ? { trim: input.trim } : {}),
+      miles: String(input.mileage),
+      zip: input.zipCode,
+    });
+    const res = await fetch(
+      `https://mc-api.marketcheck.com/v2/predict/car/price?${params}`,
+      { next: { revalidate: 3600 } }
+    );
+    if (res.ok) {
+      const data = await res.json();
+      const mean: number = data?.price_stats?.mean ?? data?.predicted_price ?? 0;
+      if (mean > 500) {
+        const std: number = data?.price_stats?.std ?? mean * 0.08;
+        return {
+          low:      Math.round((mean - std) / 100) * 100,
+          high:     Math.round((mean + std) / 100) * 100,
+          midpoint: Math.round(mean / 100) * 100,
+        };
+      }
+    }
+  } catch {
+    // fall through to listings search
+  }
+
+  // 2. Fall back to listing search (median of active listings near ZIP)
+  try {
+    const params = new URLSearchParams({
+      api_key: apiKey,
+      year: String(input.year),
+      make: input.make,
+      model: input.model,
+      trim: input.trim ?? "",
+      zip: input.zipCode,
+      radius: "150",
+      rows: "30",
+    });
+    const res = await fetch(
+      `https://mc-api.marketcheck.com/v2/search/car/active?${params}`,
+      { next: { revalidate: 3600 } }
+    );
+    if (!res.ok) return null;
+    const data = await res.json();
+    const listings: { price: number }[] = data?.listings ?? [];
+    const prices = listings
+      .map((l) => l.price)
+      .filter((p) => p > 500)
+      .sort((a, b) => a - b);
+    if (prices.length < 3) return null;
+
+    // Trim outliers: drop top/bottom 10%
+    const trimCount = Math.floor(prices.length * 0.1);
+    const trimmed = prices.slice(trimCount, prices.length - trimCount);
+    const mid = trimmed[Math.floor(trimmed.length / 2)];
+    return {
+      low:      trimmed[0],
+      high:     trimmed[trimmed.length - 1],
+      midpoint: mid,
+    };
+  } catch {
+    return null;
+  }
+}
+
+// AI explanation using Anthropic (or falls back gracefully)
+async function generateAiSummary(
+  input: CarInput,
+  scored: ReturnType<typeof scoreCarDeal>
+): Promise<{ summary: string; script: string }> {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) {
+    return {
+      summary: buildFallbackSummary(input, scored),
+      script: buildFallbackScript(input, scored),
+    };
+  }
+
+  const absDelta = Math.abs(scored.priceDelta);
+  const deltaDir = scored.priceDelta >= 0 ? "ABOVE" : "BELOW";
+
+  const scriptInstruction =
+    scored.verdict === "Buy"
+      ? `Write a CLOSING script — NOT a negotiation script. The car is already priced ${deltaDir} market by $${absDelta.toLocaleString()}, so the buyer should NOT ask for a lower price. Instead, help them express readiness to close, confirm out-the-door fees, and move quickly before someone else does.`
+      : scored.verdict === "Negotiate"
+      ? `Write a polite but data-backed negotiation script. The car is $${absDelta.toLocaleString()} ABOVE fair value. The buyer should cite the market data and push toward the midpoint of $${scored.fairValueRange.midpoint.toLocaleString()}.`
+      : `Write a firm, professional walk-away script. The car is $${absDelta.toLocaleString()} ABOVE fair value — a ${Math.abs(Math.round(scored.priceDeltaPct * 100))}% premium. The buyer should make clear the price is too high and they are prepared to walk unless it drops to around $${scored.fairValueRange.midpoint.toLocaleString()}.`;
+
+  const prompt = `You are an expert used-car advisor. Given the following deal analysis, write:
+1. A SHORT SUMMARY (2–3 sentences, plain language) explaining whether this is a good deal and exactly what the buyer should do next.
+2. A SCRIPT (4–6 sentences the buyer says out loud to the dealer or seller). ${scriptInstruction}
+
+Car: ${input.year} ${input.make} ${input.model}${input.trim ? " " + input.trim : ""}
+Mileage: ${input.mileage.toLocaleString()} miles
+Asking price: $${input.askingPrice.toLocaleString()}
+Fair value range: $${scored.fairValueRange.low.toLocaleString()}–$${scored.fairValueRange.high.toLocaleString()} (midpoint $${scored.fairValueRange.midpoint.toLocaleString()})
+Price vs market: ${scored.priceDelta >= 0 ? "+" : ""}$${scored.priceDelta.toLocaleString()} (${scored.priceDelta >= 0 ? "overpriced" : "underpriced"})
+Deal Score: ${scored.score}/100
+Verdict: ${scored.verdict}
+
+Respond with JSON exactly like this:
+{"summary": "...", "negotiationScript": "..."}`;
+
+  try {
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01",
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "claude-haiku-4-5-20251001",
+        max_tokens: 600,
+        messages: [{ role: "user", content: prompt }],
+      }),
+    });
+
+    if (!res.ok) throw new Error(`Anthropic error ${res.status}`);
+    const data = await res.json();
+    const text: string = data?.content?.[0]?.text ?? "";
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) throw new Error("No JSON in response");
+    const parsed = JSON.parse(jsonMatch[0]);
+    return {
+      summary: parsed.summary ?? buildFallbackSummary(input, scored),
+      script: parsed.negotiationScript ?? buildFallbackScript(input, scored),
+    };
+  } catch (err) {
+    console.error("AI generation error:", err);
+    return {
+      summary: buildFallbackSummary(input, scored),
+      script: buildFallbackScript(input, scored),
+    };
+  }
+}
+
+function buildFallbackSummary(
+  input: CarInput,
+  scored: ReturnType<typeof scoreCarDeal>
+): string {
+  const delta = Math.abs(scored.priceDelta);
+  if (scored.verdict === "Buy") {
+    if (scored.priceDelta <= -5000) {
+      return `This ${input.year} ${input.make} ${input.model} is an excellent deal — the asking price is $${delta.toLocaleString()} below estimated fair market value. Don't try to negotiate lower; you risk losing this car to another buyer. Get an independent inspection and move quickly to close.`;
+    }
+    return `This ${input.year} ${input.make} ${input.model} is fairly priced and a solid buy. The asking price is $${delta.toLocaleString()} below fair value, putting this comfortably in "move forward" territory. Confirm the out-the-door fees and close.`;
+  }
+  if (scored.verdict === "Negotiate") {
+    return `This listing has potential but the price needs work. At $${input.askingPrice.toLocaleString()}, the seller is asking $${delta.toLocaleString()} above what comparable vehicles are trading for. A counter-offer closer to $${scored.fairValueRange.midpoint.toLocaleString()} is reasonable and supported by market data.`;
+  }
+  return `This listing is significantly overpriced. The asking price is $${delta.toLocaleString()} above fair market value — a ${Math.abs(Math.round(scored.priceDeltaPct * 100))}% premium that's hard to justify. Either the seller needs to come down significantly toward $${scored.fairValueRange.midpoint.toLocaleString()}, or walk away and find a better deal.`;
+}
+
+function buildFallbackScript(
+  input: CarInput,
+  scored: ReturnType<typeof scoreCarDeal>
+): string {
+  const target = Math.round(scored.fairValueRange.midpoint / 100) * 100;
+  const delta = Math.abs(scored.priceDelta);
+
+  if (scored.verdict === "Buy") {
+    if (scored.priceDelta <= -5000) {
+      return `"I've done my homework on this ${input.year} ${input.make} ${input.model} and the market data supports this price — it's well below what comparable vehicles are listing for. I'm ready to move forward today. Can we go over the out-the-door number so I know the full cost including fees and taxes? I'd like to close this as soon as possible."`;
+    }
+    return `"I've looked at the market for this ${input.year} ${input.make} ${input.model} and this is priced fairly. I'm happy with the price and ready to proceed. Can you walk me through the out-the-door cost including any dealer fees? I'd like to get the paperwork started today."`;
+  }
+
+  if (scored.verdict === "Negotiate") {
+    return `"I've researched this ${input.year} ${input.make} ${input.model} and comparable vehicles in this market are selling for $${scored.fairValueRange.low.toLocaleString()}–$${scored.fairValueRange.high.toLocaleString()}. At $${input.askingPrice.toLocaleString()}, you're $${delta.toLocaleString()} above what I'm seeing. I'd move forward today at $${target.toLocaleString()} — is that something you can work with?"`;
+  }
+
+  // Walk Away
+  return `"I want to be straightforward — I've done my research and this ${input.year} ${input.make} ${input.model} is listed $${delta.toLocaleString()} above fair market value. That's a ${Math.abs(Math.round(scored.priceDeltaPct * 100))}% premium I can't justify. If you're able to come down to around $${target.toLocaleString()}, I'm still interested. Otherwise I'll have to keep looking."`;
+}
+
+export async function POST(req: NextRequest) {
+  let input: CarInput;
+  try {
+    input = await req.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
+  }
+
+  // Validate required fields
+  if (
+    !input.year ||
+    !input.make ||
+    !input.model ||
+    !input.mileage ||
+    !input.askingPrice ||
+    !input.zipCode
+  ) {
+    return NextResponse.json(
+      { error: "Missing required fields: year, make, model, mileage, askingPrice, zipCode." },
+      { status: 400 }
+    );
+  }
+
+  // Pricing priority order:
+  // 1. VinAudit — real transaction data, most accurate (requires VIN)
+  // 2. MarketCheck ML prediction → listings search (paid API key)
+  // 3. Craigslist regional listings — free, real asking prices near user's ZIP
+  // 4. Built-in per-model depreciation model — always runs as final fallback
+  const [vinAuditValue, marketCheckValue, craigslistValue] = await Promise.all([
+    fetchVinAuditValue(input),
+    fetchMarketCheckValue(input),
+    fetchCraigslistPrices(input),
+  ]);
+
+  // Blend Craigslist with the model if no paid API is available
+  let marketValue: PriceRange | undefined;
+  let priceSource: string;
+
+  if (vinAuditValue) {
+    marketValue = vinAuditValue;
+    priceSource = "VinAudit transaction data";
+  } else if (marketCheckValue) {
+    marketValue = marketCheckValue;
+    priceSource = "MarketCheck live listings";
+  } else if (craigslistValue) {
+    // Blend Craigslist (real asking prices) with the statistical model (50/50)
+    const modelValue = estimateFairValue(input);
+    marketValue = {
+      low:      Math.round((craigslistValue.low      + modelValue.low)      / 200) * 100,
+      high:     Math.round((craigslistValue.high     + modelValue.high)     / 200) * 100,
+      midpoint: Math.round((craigslistValue.midpoint + modelValue.midpoint) / 200) * 100,
+    };
+    priceSource = "Craigslist regional listings + statistical model";
+  } else {
+    priceSource = "Statistical model (iSeeCars/CarEdge depreciation data)";
+  }
+
+  const scored = scoreCarDeal(input, marketValue);
+
+  // AI summary (gracefully degrades if no API key)
+  const { summary, script } = await generateAiSummary(input, scored);
+
+  const result: AnalysisResult = {
+    ...scored,
+    aiSummary: summary,
+    negotiationScript: script,
+    input,
+    priceSource,
+  };
+
+  // Optionally persist to Supabase
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (supabaseUrl && supabaseKey) {
+    try {
+      const { createClient } = await import("@supabase/supabase-js");
+      const supabase = createClient(supabaseUrl, supabaseKey);
+      await supabase.from("analyses").insert({
+        vin: input.vin ?? null,
+        year: input.year,
+        make: input.make,
+        model: input.model,
+        trim: input.trim ?? null,
+        mileage: input.mileage,
+        asking_price: input.askingPrice,
+        zip_code: input.zipCode,
+        estimated_value_low: scored.fairValueRange.low,
+        estimated_value_high: scored.fairValueRange.high,
+        price_delta: scored.priceDelta,
+        deal_score: scored.score,
+        verdict: scored.verdict,
+        ai_summary: summary,
+        negotiation_script: script,
+      });
+    } catch (err) {
+      console.error("Supabase insert error:", err);
+      // Non-fatal — result still returns
+    }
+  }
+
+  return NextResponse.json(result);
+}
