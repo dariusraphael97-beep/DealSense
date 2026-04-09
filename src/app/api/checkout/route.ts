@@ -2,7 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import { createClient } from "@/lib/supabase/server";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
+function getStripe() {
+  const key = process.env.STRIPE_SECRET_KEY;
+  if (!key) throw new Error("STRIPE_SECRET_KEY is not set");
+  return new Stripe(key);
+}
 
 const PRICE_CREDITS: Record<string, { credits: number; label: string }> = {
   "price_1TK6MGJ5w276rD5yy4QjjsP8": { credits: 3,  label: "Starter Pack"  },
@@ -22,6 +26,7 @@ export async function POST(req: NextRequest) {
 
   const origin = req.headers.get("origin") ?? "https://dealsense.space";
 
+  const stripe = getStripe();
   const session = await stripe.checkout.sessions.create({
     mode: "payment",
     line_items: [{ price: priceId, quantity: 1 }],

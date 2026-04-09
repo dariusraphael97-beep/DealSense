@@ -52,76 +52,75 @@ async function fetchMarketCheckValue(input: CarInput): Promise<PriceRange | null
   const apiKey = process.env.MARKETCHECK_API_KEY;
   if (!apiKey) return null;
 
-  // 1. Try the price prediction endpoint first
-  try {
-    const params = new URLSearchParams({
-      api_key: apiKey,
-      year: String(input.year),
-      make: input.make,
-      model: input.model,
-      ...(input.trim ? { trim: input.trim } : {}),
-      miles: String(input.mileage),
-      zip: input.zipCode,
-    });
-    const res = await fetch(
-      `https://mc-api.marketcheck.com/v2/predict/car/price?${params}`,
-      { next: { revalidate: 3600 } }
-    );
-    if (res.ok) {
-      const data = await res.json();
-      const mean: number = data?.price_stats?.mean ?? data?.predicted_price ?? 0;
-      if (mean > 500) {
-        const std: number = data?.price_stats?.std ?? mean * 0.08;
-        return {
-          low:      Math.round((mean - std) / 100) * 100,
-          high:     Math.round((mean + std) / 100) * 100,
-          midpoint: Math.round(mean / 100) * 100,
-        };
-      }
-    }
-  } catch {
-    // fall through to listings search
-  }
+  // Build mileage range filter — compare to similar-mileage vehicles only
+  const miles = input.mileage;
+  const milesMin = Math.max(0, Math.round(miles * 0.4));
+  const milesMax = Math.round(miles * 2.5 + 15000); // generous upper bound
 
-  // 2. Fall back to listing search — try progressively wider radii for rare/luxury cars
-  const radii = ["150", "500", "2000"]; // 2000 = effectively nationwide
-  for (const radius of radii) {
+  for (const radius of ["150", "500", "2000"]) {
     try {
       const params = new URLSearchParams({
-        api_key: apiKey,
-        year: String(input.year),
-        make: input.make,
-        model: input.model,
+        api_key:   apiKey,
+        year:      String(input.year),
+        make:      input.make,
+        model:     input.model,
         ...(input.trim ? { trim: input.trim } : {}),
-        zip: input.zipCode,
+        zip:       input.zipCode,
         radius,
-        rows: "50",
+        rows:      "50",
+        miles_min: String(milesMin),
+        miles_max: String(milesMax),
       });
       const res = await fetch(
         `https://mc-api.marketcheck.com/v2/search/car/active?${params}`,
-        { next: { revalidate: 3600 } }
+        { cache: "no-store" }
       );
-      if (!res.ok) continue;
+      if (!res.ok) {
+        console.log(`[MC] listings radius=${radius} status=${res.status}`);
+        // If radius restriction on free tier, still try without mileage filter
+        const params2 = new URLSearchParams({
+          api_key: apiKey,
+          year:    String(input.year),
+          make:    input.make,
+          model:   input.model,
+          ...(input.trim ? { trim: input.trim } : {}),
+          zip:     input.zipCode,
+          radius,
+          rows:    "50",
+        });
+        const res2 = await fetch(
+          `https://mc-api.marketcheck.com/v2/search/car/active?${params2}`,
+          { cache: "no-store" }
+        );
+        if (!res2.ok) continue;
+        const data2 = await res2.json();
+        const listings2: { price: number; miles: number }[] = data2?.listings ?? [];
+        // Filter by mileage client-side
+        const filtered2 = listings2.filter((l) => l.miles >= milesMin && l.miles <= milesMax);
+        const src = filtered2.length >= 3 ? filtered2 : listings2;
+        const prices2 = src.map((l) => l.price).filter((p) => p > 500).sort((a, b) => a - b);
+        console.log(`[MC] fallback radius=${radius} total=${listings2.length} mileage-filtered=${filtered2.length}`);
+        if (prices2.length < 3) continue;
+        const tc2 = Math.floor(prices2.length * 0.1);
+        const tr2 = prices2.slice(tc2, prices2.length - tc2);
+        return { low: tr2[0], high: tr2[tr2.length - 1], midpoint: tr2[Math.floor(tr2.length / 2)] };
+      }
+
       const data = await res.json();
-      const listings: { price: number }[] = data?.listings ?? [];
-      const prices = listings
-        .map((l) => l.price)
-        .filter((p) => p > 500)
-        .sort((a, b) => a - b);
+      const listings: { price: number; miles: number }[] = data?.listings ?? [];
+      console.log(`[MC] listings radius=${radius} found=${listings.length}`);
+      if (listings.length < 3) continue;
 
-      // Need at least 3 comps — if not enough, expand radius
-      if (prices.length < 3) continue;
-
-      // Trim outliers: drop top/bottom 10%
+      const prices = listings.map((l) => l.price).filter((p) => p > 500).sort((a, b) => a - b);
       const trimCount = Math.floor(prices.length * 0.1);
       const trimmed = prices.slice(trimCount, prices.length - trimCount);
-      const mid = trimmed[Math.floor(trimmed.length / 2)];
       return {
         low:      trimmed[0],
         high:     trimmed[trimmed.length - 1],
-        midpoint: mid,
+        midpoint: trimmed[Math.floor(trimmed.length / 2)],
       };
-    } catch {
+    } catch (e) {
+      console.log(`[MC] listings radius=${radius} error=${e}`);
       continue;
     }
   }

@@ -62,7 +62,8 @@
       "mcp__eb0e215d-09d2-42bf-b558-7c883674fdc6__execute_sql",
       "mcp__9182f1d1-ab54-4586-9bf6-3c490c9a2003__get_stripe_account_info",
       "mcp__9182f1d1-ab54-4586-9bf6-3c490c9a2003__stripe_api_execute",
-      "mcp__9182f1d1-ab54-4586-9bf6-3c490c9a2003__stripe_api_search"
+      "mcp__9182f1d1-ab54-4586-9bf6-3c490c9a2003__stripe_api_search",
+      "Bash(curl -s \"https://mc-api.marketcheck.com/v2/search/car/active?api_key=JrrmxvXeH9qA7Klizjuyb1CM2l68LcA4&year=2021&make=Toyota&model=Camry&zip=11590&radius=100&rows=5\")"
     ]
   }
 }
