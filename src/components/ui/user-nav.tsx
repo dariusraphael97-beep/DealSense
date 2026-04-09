@@ -5,12 +5,14 @@ import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { motion, AnimatePresence } from "framer-motion"
-import { LogOut, ChevronDown, Settings, Clock } from "lucide-react"
+import { LogOut, ChevronDown, Settings, Clock, Shield } from "lucide-react"
+import { useCredits } from "@/contexts/credits-context"
 
 export function UserNav() {
   const [email, setEmail] = useState<string | null>(null)
   const [open, setOpen] = useState(false)
   const [signingOut, setSigningOut] = useState(false)
+  const { role } = useCredits()
   const router = useRouter()
   const menuRef = useRef<HTMLDivElement>(null)
 
@@ -97,6 +99,18 @@ export function UserNav() {
                 <Clock className="w-4 h-4" />
                 History
               </Link>
+
+              {role === "admin" && (
+                <Link href="/admin" onClick={() => setOpen(false)}
+                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors"
+                  style={{ color: "rgba(192,132,252,0.85)" }}
+                  onMouseEnter={e => (e.currentTarget.style.background = "rgba(168,85,247,0.08)")}
+                  onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
+                >
+                  <Shield className="w-4 h-4" />
+                  Admin Panel
+                </Link>
+              )}
 
               <Link href="/settings" onClick={() => setOpen(false)}
                 className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors"
