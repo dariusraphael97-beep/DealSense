@@ -635,28 +635,29 @@ function getBasePrice(make: string, model: string, trim?: string): number {
   const mod = model.toLowerCase().trim().replace(/\s+/g, " ");
   const t   = trim?.toLowerCase().trim().replace(/\s+/g, " ");
 
-  // 1. MODEL_BASE exact match on model name alone
-  //    (e.g. model="M3 Competition" → "bmw|m3 competition" = 86000)
-  const exactKey = `${m}|${mod}`;
-  if (MODEL_BASE[exactKey]) {
-    // The MSRP is already specific; only apply trim mult for top-tier variants
-    // beyond what the key already captures (e.g. CS, CSL upgrades)
-    const mult = t ? getTrimMultiplier(t) : 1.0;
-    // Don't double-count if the trim is already baked into the model name
-    const trimBakedIn = mod.includes(t ?? "~~~");
-    return Math.round(MODEL_BASE[exactKey] * (trimBakedIn ? 1.0 : mult));
-  }
-
-  // 2. MODEL_BASE combined "model trim" key
-  //    (e.g. model="3 Series", trim="M3 Competition" → "bmw|3 series m3 competition" = 86000)
+  // 1. Combined "model + trim" key checked FIRST — most specific wins.
+  //    e.g. model="3 Series" trim="M3 Competition" → "bmw|3 series m3 competition" = $86k
+  //    e.g. model="C-Class"  trim="AMG C 63 S"     → "mercedes-benz|c-class amg c 63 s" = $88k
   if (t) {
     const combinedKey = `${m}|${mod} ${t}`;
     if (MODEL_BASE[combinedKey]) {
-      return MODEL_BASE[combinedKey]; // MSRP fully accounts for this variant — no extra mult
+      return MODEL_BASE[combinedKey]; // exact MSRP for this variant — no extra multiplier
     }
   }
 
+  // 2. MODEL_BASE exact match on model name alone
+  //    e.g. model="M3 Competition" → "bmw|m3 competition" = $86k (no extra mult needed)
+  const exactKey = `${m}|${mod}`;
+  if (MODEL_BASE[exactKey]) {
+    // Model name already identifies the specific variant — trim mult only applies
+    // when trim adds something beyond what the model key covers (rare edge case)
+    const trimBakedIn = !t || mod.includes(t);
+    const mult = trimBakedIn ? 1.0 : getTrimMultiplier(t!);
+    return Math.round(MODEL_BASE[exactKey] * mult);
+  }
+
   // 3. carData database lookup + trim multiplier
+  //    Covers broad model catalog (35+ makes). Trim multiplier approximates variant premium.
   const carDataMSRP = getModelMSRP(make, model);
   if (carDataMSRP !== 32000) {
     const mult = t ? getTrimMultiplier(t) : 1.0;
