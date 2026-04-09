@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useCallback, useRef, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useCallback, useRef, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import type { CarInput, VinDecodeResult } from "@/lib/types";
 import { ALL_MAKES, getModels, getTrims } from "@/lib/carData";
@@ -9,6 +9,8 @@ import Link from "next/link";
 import { UserNav } from "@/components/ui/user-nav";
 import { EtherealShadow } from "@/components/ui/etheral-shadow";
 import { useSettings } from "@/contexts/settings-context";
+import { useCredits } from "@/contexts/credits-context";
+import { PaywallModal } from "@/components/ui/paywall-modal";
 
 const CURRENT_YEAR = new Date().getFullYear();
 const YEARS = Array.from({ length: 30 }, (_, i) => CURRENT_YEAR - i);
@@ -251,9 +253,19 @@ function LoadingOverlay() {
   );
 }
 
+// Tiny component so useSearchParams is inside a Suspense boundary
+function CreditsAddedDetector({ onDetected }: { onDetected: () => void }) {
+  const searchParams = useSearchParams();
+  useEffect(() => {
+    if (searchParams.get("credits_added") === "true") onDetected();
+  }, [searchParams, onDetected]);
+  return null;
+}
+
 export default function AnalyzePage() {
   const router = useRouter();
   const { settings } = useSettings();
+  const { credits, refresh: refreshCredits } = useCredits();
   const [form, setForm] = useState<CarInput>(defaultForm);
   const [vinInput, setVinInput] = useState("");
   const [vinLoading, setVinLoading] = useState(false);
@@ -261,6 +273,15 @@ export default function AnalyzePage() {
   const [vinSuccess, setVinSuccess] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
+  const [showPaywall, setShowPaywall] = useState(false);
+  const [creditsBanner, setCreditsBanner] = useState(false);
+
+  const handleCreditsAdded = useCallback(() => {
+    setCreditsBanner(true);
+    refreshCredits();
+    const t = setTimeout(() => setCreditsBanner(false), 5000);
+    return () => clearTimeout(t);
+  }, [refreshCredits]);
 
   function setField<K extends keyof CarInput>(k: K, v: CarInput[K]) {
     setForm((p) => ({ ...p, [k]: v }));
@@ -290,6 +311,10 @@ export default function AnalyzePage() {
     if (!form.make || !form.model) { setSubmitError("Make and model are required."); return; }
     if (form.mileage <= 0 || form.askingPrice <= 0) { setSubmitError("Mileage and asking price must be greater than 0."); return; }
     if (!/^\d{5}$/.test(form.zipCode)) { setSubmitError("ZIP code must be 5 digits."); return; }
+
+    // Gate on credits
+    if (credits !== null && credits <= 0) { setShowPaywall(true); return; }
+
     setSubmitting(true);
     try {
       const payload: CarInput = {
@@ -300,14 +325,46 @@ export default function AnalyzePage() {
       };
       const res = await fetch("/api/analyze", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(payload) });
       const data = await res.json();
-      if (!res.ok) { setSubmitError(data.error ?? "Something went wrong."); return; }
+      if (!res.ok) {
+        if (res.status === 402) { setShowPaywall(true); return; }
+        setSubmitError(data.error ?? "Something went wrong."); return;
+      }
+      refreshCredits();
       router.push(`/results?data=${encodeURIComponent(JSON.stringify(data))}`);
     } catch { setSubmitError("Network error. Please try again."); }
     finally { setSubmitting(false); }
   };
 
+  const creditsColor =
+    credits === null ? "rgba(255,255,255,0.3)"
+    : credits === 0  ? "#f87171"
+    : credits === 1  ? "#fbbf24"
+    : "#34d399";
+
   return (
     <div className="min-h-screen" style={{ background: "var(--ds-bg)", position: "relative" }}>
+      {/* Detect ?credits_added=true from Stripe redirect */}
+      <Suspense fallback={null}>
+        <CreditsAddedDetector onDetected={handleCreditsAdded} />
+      </Suspense>
+
+      {/* Paywall modal */}
+      <PaywallModal open={showPaywall} onClose={() => setShowPaywall(false)} />
+
+      {/* Credits added banner */}
+      <AnimatePresence>
+        {creditsBanner && (
+          <motion.div
+            initial={{ opacity: 0, y: -40 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -40 }}
+            className="fixed top-4 left-1/2 -translate-x-1/2 z-[90] px-5 py-3 rounded-2xl text-sm font-semibold flex items-center gap-2"
+            style={{ background: "rgba(52,211,153,0.15)", border: "1px solid rgba(52,211,153,0.3)", color: "#34d399", backdropFilter: "blur(12px)" }}
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4"><polyline points="20 6 9 17 4 12"/></svg>
+            Credits added — ready to analyze!
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Loading overlay */}
       <AnimatePresence>
         {submitting && <LoadingOverlay />}
@@ -335,7 +392,25 @@ export default function AnalyzePage() {
             <span style={{ color: "var(--ds-text-4)" }}>/</span>
             <span className="text-sm" style={{ color: "var(--ds-text-3)" }}>Analyze a listing</span>
           </div>
-          <UserNav />
+          <div className="flex items-center gap-3">
+            {/* Credits badge */}
+            <button
+              onClick={() => credits === 0 ? setShowPaywall(true) : undefined}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all"
+              style={{
+                background: "rgba(255,255,255,0.04)",
+                border: `1px solid ${creditsColor}30`,
+                color: creditsColor,
+                cursor: credits === 0 ? "pointer" : "default",
+              }}
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3">
+                <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/>
+              </svg>
+              {credits === null ? "—" : credits === 0 ? "Buy credits" : `${credits} credit${credits !== 1 ? "s" : ""}`}
+            </button>
+            <UserNav />
+          </div>
         </div>
       </nav>
 

@@ -11,6 +11,7 @@
   "dependencies": {
     "@radix-ui/react-avatar": "^1.1.11",
     "@radix-ui/react-slot": "^1.2.4",
+    "@stripe/stripe-js": "^9.1.0",
     "@supabase/ssr": "^0.10.0",
     "@supabase/supabase-js": "^2.43.5",
     "@types/three": "^0.183.1",
@@ -23,6 +24,7 @@
     "react": "^18",
     "react-dom": "^18",
     "recharts": "^3.8.1",
+    "stripe": "^22.0.1",
     "tailwind-merge": "^3.5.0",
     "three": "^0.183.2"
   },

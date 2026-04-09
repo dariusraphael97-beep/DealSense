@@ -256,6 +256,37 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  // Check and deduct credits
+  let userId: string | null = null;
+  try {
+    const { createClient } = await import("@/lib/supabase/server");
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      userId = user.id;
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("credits")
+        .eq("id", user.id)
+        .single();
+
+      if (profile && profile.credits <= 0) {
+        return NextResponse.json({ error: "No credits remaining." }, { status: 402 });
+      }
+
+      // Deduct 1 credit (will finalize after successful analysis)
+      if (profile) {
+        await supabase
+          .from("profiles")
+          .update({ credits: profile.credits - 1 })
+          .eq("id", user.id);
+      }
+    }
+  } catch (err) {
+    console.error("Credit check error:", err);
+    // Non-fatal for now — don't block analysis if credit check fails
+  }
+
   // Pricing priority order:
   // 1. VinAudit — real transaction data, most accurate (requires VIN)
   // 2. MarketCheck ML prediction → listings search (paid API key)
@@ -303,34 +334,30 @@ export async function POST(req: NextRequest) {
     priceSource,
   };
 
-  // Optionally persist to Supabase
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (supabaseUrl && supabaseKey) {
-    try {
-      const { createClient } = await import("@supabase/supabase-js");
-      const supabase = createClient(supabaseUrl, supabaseKey);
-      await supabase.from("analyses").insert({
-        vin: input.vin ?? null,
-        year: input.year,
-        make: input.make,
-        model: input.model,
-        trim: input.trim ?? null,
-        mileage: input.mileage,
-        asking_price: input.askingPrice,
-        zip_code: input.zipCode,
-        estimated_value_low: scored.fairValueRange.low,
-        estimated_value_high: scored.fairValueRange.high,
-        price_delta: scored.priceDelta,
-        deal_score: scored.score,
-        verdict: scored.verdict,
-        ai_summary: summary,
-        negotiation_script: script,
-      });
-    } catch (err) {
-      console.error("Supabase insert error:", err);
-      // Non-fatal — result still returns
-    }
+  // Persist analysis to Supabase
+  try {
+    const { createClient } = await import("@/lib/supabase/server");
+    const supabase = await createClient();
+    await supabase.from("analyses").insert({
+      user_id: userId ?? null,
+      vin: input.vin ?? null,
+      year: input.year,
+      make: input.make,
+      model: input.model,
+      trim: input.trim ?? null,
+      mileage: input.mileage,
+      asking_price: input.askingPrice,
+      zip_code: input.zipCode,
+      estimated_value_low: scored.fairValueRange.low,
+      estimated_value_high: scored.fairValueRange.high,
+      price_delta: scored.priceDelta,
+      deal_score: scored.score,
+      verdict: scored.verdict,
+      ai_summary: summary,
+      negotiation_script: script,
+    });
+  } catch (err) {
+    console.error("Supabase insert error:", err);
   }
 
   return NextResponse.json(result);
