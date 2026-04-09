@@ -383,62 +383,34 @@ export async function POST(req: NextRequest) {
     console.error("Credit check error:", err);
   }
 
-  // ── VIN cache check: skip API call if we already have recent data ────────
-  // Only reuses data from EXTERNAL APIs (VinAudit, Edmunds) — never caches our
-  // own statistical model output, since model updates would be masked by stale data.
-  let cachedMarketValue: PriceRange | undefined;
-  try {
-    const { createClient: cc } = await import("@/lib/supabase/server");
-    const sbCache = await cc();
-    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
-    const { data: cached } = await sbCache
-      .from("analyses")
-      .select("estimated_value_low, estimated_value_high, price_source")
-      .eq("vin", input.vin!)
-      .not("estimated_value_low", "is", null)
-      .not("price_source", "is", null)
-      .gte("created_at", sevenDaysAgo)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .single();
-    // Only use cache if the original data came from a real external API,
-    // NOT from our own statistical model (which may have been updated/fixed).
-    const isExternalSource = cached?.price_source &&
-      !cached.price_source.toLowerCase().includes("statistical model");
-    if (isExternalSource && cached?.estimated_value_low && cached?.estimated_value_high) {
-      cachedMarketValue = {
-        low:      cached.estimated_value_low,
-        high:     cached.estimated_value_high,
-        midpoint: Math.round((cached.estimated_value_low + cached.estimated_value_high) / 2),
-      };
-    }
-  } catch { /* non-fatal */ }
+  // ── VIN cache DISABLED ───────────────────────────────────────────────────
+  // The VIN cache was designed to save VinAudit API costs (~$0.40/lookup) by
+  // reusing price data from previous analyses on the same VIN. However, it
+  // caused a cascading bug: statistical model output was cached, then relabeled
+  // as "VinAudit (cached)" on reuse, making stale/buggy values look like real
+  // external API data. The cache will be re-enabled once VinAudit is active and
+  // we can reliably distinguish real API responses from model output.
+  // ─────────────────────────────────────────────────────────────────────────
 
   // Pricing priority order:
-  // 0. VIN cache — free, instant, reuses external API data from previous analyses
   // 1. VinAudit — real transaction data, most accurate (VIN always provided)
   // 2. Edmunds TMV — real transaction data fallback (requires EDMUNDS_API_KEY)
   // 3. Statistical depreciation model — always-on fallback, no API needed
   let marketValue: PriceRange | undefined;
   let priceSource: string;
 
-  if (cachedMarketValue) {
-    marketValue = cachedMarketValue;
-    priceSource = "VinAudit transaction data (cached)";
+  const [vinAuditValue, edmundsValue] = await Promise.all([
+    fetchVinAuditValue(input),
+    fetchEdmundsTMV(input),
+  ]);
+  if (vinAuditValue) {
+    marketValue = vinAuditValue;
+    priceSource = "VinAudit transaction data";
+  } else if (edmundsValue) {
+    marketValue = edmundsValue;
+    priceSource = "Edmunds True Market Value (TMV)";
   } else {
-    const [vinAuditValue, edmundsValue] = await Promise.all([
-      fetchVinAuditValue(input),
-      fetchEdmundsTMV(input),
-    ]);
-    if (vinAuditValue) {
-      marketValue = vinAuditValue;
-      priceSource = "VinAudit transaction data";
-    } else if (edmundsValue) {
-      marketValue = edmundsValue;
-      priceSource = "Edmunds True Market Value (TMV)";
-    } else {
-      priceSource = "Statistical model (depreciation data)";
-    }
+    priceSource = "Statistical model (depreciation data)";
   }
 
   console.log(`[analyze] make="${input.make}" model="${input.model}" trim="${input.trim}" vin="${input.vin}"`);
