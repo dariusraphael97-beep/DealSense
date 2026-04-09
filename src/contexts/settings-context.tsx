@@ -34,10 +34,21 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
       applyTheme(mq.matches);
       const handler = (e: MediaQueryListEvent) => applyTheme(e.matches);
       mq.addEventListener("change", handler);
+      // Remove no-transitions class and enable body transition after initial theme is applied
+      requestAnimationFrame(() => {
+        root.classList.remove("no-transitions");
+        document.body.classList.add("transition-colors", "duration-300");
+      });
       return () => mq.removeEventListener("change", handler);
     } else {
       applyTheme(settings.theme === "dark");
     }
+
+    // Remove no-transitions class and enable body transition after initial theme is applied
+    requestAnimationFrame(() => {
+      root.classList.remove("no-transitions");
+      document.body.classList.add("transition-colors", "duration-300");
+    });
   }, [settings.theme, mounted]);
 
   const update = useCallback(<K extends keyof AppSettings>(key: K, value: AppSettings[K]) => {

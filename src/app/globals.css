@@ -159,3 +159,16 @@
     box-shadow: 0 0 0 3px rgba(99,102,241,0.25);
   }
 }
+
+/* Prevent transition flash on page load */
+html.no-transitions * {
+  transition: none !important;
+}
+
+/* Fix backdrop-filter GPU issues on Windows */
+.backdrop-blur-sm, .backdrop-blur-2xl, [style*="backdrop-filter"] {
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  transform: translateZ(0);
+  will-change: transform;
+}

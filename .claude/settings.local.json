@@ -133,7 +133,9 @@
       "WebFetch(domain:carapi.app)",
       "WebFetch(domain:www.autodev.com)",
       "mcp__9182f1d1-ab54-4586-9bf6-3c490c9a2003__list_prices",
-      "mcp__9182f1d1-ab54-4586-9bf6-3c490c9a2003__list_products"
+      "mcp__9182f1d1-ab54-4586-9bf6-3c490c9a2003__list_products",
+      "Bash(find /Users/darius/Downloads/myproject/src -type f \\\\\\( -name \"*.tsx\" -o -name \"*.ts\" -o -name \"*.html\" \\\\\\) -exec grep -l \"script\\\\|<html\" {} \\\\;)",
+      "Bash(npx next:*)"
     ]
   }
 }

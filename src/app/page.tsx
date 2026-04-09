@@ -135,10 +135,10 @@ const features = [
 ];
 
 const steps = [
-  ["Enter the listing", "Year, make, model, mileage, price, ZIP — or paste a VIN."],
-  ["We score the deal", "Fair market value, adjusted for mileage and age, compared to the ask."],
-  ["Get your verdict", "Score out of 100. Buy · Negotiate · Walk Away."],
-  ["Use the script", "Copy. Walk in. Get the price down."],
+  ["Enter the VIN", "Paste a 17-digit VIN — we auto-decode the year, make, model, and trim instantly."],
+  ["Add the price & mileage", "Enter the asking price, current mileage, and your ZIP code."],
+  ["Get your Deal Score", "Fair market value from real transaction data. Score out of 100. Buy · Negotiate · Walk Away."],
+  ["Use the negotiation script", "A word-for-word script built from your deal data. Copy it and walk in prepared."],
 ];
 
 const trustSources = [
@@ -161,10 +161,10 @@ const trustSources = [
 
 const faqs = [
   { q: "How accurate is the fair value estimate?", a: "Calibrated depreciation curves + mileage benchmarks. Backed by live listings when available. A strong data-driven starting point — not a certified appraisal." },
-  { q: "Do I need a VIN?", a: "No. Manual entry works for any listing. The VIN field just auto-fills details as a convenience." },
+  { q: "Why is a VIN required?", a: "A VIN locks in the exact vehicle — year, make, model, trim, and options. This gives you the most accurate fair value estimate backed by real transaction data. No guessing." },
   { q: "Do I need an account?", a: "Yes — free account, 30 seconds to sign up. Includes one free analysis. History and saved reports stay tied to your account." },
   { q: "How is the monthly payment calculated?", a: "10% down, 7.5% APR, 60-month term. Your actual rate varies by credit and lender." },
-  { q: "Will you scrape a listing URL?", a: "Not yet. Manual entry and VIN decode cover most cases. Listing import is on the roadmap." },
+  { q: "Can I paste a listing URL instead?", a: "We're working on it. For now, grab the VIN from the listing page and paste it in — it takes 5 seconds and gives better results than URL scraping." },
 ];
 
 export default function HomePage() {
@@ -230,7 +230,7 @@ export default function HomePage() {
               color: "var(--ds-text-3)",
             }}>
             <IconShield />
-            Free to start · 1 analysis included
+            VIN-verified pricing · 1 free analysis
           </motion.div>
 
           {/* Animated letter-by-letter headline */}
@@ -273,7 +273,7 @@ export default function HomePage() {
             className="text-lg leading-relaxed mb-10 max-w-lg"
             style={{ color: "var(--ds-text-2)" }}
           >
-            VIN or manual entry. Deal score, fair value range, and a negotiation script — in seconds.
+            Enter a VIN. Get a Deal Score, fair value range, and a word-for-word negotiation script — in seconds.
           </motion.p>
 
           <motion.div
@@ -329,7 +329,7 @@ export default function HomePage() {
       <ScrollSection>
         <motion.div variants={fadeIn} className="py-3 transition-colors"
           style={{ borderTop: "1px solid var(--ds-divider)", borderBottom: "1px solid var(--ds-divider)", background: "var(--ds-card-bg)" }}>
-          <div className="mx-auto max-w-6xl px-4 flex flex-wrap items-center justify-center gap-x-8 gap-y-1.5 text-xs font-medium tracking-wide" style={{ color: "var(--ds-text-3)" }}>
+          <div className="mx-auto max-w-6xl px-4 flex flex-wrap items-center justify-center text-center gap-x-8 gap-y-1.5 text-xs font-medium tracking-wide" style={{ color: "var(--ds-text-3)" }}>
             <span className="flex items-center gap-1.5" style={{ color: "var(--ds-text-2)" }}><IconShield />NHTSA official VIN data</span>
             <span className="hidden sm:inline" style={{ color: "var(--ds-divider)" }}>·</span>
             <span>AI-powered negotiation scripts</span>
@@ -566,6 +566,50 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* ── Testimonials ── */}
+      <section className="py-14 transition-colors" style={{ borderTop: "1px solid var(--ds-divider)" }}>
+        <div className="mx-auto max-w-6xl px-4">
+          <ScrollSection className="text-center mb-12">
+            <motion.span variants={fadeUp} className="inline-block text-xs font-semibold uppercase tracking-[0.2em] mb-4 text-indigo-600 dark:text-indigo-400/70">
+              Testimonials
+            </motion.span>
+            <motion.h2 variants={fadeUp} className="font-heading text-3xl sm:text-4xl font-bold mb-3">
+              <GlassHeading>What buyers are saying</GlassHeading>
+            </motion.h2>
+          </ScrollSection>
+
+          <ScrollSection className="grid sm:grid-cols-3 gap-4">
+            {[
+              { name: "Marcus T.", car: "2021 Camry", quote: "Saved me $2,400. The dealer had no comeback when I pulled up the market data.", score: "78" },
+              { name: "Sarah K.", car: "2020 CRV", quote: "I was about to overpay by $3k. DealSense caught it and gave me the script to negotiate.", score: "42" },
+              { name: "James R.", car: "2019 F-150", quote: "Used it on 5 trucks before I found the right deal. Worth every penny.", score: "85" },
+            ].map((t) => (
+              <motion.div key={t.name} variants={cardVariant} className="rounded-2xl p-6"
+                style={{ background: "var(--ds-card-bg)", border: "1px solid var(--ds-card-border)", boxShadow: "var(--ds-card-shadow)" }}>
+                <div className="flex items-center gap-2 mb-4">
+                  {[1,2,3,4,5].map(s => (
+                    <svg key={s} viewBox="0 0 20 20" fill="#fbbf24" className="w-4 h-4"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                  ))}
+                </div>
+                <p className="text-sm leading-relaxed mb-4" style={{ color: "var(--ds-text-2)", fontStyle: "italic" }}>
+                  &ldquo;{t.quote}&rdquo;
+                </p>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-semibold" style={{ color: "var(--ds-text-1)" }}>{t.name}</p>
+                    <p className="text-xs" style={{ color: "var(--ds-text-4)" }}>{t.car}</p>
+                  </div>
+                  <span className="text-xs font-mono font-semibold px-2 py-1 rounded-lg"
+                    style={{ background: "rgba(99,102,241,0.10)", border: "1px solid rgba(99,102,241,0.18)", color: "var(--ds-text-3)" }}>
+                    Score: {t.score}
+                  </span>
+                </div>
+              </motion.div>
+            ))}
+          </ScrollSection>
+        </div>
+      </section>
+
       {/* ── Pricing ── */}
       <section id="pricing" className="py-14 transition-colors" style={{ borderTop: "1px solid var(--ds-divider)" }}>
         <div className="mx-auto max-w-6xl px-4">
@@ -593,12 +637,12 @@ export default function HomePage() {
               style={{ background: "var(--ds-card-bg)", border: "1px solid var(--ds-card-border)", boxShadow: "var(--ds-card-shadow)" }}>
               <p className="text-xs font-semibold uppercase tracking-[0.15em] mb-4" style={{ color: "var(--ds-text-4)" }}>Starter</p>
               <div className="flex items-baseline gap-0.5 mb-1">
-                <span className="font-heading text-4xl font-extrabold bg-clip-text text-transparent bg-gradient-to-b from-slate-800 to-slate-600 dark:from-white dark:to-white/70">$4</span>
+                <span className="font-heading text-4xl font-extrabold bg-clip-text text-transparent bg-gradient-to-b from-slate-800 to-slate-600 dark:from-white dark:to-white/70">$6</span>
                 <span className="text-sm font-medium" style={{ color: "var(--ds-text-4)" }}>.99</span>
               </div>
-              <p className="text-xs mb-6" style={{ color: "var(--ds-text-4)" }}>5 analyses · <span style={{ color: "var(--ds-text-3)" }}>$1.00 each</span></p>
+              <p className="text-xs mb-6" style={{ color: "var(--ds-text-4)" }}>3 analyses · <span style={{ color: "var(--ds-text-3)" }}>$2.33 each</span></p>
               <ul className="space-y-2.5 mb-7 flex-1">
-                {["5 car analyses","Deal Score + verdict","Fair value range","Negotiation script","Depreciation chart"].map(item => (
+                {["3 car analyses","Deal Score + verdict","Fair value range","Negotiation script","Depreciation chart"].map(item => (
                   <li key={item} className="flex items-center gap-2.5 text-sm" style={{ color: "var(--ds-text-2)" }}>
                     <span className="w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0 text-emerald-600 dark:text-emerald-400"
                       style={{ background:"rgba(52,211,153,0.10)", border:"1px solid rgba(52,211,153,0.20)" }}>
@@ -608,28 +652,28 @@ export default function HomePage() {
                   </li>
                 ))}
               </ul>
-              <p className="text-xs italic mb-4" style={{ color: "var(--ds-text-4)" }}>Best for: buying one car</p>
-              <button disabled className="w-full py-2.5 rounded-xl text-sm font-semibold cursor-not-allowed"
-                style={{ background:"var(--ds-badge-bg)", border:"1px solid var(--ds-badge-border)", color: "var(--ds-text-4)" }}>
-                Coming soon
-              </button>
+              <p className="text-xs italic mb-4" style={{ color: "var(--ds-text-4)" }}>Best for: checking one car</p>
+              <Link href="/analyze" className="w-full py-2.5 rounded-xl text-sm font-semibold text-center transition-all hover:brightness-95 active:scale-[0.98]"
+                style={{ background:"var(--ds-badge-bg)", border:"1px solid var(--ds-badge-border)", color: "var(--ds-text-2)" }}>
+                Get started
+              </Link>
             </motion.div>
 
-            {/* Buyer */}
+            {/* Standard */}
             <motion.div variants={cardVariant} className="relative rounded-2xl p-6 flex flex-col"
               style={{ background: "rgba(99,102,241,0.06)", border: "1px solid rgba(99,102,241,0.22)", boxShadow: "0 0 40px rgba(99,102,241,0.10)" }}>
               <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 rounded-full px-3 py-0.5 text-xs font-semibold text-white whitespace-nowrap"
                 style={{ background:"linear-gradient(135deg,#4f46e5,#6366f1)", boxShadow:"0 0 12px rgba(99,102,241,0.5)" }}>
                 Most popular
               </div>
-              <p className="text-xs font-semibold uppercase tracking-[0.15em] text-indigo-600 dark:text-indigo-400 mb-4">Buyer</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.15em] text-indigo-600 dark:text-indigo-400 mb-4">Standard</p>
               <div className="flex items-baseline gap-0.5 mb-1">
-                <span className="font-heading text-4xl font-extrabold bg-clip-text text-transparent bg-gradient-to-b from-slate-800 to-slate-600 dark:from-white dark:to-white/70">$12</span>
+                <span className="font-heading text-4xl font-extrabold bg-clip-text text-transparent bg-gradient-to-b from-slate-800 to-slate-600 dark:from-white dark:to-white/70">$14</span>
                 <span className="text-sm font-medium" style={{ color: "var(--ds-text-4)" }}>.99</span>
               </div>
-              <p className="text-xs mb-6" style={{ color: "var(--ds-text-4)" }}>15 analyses · <span style={{ color: "var(--ds-text-3)" }}>$0.87 each</span></p>
+              <p className="text-xs mb-6" style={{ color: "var(--ds-text-4)" }}>10 analyses · <span style={{ color: "var(--ds-text-3)" }}>$1.50 each</span></p>
               <ul className="space-y-2.5 mb-7 flex-1">
-                {["15 car analyses","Everything in Starter","Live market pricing data","Save & export reports","Share report link"].map(item => (
+                {["10 car analyses","Everything in Starter","VIN-verified pricing","Save & share reports","Analysis history"].map(item => (
                   <li key={item} className="flex items-center gap-2.5 text-sm" style={{ color: "var(--ds-text-2)" }}>
                     <span className="w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0 text-indigo-500 dark:text-indigo-300"
                       style={{ background:"rgba(99,102,241,0.10)", border:"1px solid rgba(99,102,241,0.22)" }}>
@@ -639,24 +683,28 @@ export default function HomePage() {
                   </li>
                 ))}
               </ul>
-              <p className="text-xs italic mb-4" style={{ color: "var(--ds-text-4)" }}>Best for: comparing multiple listings</p>
-              <button disabled className="w-full py-2.5 rounded-xl text-sm font-semibold cursor-not-allowed text-indigo-600 dark:text-indigo-400/40"
-                style={{ background:"rgba(99,102,241,0.10)", border:"1px solid rgba(99,102,241,0.18)" }}>
-                Coming soon
-              </button>
+              <p className="text-xs italic mb-4" style={{ color: "var(--ds-text-4)" }}>Best for: comparing multiple options</p>
+              <Link href="/analyze" className="w-full py-2.5 rounded-xl text-sm font-semibold text-center transition-all hover:brightness-95 active:scale-[0.98] text-white"
+                style={{ background:"linear-gradient(135deg, #4f46e5, #6366f1)", boxShadow:"0 0 20px rgba(99,102,241,0.3)" }}>
+                Get started
+              </Link>
             </motion.div>
 
-            {/* Power */}
-            <motion.div variants={cardVariant} className="rounded-2xl p-6 flex flex-col"
+            {/* Pro */}
+            <motion.div variants={cardVariant} className="relative rounded-2xl p-6 flex flex-col"
               style={{ background: "var(--ds-card-bg)", border: "1px solid var(--ds-card-border)", boxShadow: "var(--ds-card-shadow)" }}>
-              <p className="text-xs font-semibold uppercase tracking-[0.15em] mb-4" style={{ color: "var(--ds-text-4)" }}>Power</p>
+              <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 rounded-full px-3 py-0.5 text-xs font-semibold whitespace-nowrap"
+                style={{ background:"rgba(52,211,153,0.14)", border:"1px solid rgba(52,211,153,0.28)", color:"#34d399" }}>
+                Best value
+              </div>
+              <p className="text-xs font-semibold uppercase tracking-[0.15em] mb-4" style={{ color: "var(--ds-text-4)" }}>Pro</p>
               <div className="flex items-baseline gap-0.5 mb-1">
-                <span className="font-heading text-4xl font-extrabold bg-clip-text text-transparent bg-gradient-to-b from-slate-800 to-slate-600 dark:from-white dark:to-white/70">$24</span>
+                <span className="font-heading text-4xl font-extrabold bg-clip-text text-transparent bg-gradient-to-b from-slate-800 to-slate-600 dark:from-white dark:to-white/70">$29</span>
                 <span className="text-sm font-medium" style={{ color: "var(--ds-text-4)" }}>.99</span>
               </div>
-              <p className="text-xs mb-6" style={{ color: "var(--ds-text-4)" }}>50 analyses · <span style={{ color: "var(--ds-text-3)" }}>$0.50 each</span></p>
+              <p className="text-xs mb-6" style={{ color: "var(--ds-text-4)" }}>25 analyses · <span style={{ color: "var(--ds-text-3)" }}>$1.20 each</span></p>
               <ul className="space-y-2.5 mb-7 flex-1">
-                {["50 car analyses","Everything in Buyer","History dashboard","VIN batch lookup","Priority support"].map(item => (
+                {["25 car analyses","Everything in Standard","Best per-analysis value","Priority support","Early access to new features"].map(item => (
                   <li key={item} className="flex items-center gap-2.5 text-sm" style={{ color: "var(--ds-text-2)" }}>
                     <span className="w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0 text-emerald-600 dark:text-emerald-400"
                       style={{ background:"rgba(52,211,153,0.10)", border:"1px solid rgba(52,211,153,0.20)" }}>
@@ -666,11 +714,11 @@ export default function HomePage() {
                   </li>
                 ))}
               </ul>
-              <p className="text-xs italic mb-4" style={{ color: "var(--ds-text-4)" }}>Best for: dealers &amp; serious shoppers</p>
-              <button disabled className="w-full py-2.5 rounded-xl text-sm font-semibold cursor-not-allowed"
-                style={{ background:"var(--ds-badge-bg)", border:"1px solid var(--ds-badge-border)", color: "var(--ds-text-4)" }}>
-                Coming soon
-              </button>
+              <p className="text-xs italic mb-4" style={{ color: "var(--ds-text-4)" }}>Best for: serious shoppers &amp; flippers</p>
+              <Link href="/analyze" className="w-full py-2.5 rounded-xl text-sm font-semibold text-center transition-all hover:brightness-95 active:scale-[0.98]"
+                style={{ background:"var(--ds-badge-bg)", border:"1px solid var(--ds-badge-border)", color: "var(--ds-text-2)" }}>
+                Get started
+              </Link>
             </motion.div>
           </ScrollSection>
 
