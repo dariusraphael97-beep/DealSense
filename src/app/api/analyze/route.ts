@@ -83,43 +83,49 @@ async function fetchMarketCheckValue(input: CarInput): Promise<PriceRange | null
     // fall through to listings search
   }
 
-  // 2. Fall back to listing search (median of active listings near ZIP)
-  try {
-    const params = new URLSearchParams({
-      api_key: apiKey,
-      year: String(input.year),
-      make: input.make,
-      model: input.model,
-      trim: input.trim ?? "",
-      zip: input.zipCode,
-      radius: "150",
-      rows: "30",
-    });
-    const res = await fetch(
-      `https://mc-api.marketcheck.com/v2/search/car/active?${params}`,
-      { next: { revalidate: 3600 } }
-    );
-    if (!res.ok) return null;
-    const data = await res.json();
-    const listings: { price: number }[] = data?.listings ?? [];
-    const prices = listings
-      .map((l) => l.price)
-      .filter((p) => p > 500)
-      .sort((a, b) => a - b);
-    if (prices.length < 3) return null;
+  // 2. Fall back to listing search — try progressively wider radii for rare/luxury cars
+  const radii = ["150", "500", "2000"]; // 2000 = effectively nationwide
+  for (const radius of radii) {
+    try {
+      const params = new URLSearchParams({
+        api_key: apiKey,
+        year: String(input.year),
+        make: input.make,
+        model: input.model,
+        ...(input.trim ? { trim: input.trim } : {}),
+        zip: input.zipCode,
+        radius,
+        rows: "50",
+      });
+      const res = await fetch(
+        `https://mc-api.marketcheck.com/v2/search/car/active?${params}`,
+        { next: { revalidate: 3600 } }
+      );
+      if (!res.ok) continue;
+      const data = await res.json();
+      const listings: { price: number }[] = data?.listings ?? [];
+      const prices = listings
+        .map((l) => l.price)
+        .filter((p) => p > 500)
+        .sort((a, b) => a - b);
 
-    // Trim outliers: drop top/bottom 10%
-    const trimCount = Math.floor(prices.length * 0.1);
-    const trimmed = prices.slice(trimCount, prices.length - trimCount);
-    const mid = trimmed[Math.floor(trimmed.length / 2)];
-    return {
-      low:      trimmed[0],
-      high:     trimmed[trimmed.length - 1],
-      midpoint: mid,
-    };
-  } catch {
-    return null;
+      // Need at least 3 comps — if not enough, expand radius
+      if (prices.length < 3) continue;
+
+      // Trim outliers: drop top/bottom 10%
+      const trimCount = Math.floor(prices.length * 0.1);
+      const trimmed = prices.slice(trimCount, prices.length - trimCount);
+      const mid = trimmed[Math.floor(trimmed.length / 2)];
+      return {
+        low:      trimmed[0],
+        high:     trimmed[trimmed.length - 1],
+        midpoint: mid,
+      };
+    } catch {
+      continue;
+    }
   }
+  return null;
 }
 
 // AI explanation using Anthropic (or falls back gracefully)
