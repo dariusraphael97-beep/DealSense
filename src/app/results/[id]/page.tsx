@@ -348,7 +348,11 @@ export default function PersistedResultPage() {
           monthlyPayment, reasons, aiSummary, negotiationScript, priceSource, createdAt } = result;
 
   const isVinVerified = typeof priceSource === "string" && priceSource.toLowerCase().includes("vinaudit");
-  const vehicleLabel = `${input.year} ${input.make} ${input.model}${input.trim ? ` ${input.trim}` : ""}`;
+  // Avoid duplication when trim starts with model name (e.g. model="M3" trim="M3 Competition")
+  const trimSuffix = input.trim
+    ? input.trim.toLowerCase().startsWith(input.model.toLowerCase()) ? ` ${input.trim}` : ` ${input.model} ${input.trim}`
+    : ` ${input.model}`;
+  const vehicleLabel = `${input.year} ${input.make}${trimSuffix}`;
 
   const scoreColor = score >= 72 ? "#34d399" : score >= 48 ? "#fbbf24" : "#f87171";
   const scoreBg = score >= 72 ? "rgba(52,211,153,0.06)" : score >= 48 ? "rgba(251,191,36,0.06)" : "rgba(248,113,113,0.06)";

@@ -236,7 +236,7 @@ async function generateAiSummary(
 1. A SHORT SUMMARY (2–3 sentences, plain language) explaining whether this is a good deal and exactly what the buyer should do next.
 2. A SCRIPT (4–6 sentences the buyer says out loud to the dealer or seller). ${scriptInstruction}
 
-Car: ${input.year} ${input.make} ${input.model}${input.trim ? " " + input.trim : ""}
+Car: ${input.year} ${input.make} ${input.trim && input.trim.toLowerCase().startsWith(input.model.toLowerCase()) ? input.trim : input.model + (input.trim ? " " + input.trim : "")}
 Mileage: ${input.mileage.toLocaleString()} miles
 Asking price: $${input.askingPrice.toLocaleString()}
 Fair value range: $${scored.fairValueRange.low.toLocaleString()}–$${scored.fairValueRange.high.toLocaleString()} (midpoint $${scored.fairValueRange.midpoint.toLocaleString()})
@@ -413,10 +413,7 @@ export async function POST(req: NextRequest) {
     priceSource = "Statistical model (depreciation data)";
   }
 
-  console.log(`[analyze] make="${input.make}" model="${input.model}" trim="${input.trim}" vin="${input.vin}"`);
-  console.log(`[analyze] priceSource="${priceSource}" marketValue=${JSON.stringify(marketValue)}`);
   const scored = scoreCarDeal(input, marketValue);
-  console.log(`[analyze] fairValue=${JSON.stringify(scored.fairValueRange)} score=${scored.score} verdict=${scored.verdict}`);
 
   // AI summary (gracefully degrades if no API key)
   const { summary, script } = await generateAiSummary(input, scored);
