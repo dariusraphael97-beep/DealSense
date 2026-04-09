@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { scoreCarDeal, estimateFairValue } from "@/lib/scoring";
 import type { CarInput, AnalysisResult, PriceRange } from "@/lib/types";
 import { fetchCraigslistPrices } from "@/lib/craigslist";
+import { AutoDev } from "@auto.dev/sdk";
 
 /**
  * VinAudit Market Value API — most accurate when a VIN is provided.
@@ -209,6 +210,65 @@ async function fetchEdmundsTMV(input: CarInput): Promise<PriceRange | null> {
   }
 }
 
+/**
+ * Auto.dev Listings API — searches real dealer listings to derive fair value.
+ * Free tier: 1,000 calls/mo. Uses median of comparable listings as anchor.
+ * Set AUTODEV_API_KEY in env (get one at auto.dev/pricing).
+ */
+async function fetchAutoDevValue(input: CarInput): Promise<PriceRange | null> {
+  const apiKey = process.env.AUTODEV_API_KEY;
+  if (!apiKey) return null;
+
+  try {
+    const auto = new AutoDev({ apiKey });
+
+    // Build mileage bounds for filtering (±50% of input mileage, min 5k window)
+    const milesLow = Math.max(0, Math.round(input.mileage * 0.5));
+    const milesHigh = Math.max(milesLow + 5000, Math.round(input.mileage * 1.8));
+
+    const result = await auto.listings({
+      "vehicle.make": input.make,
+      "vehicle.model": input.model,
+      "vehicle.year": String(input.year),
+      ...(input.trim ? { "vehicle.trim": input.trim } : {}),
+    });
+
+    // SDK types result.data as {} — cast to array
+    const listings = (Array.isArray(result?.data) ? result.data : []) as Record<string, unknown>[];
+    if (listings.length < 3) {
+      console.log(`[Auto.dev] only ${listings.length} listings found — skipping`);
+      return null;
+    }
+
+    // Extract prices, filter to valid range and mileage window
+    const prices = listings
+      .filter((l: Record<string, unknown>) => {
+        const p = Number(l.price ?? l.askingPrice ?? 0);
+        const m = Number(l.mileage ?? l.miles ?? 0);
+        return p > 2000 && (m === 0 || (m >= milesLow && m <= milesHigh));
+      })
+      .map((l: Record<string, unknown>) => Number(l.price ?? l.askingPrice))
+      .sort((a: number, b: number) => a - b);
+
+    console.log(`[Auto.dev] ${listings.length} total listings, ${prices.length} after mileage/price filter`);
+    if (prices.length < 3) return null;
+
+    // Trim outliers (10% from each end) and take median
+    const trimCount = Math.floor(prices.length * 0.1);
+    const trimmed = prices.slice(trimCount, prices.length - trimCount);
+    const mid = trimmed[Math.floor(trimmed.length / 2)];
+
+    return {
+      low: trimmed[0],
+      high: trimmed[trimmed.length - 1],
+      midpoint: mid,
+    };
+  } catch (err) {
+    console.error("[Auto.dev] error:", err);
+    return null;
+  }
+}
+
 // AI explanation using Anthropic (or falls back gracefully)
 async function generateAiSummary(
   input: CarInput,
@@ -393,21 +453,26 @@ export async function POST(req: NextRequest) {
   // ─────────────────────────────────────────────────────────────────────────
 
   // Pricing priority order:
-  // 1. VinAudit — real transaction data, most accurate (VIN always provided)
-  // 2. Edmunds TMV — real transaction data fallback (requires EDMUNDS_API_KEY)
-  // 3. MarketCheck — live listings data (requires MARKETCHECK_API_KEY)
-  // 4. Statistical depreciation model — always-on fallback, no API needed
+  // 1. VinAudit — real transaction data, most accurate (requires VINAUDIT_API_KEY)
+  // 2. Auto.dev — real dealer listings data (requires AUTODEV_API_KEY, free tier)
+  // 3. Edmunds TMV — real transaction data fallback (requires EDMUNDS_API_KEY)
+  // 4. MarketCheck — live listings data (requires MARKETCHECK_API_KEY)
+  // 5. Statistical depreciation model — always-on fallback, no API needed
   let marketValue: PriceRange | undefined;
   let priceSource: string;
 
-  const [vinAuditValue, edmundsValue, marketCheckValue] = await Promise.all([
+  const [vinAuditValue, autoDevValue, edmundsValue, marketCheckValue] = await Promise.all([
     fetchVinAuditValue(input),
+    fetchAutoDevValue(input),
     fetchEdmundsTMV(input),
     fetchMarketCheckValue(input),
   ]);
   if (vinAuditValue) {
     marketValue = vinAuditValue;
     priceSource = "VinAudit transaction data";
+  } else if (autoDevValue) {
+    marketValue = autoDevValue;
+    priceSource = "Auto.dev dealer listings";
   } else if (edmundsValue) {
     marketValue = edmundsValue;
     priceSource = "Edmunds True Market Value (TMV)";
