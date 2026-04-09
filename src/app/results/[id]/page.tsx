@@ -157,20 +157,34 @@ function LoanCalculator({ askingPrice, initialApr, initialDownPct, initialTerm }
 
 /* ── Animated score ring ── */
 function ScoreRing({ score, size = 160 }: { score: number; size?: number }) {
-  const [animated, setAnimated] = useState(0);
+  const [displayScore, setDisplayScore] = useState(0);
+  const [revealed, setRevealed] = useState(false);
   const r = size * 0.38;
   const cx = size / 2;
   const startAngle = 215;
   const sweepAngle = 290;
 
+  // Animate the number counting up
   useEffect(() => {
-    const t = setTimeout(() => setAnimated(score), 200);
-    return () => clearTimeout(t);
+    const delay = setTimeout(() => setRevealed(true), 300);
+    let raf: number;
+    let start: number | null = null;
+    const duration = 1400;
+    const ease = (t: number) => 1 - Math.pow(1 - t, 3);
+
+    const tick = (ts: number) => {
+      if (!start) start = ts;
+      const elapsed = ts - start;
+      const t = Math.min(elapsed / duration, 1);
+      setDisplayScore(Math.round(ease(t) * score));
+      if (t < 1) raf = requestAnimationFrame(tick);
+    };
+    const kickoff = setTimeout(() => { raf = requestAnimationFrame(tick); }, 300);
+    return () => { clearTimeout(delay); clearTimeout(kickoff); cancelAnimationFrame(raf); };
   }, [score]);
 
-  const progressRatio = animated / 100;
   const color = score >= 72 ? "#34d399" : score >= 48 ? "#fbbf24" : "#f87171";
-  const glowColor = score >= 72 ? "rgba(52,211,153,0.4)" : score >= 48 ? "rgba(251,191,36,0.4)" : "rgba(248,113,113,0.4)";
+  const glowColor = score >= 72 ? "rgba(52,211,153,0.45)" : score >= 48 ? "rgba(251,191,36,0.45)" : "rgba(248,113,113,0.45)";
   const label = score >= 72 ? "Good Deal" : score >= 48 ? "Negotiable" : "Walk Away";
   const labelColor = color;
 
@@ -185,33 +199,63 @@ function ScoreRing({ score, size = 160 }: { score: number; size?: number }) {
     const large = sweep > 180 ? 1 : 0;
     return `M ${s.x} ${s.y} A ${r} ${r} 0 ${large} 1 ${e.x} ${e.y}`;
   }
-  const bgPath = arcPath(startAngle, sweepAngle);
-  const fgPath = arcPath(startAngle, sweepAngle * progressRatio);
+
+  const fullPath = arcPath(startAngle, sweepAngle);
+  const arcLength = (sweepAngle / 360) * 2 * Math.PI * r;
+  const progressRatio = score / 100;
+  const visibleLength = arcLength * progressRatio;
+  const dashOffset = revealed ? arcLength - visibleLength : arcLength;
+
+  const tipAngle = startAngle + sweepAngle * (revealed ? progressRatio : 0);
+  const tipPos = polar(tipAngle);
 
   return (
     <div className="flex flex-col items-center gap-2">
       <div className="relative" style={{ width: size, height: size }}>
         <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
           <defs>
-            <filter id="scoreGlowPersist" x="-20%" y="-20%" width="140%" height="140%">
-              <feGaussianBlur stdDeviation="3" result="blur"/>
+            <linearGradient id="scoreGradP" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor={color} stopOpacity="1"/>
+              <stop offset="100%" stopColor={color} stopOpacity="0.7"/>
+            </linearGradient>
+            <filter id="scoreGlowPersist" x="-30%" y="-30%" width="160%" height="160%">
+              <feGaussianBlur stdDeviation="4" result="blur"/>
               <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
             </filter>
           </defs>
-          <path d={bgPath} fill="none" stroke="currentColor" strokeWidth="10" strokeLinecap="round"
+          <path d={fullPath} fill="none" stroke="currentColor" strokeWidth="10" strokeLinecap="round"
             className="text-slate-200 dark:text-white/[0.07]"/>
-          <path d={fgPath} fill="none" stroke={color} strokeWidth="10" strokeLinecap="round"
+          <path
+            d={fullPath} fill="none" stroke="url(#scoreGradP)" strokeWidth="10" strokeLinecap="round"
+            strokeDasharray={arcLength}
+            strokeDashoffset={dashOffset}
             filter="url(#scoreGlowPersist)"
-            style={{ transition: "d 1.2s cubic-bezier(0.22,1,0.36,1)", filter: `drop-shadow(0 0 8px ${glowColor})` }}/>
+            style={{
+              transition: "stroke-dashoffset 1.4s cubic-bezier(0.22, 1, 0.36, 1)",
+              filter: `drop-shadow(0 0 10px ${glowColor})`,
+            }}
+          />
+          <circle
+            cx={tipPos.x} cy={tipPos.y} r="5" fill={color}
+            style={{
+              transition: "cx 1.4s cubic-bezier(0.22, 1, 0.36, 1), cy 1.4s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.4s",
+              filter: `drop-shadow(0 0 8px ${glowColor})`,
+              opacity: revealed ? 1 : 0,
+            }}
+          />
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className="font-heading font-extrabold leading-none" style={{ fontSize: size * 0.28, color: "var(--ds-text-1)" }}>
-            {score}
+          <span className="font-heading font-extrabold leading-none tabular-nums" style={{ fontSize: size * 0.28, color: "var(--ds-text-1)" }}>
+            {displayScore}
           </span>
           <span className="text-xs font-medium" style={{ color: "var(--ds-text-4)" }}>/ 100</span>
         </div>
       </div>
-      <span className="text-xs font-bold uppercase tracking-widest" style={{ color: labelColor }}>{label}</span>
+      <motion.span
+        initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 1.2, duration: 0.5 }}
+        className="text-xs font-bold uppercase tracking-widest" style={{ color: labelColor }}
+      >{label}</motion.span>
     </div>
   );
 }
