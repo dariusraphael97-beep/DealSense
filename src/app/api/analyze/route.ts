@@ -395,13 +395,15 @@ export async function POST(req: NextRequest) {
   // Pricing priority order:
   // 1. VinAudit — real transaction data, most accurate (VIN always provided)
   // 2. Edmunds TMV — real transaction data fallback (requires EDMUNDS_API_KEY)
-  // 3. Statistical depreciation model — always-on fallback, no API needed
+  // 3. MarketCheck — live listings data (requires MARKETCHECK_API_KEY)
+  // 4. Statistical depreciation model — always-on fallback, no API needed
   let marketValue: PriceRange | undefined;
   let priceSource: string;
 
-  const [vinAuditValue, edmundsValue] = await Promise.all([
+  const [vinAuditValue, edmundsValue, marketCheckValue] = await Promise.all([
     fetchVinAuditValue(input),
     fetchEdmundsTMV(input),
+    fetchMarketCheckValue(input),
   ]);
   if (vinAuditValue) {
     marketValue = vinAuditValue;
@@ -409,6 +411,9 @@ export async function POST(req: NextRequest) {
   } else if (edmundsValue) {
     marketValue = edmundsValue;
     priceSource = "Edmunds True Market Value (TMV)";
+  } else if (marketCheckValue) {
+    marketValue = marketCheckValue;
+    priceSource = "MarketCheck live listings";
   } else {
     priceSource = "Statistical model (depreciation data)";
   }

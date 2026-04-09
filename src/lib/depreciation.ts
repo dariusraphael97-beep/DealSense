@@ -19,24 +19,38 @@ export interface DepreciationProfile {
   fiveYear: number;
   tenYear: number;
   mileagePenaltyPer1k: number; // $/1000 miles delta from avg (13,500 mi/yr)
+  /**
+   * Optional per-year weight distribution for 0–5 year range.
+   * Each entry = fraction of total 5-year depreciation lost that year.
+   * Must sum to 1.0. When omitted, uses YEAR_WEIGHTS_DEFAULT (front-loaded).
+   *
+   * Use "flat" curves for high-demand performance/enthusiast cars that hold
+   * value well in years 1–2 (e.g. M3, 911, Type R, Wrangler).
+   */
+  yearWeights?: [number, number, number, number, number];
 }
 
-// Year-weight distribution for 0–5 year range (front-loaded)
-// These fractions of total 5-year depreciation lost each year
-const YEAR_WEIGHTS = [0.48, 0.25, 0.14, 0.08, 0.05];
+// Default: front-loaded (mass-market sedans, luxury non-performance)
+// 48% of the 5-year drop happens in year 1
+const YEAR_WEIGHTS_DEFAULT = [0.48, 0.25, 0.14, 0.08, 0.05];
+
+// Enthusiast/performance: much flatter year 1, more evenly spread
+// Only ~15% of the 5-year drop in year 1, rest spread more evenly
+const YEAR_WEIGHTS_ENTHUSIAST: [number, number, number, number, number] = [0.15, 0.20, 0.25, 0.22, 0.18];
 
 export function retentionAtYear(profile: DepreciationProfile, ageYears: number): number {
   if (ageYears <= 0) return 1.0;
 
   const totalLoss5yr = 1 - profile.fiveYear;
+  const weights = profile.yearWeights ?? YEAR_WEIGHTS_DEFAULT;
 
   if (ageYears <= 5) {
     let cumLoss = 0;
     const steps = Math.floor(ageYears);
-    for (let i = 0; i < steps; i++) cumLoss += YEAR_WEIGHTS[i] * totalLoss5yr;
+    for (let i = 0; i < steps; i++) cumLoss += weights[i] * totalLoss5yr;
     // Interpolate fractional year
     if (ageYears !== steps && steps < 5) {
-      cumLoss += (ageYears - steps) * YEAR_WEIGHTS[steps] * totalLoss5yr;
+      cumLoss += (ageYears - steps) * weights[steps] * totalLoss5yr;
     }
     return Math.max(0.05, 1 - cumLoss);
   }
@@ -59,14 +73,14 @@ export function retentionAtYear(profile: DepreciationProfile, ageYears: number):
 const PROFILES: Record<string, DepreciationProfile> = {
 
   // ── TRUCKS — generally best resale in the industry ────────────────────────
-  "toyota|4runner":           { fiveYear: 0.90, tenYear: 0.72, mileagePenaltyPer1k: 55 },
-  "toyota|tacoma":            { fiveYear: 0.86, tenYear: 0.67, mileagePenaltyPer1k: 50 },
-  "toyota|land cruiser":      { fiveYear: 0.84, tenYear: 0.68, mileagePenaltyPer1k: 55 },
+  "toyota|4runner":           { fiveYear: 0.90, tenYear: 0.72, mileagePenaltyPer1k: 55, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "toyota|tacoma":            { fiveYear: 0.86, tenYear: 0.67, mileagePenaltyPer1k: 50, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "toyota|land cruiser":      { fiveYear: 0.84, tenYear: 0.68, mileagePenaltyPer1k: 55, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
   "toyota|tundra":            { fiveYear: 0.76, tenYear: 0.52, mileagePenaltyPer1k: 55 },
   "toyota|sequoia":           { fiveYear: 0.72, tenYear: 0.48, mileagePenaltyPer1k: 55 },
-  "jeep|wrangler":            { fiveYear: 0.88, tenYear: 0.68, mileagePenaltyPer1k: 50 },
+  "jeep|wrangler":            { fiveYear: 0.88, tenYear: 0.68, mileagePenaltyPer1k: 50, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
   "jeep|gladiator":           { fiveYear: 0.80, tenYear: 0.58, mileagePenaltyPer1k: 50 },
-  "ford|bronco":              { fiveYear: 0.82, tenYear: 0.60, mileagePenaltyPer1k: 55 },
+  "ford|bronco":              { fiveYear: 0.82, tenYear: 0.60, mileagePenaltyPer1k: 55, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
   "ford|f-150":               { fiveYear: 0.72, tenYear: 0.47, mileagePenaltyPer1k: 52 },
   "ford|f-250":               { fiveYear: 0.70, tenYear: 0.45, mileagePenaltyPer1k: 52 },
   "ford|f-350":               { fiveYear: 0.70, tenYear: 0.45, mileagePenaltyPer1k: 52 },
@@ -115,7 +129,7 @@ const PROFILES: Record<string, DepreciationProfile> = {
   "subaru|forester":          { fiveYear: 0.62, tenYear: 0.38, mileagePenaltyPer1k: 50 },
   "subaru|crosstrek":         { fiveYear: 0.62, tenYear: 0.38, mileagePenaltyPer1k: 50 },
   "subaru|ascent":            { fiveYear: 0.60, tenYear: 0.36, mileagePenaltyPer1k: 52 },
-  "subaru|wrx":               { fiveYear: 0.63, tenYear: 0.38, mileagePenaltyPer1k: 55 },
+  "subaru|wrx":               { fiveYear: 0.63, tenYear: 0.38, mileagePenaltyPer1k: 55, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
   "subaru|legacy":            { fiveYear: 0.57, tenYear: 0.32, mileagePenaltyPer1k: 48 },
   "mazda|cx-5":               { fiveYear: 0.65, tenYear: 0.42, mileagePenaltyPer1k: 52 },
   "mazda|cx-50":              { fiveYear: 0.63, tenYear: 0.40, mileagePenaltyPer1k: 52 },
@@ -175,9 +189,9 @@ const PROFILES: Record<string, DepreciationProfile> = {
   "bmw|x3":                   { fiveYear: 0.50, tenYear: 0.24, mileagePenaltyPer1k: 72 },
   "bmw|x5":                   { fiveYear: 0.50, tenYear: 0.24, mileagePenaltyPer1k: 78 },
   "bmw|x7":                   { fiveYear: 0.48, tenYear: 0.22, mileagePenaltyPer1k: 82 },
-  "bmw|m3":                   { fiveYear: 0.65, tenYear: 0.40, mileagePenaltyPer1k: 80 },
-  "bmw|m4":                   { fiveYear: 0.64, tenYear: 0.39, mileagePenaltyPer1k: 80 },
-  "bmw|m5":                   { fiveYear: 0.60, tenYear: 0.35, mileagePenaltyPer1k: 85 },
+  "bmw|m3":                   { fiveYear: 0.65, tenYear: 0.40, mileagePenaltyPer1k: 80, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "bmw|m4":                   { fiveYear: 0.64, tenYear: 0.39, mileagePenaltyPer1k: 80, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "bmw|m5":                   { fiveYear: 0.60, tenYear: 0.35, mileagePenaltyPer1k: 85, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
   "mercedes-benz|a-class":    { fiveYear: 0.48, tenYear: 0.22, mileagePenaltyPer1k: 72 },
   "mercedes-benz|c-class":    { fiveYear: 0.46, tenYear: 0.20, mileagePenaltyPer1k: 75 },
   "mercedes-benz|e-class":    { fiveYear: 0.44, tenYear: 0.18, mileagePenaltyPer1k: 80 },
@@ -222,7 +236,7 @@ const PROFILES: Record<string, DepreciationProfile> = {
   "volvo|xc90":               { fiveYear: 0.44, tenYear: 0.18, mileagePenaltyPer1k: 72 },
   "land rover|defender":      { fiveYear: 0.68, tenYear: 0.42, mileagePenaltyPer1k: 75 },
   "land rover|range rover":   { fiveYear: 0.37, tenYear: 0.14, mileagePenaltyPer1k: 90 },
-  "porsche|911":              { fiveYear: 0.78, tenYear: 0.60, mileagePenaltyPer1k: 85 },
+  "porsche|911":              { fiveYear: 0.78, tenYear: 0.60, mileagePenaltyPer1k: 85, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
   "porsche|cayenne":          { fiveYear: 0.55, tenYear: 0.30, mileagePenaltyPer1k: 80 },
   "porsche|macan":            { fiveYear: 0.54, tenYear: 0.29, mileagePenaltyPer1k: 78 },
   "porsche|taycan":           { fiveYear: 0.50, tenYear: 0.25, mileagePenaltyPer1k: 75 },
