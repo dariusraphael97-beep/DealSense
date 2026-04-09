@@ -384,8 +384,8 @@ export async function POST(req: NextRequest) {
   }
 
   // ── VIN cache check: skip API call if we already have recent data ────────
-  // Queries the analyses table for a result on this VIN within the last 7 days.
-  // Saves ~$0.40/lookup on repeated VINs (same car checked by multiple users).
+  // Only reuses data from EXTERNAL APIs (VinAudit, Edmunds) — never caches our
+  // own statistical model output, since model updates would be masked by stale data.
   let cachedMarketValue: PriceRange | undefined;
   try {
     const { createClient: cc } = await import("@/lib/supabase/server");
@@ -393,14 +393,19 @@ export async function POST(req: NextRequest) {
     const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
     const { data: cached } = await sbCache
       .from("analyses")
-      .select("estimated_value_low, estimated_value_high")
+      .select("estimated_value_low, estimated_value_high, price_source")
       .eq("vin", input.vin!)
       .not("estimated_value_low", "is", null)
+      .not("price_source", "is", null)
       .gte("created_at", sevenDaysAgo)
       .order("created_at", { ascending: false })
       .limit(1)
       .single();
-    if (cached?.estimated_value_low && cached?.estimated_value_high) {
+    // Only use cache if the original data came from a real external API,
+    // NOT from our own statistical model (which may have been updated/fixed).
+    const isExternalSource = cached?.price_source &&
+      !cached.price_source.toLowerCase().includes("statistical model");
+    if (isExternalSource && cached?.estimated_value_low && cached?.estimated_value_high) {
       cachedMarketValue = {
         low:      cached.estimated_value_low,
         high:     cached.estimated_value_high,
@@ -410,7 +415,7 @@ export async function POST(req: NextRequest) {
   } catch { /* non-fatal */ }
 
   // Pricing priority order:
-  // 0. VIN cache — free, instant, reuses data from previous analyses on same VIN
+  // 0. VIN cache — free, instant, reuses external API data from previous analyses
   // 1. VinAudit — real transaction data, most accurate (VIN always provided)
   // 2. Edmunds TMV — real transaction data fallback (requires EDMUNDS_API_KEY)
   // 3. Statistical depreciation model — always-on fallback, no API needed
