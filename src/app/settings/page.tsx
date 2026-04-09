@@ -7,6 +7,7 @@ import { UserNav } from "@/components/ui/user-nav";
 import { useSettings } from "@/contexts/settings-context";
 import type { Theme, LoanTerm, DistanceUnit } from "@/lib/settings";
 import { createClient } from "@/lib/supabase/client";
+import { useCredits } from "@/contexts/credits-context";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
@@ -122,8 +123,10 @@ function IconUser() {
 
 export default function SettingsPage() {
   const { settings, update } = useSettings();
+  const { referralCode } = useCredits();
   const [email, setEmail] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [refCopied, setRefCopied] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -141,6 +144,14 @@ export default function SettingsPage() {
     await navigator.clipboard.writeText(email);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const copyRefLink = async () => {
+    if (!referralCode) return;
+    const link = `${window.location.origin}/ref/${referralCode}`;
+    await navigator.clipboard.writeText(link);
+    setRefCopied(true);
+    setTimeout(() => setRefCopied(false), 2500);
   };
 
   return (
@@ -280,6 +291,35 @@ export default function SettingsPage() {
                 />
               </Row>
             </motion.div>
+
+            {/* ── Referral ── */}
+            {referralCode && (
+              <motion.div variants={fadeUp} className="rounded-2xl p-6" style={{ background: "var(--ds-card-bg)", border: "1px solid var(--ds-card-border)", boxShadow: "var(--ds-card-shadow)" }}>
+                <SectionHeader
+                  icon={<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>}
+                  title="Referral"
+                  subtitle="Earn 1 free credit for every friend who signs up with your link."
+                />
+
+                <Row label="Your referral link" hint="Share this link — you both get a free credit when they sign up.">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-mono truncate max-w-[140px]" style={{ color: "var(--ds-text-3)" }}>
+                      /ref/{referralCode}
+                    </span>
+                    <button
+                      onClick={copyRefLink}
+                      className="text-xs px-2.5 py-1 rounded-lg transition-all flex-shrink-0"
+                      style={{
+                        background: refCopied ? "rgba(52,211,153,0.12)" : "var(--ds-badge-bg)",
+                        border: refCopied ? "1px solid rgba(52,211,153,0.25)" : "1px solid var(--ds-badge-border)",
+                        color: refCopied ? "rgba(52,211,153,0.9)" : "var(--ds-text-2)",
+                      }}>
+                      {refCopied ? "✓ Copied!" : "Copy link"}
+                    </button>
+                  </div>
+                </Row>
+              </motion.div>
+            )}
 
             {/* ── Account ── */}
             <motion.div variants={fadeUp} className="rounded-2xl p-6" style={{ background: "var(--ds-card-bg)", border: "1px solid var(--ds-card-border)", boxShadow: "var(--ds-card-shadow)" }}>

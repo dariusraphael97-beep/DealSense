@@ -193,7 +193,7 @@ function HowToFindVin() {
               </p>
               <div className="space-y-2">
                 {[
-                  { icon: <IconLink />, text: "On car listing sites like CarGurus, AutoTrader, and dealer websites — look for a field labeled "VIN" in the listing details." },
+                  { icon: <IconLink />, text: 'On car listing sites like CarGurus, AutoTrader, and dealer websites — look for a field labeled "VIN" in the listing details.' },
                   { icon: <IconCar />, text: "On the car itself — visible through the windshield on the driver-side dashboard." },
                   { icon: <IconDoor />, text: "Inside the driver-side door frame on a white sticker." },
                   { icon: <IconMapPin />, text: "In the title, registration, or insurance documents." },
@@ -285,7 +285,7 @@ function CreditsAddedDetector({ onDetected }: { onDetected: () => void }) {
 export default function AnalyzePage() {
   const router = useRouter();
   const { settings } = useSettings();
-  const { credits, refresh: refreshCredits } = useCredits();
+  const { credits, isStaff, refresh: refreshCredits } = useCredits();
 
   const [form, setForm]           = useState<CarInput>(defaultForm);
   const [vinInput, setVinInput]   = useState("");
@@ -393,7 +393,7 @@ export default function AnalyzePage() {
       setSubmitError("ZIP code must be 5 digits.");
       return;
     }
-    if (credits !== null && credits <= 0) { setShowPaywall(true); return; }
+    if (!isStaff && credits !== null && credits <= 0) { setShowPaywall(true); return; }
 
     setSubmitting(true);
     try {
@@ -416,7 +416,8 @@ export default function AnalyzePage() {
   };
 
   const creditsColor =
-    credits === null ? "rgba(255,255,255,0.3)"
+    isStaff          ? "#818cf8"
+    : credits === null ? "rgba(255,255,255,0.3)"
     : credits === 0  ? "#f87171"
     : credits === 1  ? "#fbbf24"
     : "#34d399";
@@ -472,7 +473,7 @@ export default function AnalyzePage() {
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3">
                 <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/>
               </svg>
-              {credits === null ? "—" : credits === 0 ? "Buy credits" : `${credits} credit${credits !== 1 ? "s" : ""} left`}
+              {isStaff ? "∞ credits" : credits === null ? "—" : credits === 0 ? "Buy credits" : `${credits} credit${credits !== 1 ? "s" : ""} left`}
             </button>
             <UserNav />
           </div>

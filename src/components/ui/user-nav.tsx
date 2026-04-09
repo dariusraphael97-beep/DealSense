@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { motion, AnimatePresence } from "framer-motion"
-import { User, LogOut, ChevronDown, Settings } from "lucide-react"
+import { LogOut, ChevronDown, Settings, Clock } from "lucide-react"
 
 export function UserNav() {
   const [email, setEmail] = useState<string | null>(null)
@@ -88,6 +88,16 @@ export function UserNav() {
 
             {/* Menu items */}
             <div className="p-1.5 space-y-0.5">
+              <Link href="/history" onClick={() => setOpen(false)}
+                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors"
+                style={{ color: "rgba(255,255,255,0.65)" }}
+                onMouseEnter={e => (e.currentTarget.style.background = "rgba(255,255,255,0.06)")}
+                onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
+              >
+                <Clock className="w-4 h-4" />
+                History
+              </Link>
+
               <Link href="/settings" onClick={() => setOpen(false)}
                 className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors"
                 style={{ color: "rgba(255,255,255,0.65)" }}

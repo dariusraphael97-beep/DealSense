@@ -13,7 +13,7 @@ export async function POST(req: NextRequest) {
     const trimmed = url.trim();
 
     // ── 1. VIN embedded directly in the URL ───────────────────────────────
-    const urlMatches = [...trimmed.matchAll(VIN_RE)];
+    const urlMatches = Array.from(trimmed.matchAll(VIN_RE));
     if (urlMatches.length) {
       return NextResponse.json({ vin: urlMatches[0][1].toUpperCase() });
     }

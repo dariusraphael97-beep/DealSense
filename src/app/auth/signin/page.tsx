@@ -112,6 +112,17 @@ function AuthForm() {
   const [globalError, setGlobalError] = useState("")
   const pwStrength = getStrength(password)
 
+  // Capture referral code from URL (?ref=xxxx) or localStorage
+  const refCode = searchParams.get("ref") ?? (typeof window !== "undefined" ? localStorage.getItem("ds_ref") : null) ?? ""
+
+  useEffect(() => {
+    // Persist referral code in localStorage so it survives page reloads
+    const ref = searchParams.get("ref")
+    if (ref && typeof window !== "undefined") {
+      localStorage.setItem("ds_ref", ref)
+    }
+  }, [searchParams])
+
   useEffect(() => {
     if (searchParams.get("error") === "verification_failed")
       setGlobalError("Email verification failed. Please try signing in again.")
@@ -161,14 +172,22 @@ function AuthForm() {
     } else {
       const { error } = await supabase.auth.signUp({
         email, password,
-        options: { data: { full_name: fullName }, emailRedirectTo: `${window.location.origin}/auth/callback` },
+        options: {
+          data: {
+            full_name: fullName,
+            ...(refCode ? { referred_by_code: refCode } : {}),
+          },
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
+        },
       })
+      // Clear referral code from localStorage after use
+      if (typeof window !== "undefined") localStorage.removeItem("ds_ref")
       if (error) { setGlobalError(error.message); setLoading(false); return }
       setStep("verify")
       setResendTimer(60)
     }
     setLoading(false)
-  }, [email, password, fullName, mode, router, supabaseAvailable])
+  }, [email, password, fullName, mode, router, supabaseAvailable, refCode])
 
   const switchMode = (m: "signin" | "signup") => {
     setMode(m); setErrors({}); setGlobalError(""); setPassword("")

@@ -351,7 +351,7 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // Check and deduct credits
+  // Check and deduct credits (staff/admin bypass)
   let userId: string | null = null;
   try {
     const { createClient } = await import("@/lib/supabase/server");
@@ -361,16 +361,18 @@ export async function POST(req: NextRequest) {
       userId = user.id;
       const { data: profile } = await supabase
         .from("profiles")
-        .select("credits")
+        .select("credits, role")
         .eq("id", user.id)
         .single();
 
-      if (profile && profile.credits <= 0) {
+      const isStaff = profile?.role === "staff" || profile?.role === "admin";
+
+      if (!isStaff && profile && profile.credits <= 0) {
         return NextResponse.json({ error: "No credits remaining." }, { status: 402 });
       }
 
-      // Deduct 1 credit (will finalize after successful analysis)
-      if (profile) {
+      // Deduct 1 credit — skip for staff/admin
+      if (!isStaff && profile) {
         await supabase
           .from("profiles")
           .update({ credits: profile.credits - 1 })
@@ -379,7 +381,6 @@ export async function POST(req: NextRequest) {
     }
   } catch (err) {
     console.error("Credit check error:", err);
-    // Non-fatal for now — don't block analysis if credit check fails
   }
 
   // ── VIN cache check: skip API call if we already have recent data ────────
@@ -448,31 +449,35 @@ export async function POST(req: NextRequest) {
     priceSource,
   };
 
-  // Persist analysis to Supabase
+  // Persist analysis to Supabase — store full result_json for history/sharing
+  let savedId: string | null = null;
   try {
     const { createClient } = await import("@/lib/supabase/server");
     const supabase = await createClient();
-    await supabase.from("analyses").insert({
-      user_id: userId ?? null,
-      vin: input.vin ?? null,
-      year: input.year,
-      make: input.make,
-      model: input.model,
-      trim: input.trim ?? null,
-      mileage: input.mileage,
-      asking_price: input.askingPrice,
-      zip_code: input.zipCode,
-      estimated_value_low: scored.fairValueRange.low,
+    const { data: inserted } = await supabase.from("analyses").insert({
+      user_id:              userId ?? null,
+      vin:                  input.vin ?? null,
+      year:                 input.year,
+      make:                 input.make,
+      model:                input.model,
+      trim:                 input.trim ?? null,
+      mileage:              input.mileage,
+      asking_price:         input.askingPrice,
+      zip_code:             input.zipCode,
+      estimated_value_low:  scored.fairValueRange.low,
       estimated_value_high: scored.fairValueRange.high,
-      price_delta: scored.priceDelta,
-      deal_score: scored.score,
-      verdict: scored.verdict,
-      ai_summary: summary,
-      negotiation_script: script,
-    });
+      price_delta:          scored.priceDelta,
+      deal_score:           scored.score,
+      verdict:              scored.verdict,
+      ai_summary:           summary,
+      negotiation_script:   script,
+      price_source:         priceSource,
+      result_json:          result,
+    }).select("id").single();
+    savedId = inserted?.id ?? null;
   } catch (err) {
     console.error("Supabase insert error:", err);
   }
 
-  return NextResponse.json(result);
+  return NextResponse.json({ ...result, savedId });
 }
