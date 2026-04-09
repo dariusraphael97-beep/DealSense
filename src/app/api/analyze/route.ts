@@ -57,7 +57,7 @@ async function fetchMarketCheckValue(input: CarInput): Promise<PriceRange | null
   const milesMin = Math.max(0, Math.round(miles * 0.4));
   const milesMax = Math.round(miles * 2.5 + 15000); // generous upper bound
 
-  for (const radius of ["150", "500", "2000"]) {
+  for (const radius of ["100", "500", "2000"]) {
     try {
       const params = new URLSearchParams({
         api_key:   apiKey,
@@ -88,6 +88,7 @@ async function fetchMarketCheckValue(input: CarInput): Promise<PriceRange | null
           radius,
           rows:    "50",
         });
+        params2.set("radius", "100");
         const res2 = await fetch(
           `https://mc-api.marketcheck.com/v2/search/car/active?${params2}`,
           { cache: "no-store" }

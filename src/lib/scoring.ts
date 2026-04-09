@@ -157,16 +157,26 @@ const MODEL_BASE: Record<string, number> = {
   "volkswagen|taos":      26000,
 
   // ── BMW ─────────────────────────────────────────────────────────────────
-  "bmw|3 series":     46000,
-  "bmw|5 series":     56000,
-  "bmw|7 series":     92000,
-  "bmw|x1":           38000,
-  "bmw|x3":           47000,
-  "bmw|x5":           62000,
-  "bmw|x7":           78000,
-  "bmw|4 series":     50000,
-  "bmw|m3":           72000,
-  "bmw|m4":           75000,
+  "bmw|3 series":          46000,
+  "bmw|5 series":          56000,
+  "bmw|7 series":          92000,
+  "bmw|x1":                38000,
+  "bmw|x3":                47000,
+  "bmw|x5":                62000,
+  "bmw|x7":                78000,
+  "bmw|4 series":          50000,
+  "bmw|m2":                65000,
+  "bmw|m3":                82000,
+  "bmw|m3 competition":    86000,
+  "bmw|m3 cs":             112000,
+  "bmw|m4":                78000,
+  "bmw|m4 competition":    82000,
+  "bmw|m5":                108000,
+  "bmw|m8":                130000,
+  "bmw|x3 m":              72000,
+  "bmw|x5 m":              106000,
+  "bmw|3 series m3":       82000,
+  "bmw|3 series m3 competition": 86000,
 
   // ── Mercedes-Benz ───────────────────────────────────────────────────────
   "mercedes-benz|c-class": 46000,
@@ -296,13 +306,15 @@ function getBasePrice(make: string, model: string, trim?: string): number {
     const mult = trim ? getTrimMultiplier(trim) : 1.0;
     return Math.round(MODEL_BASE[key] * mult);
   }
-  // Partial match (e.g. "camry hybrid" → "camry")
-  const partial = Object.keys(MODEL_BASE).find(
+  // Partial match — pick the LONGEST (most specific) match to avoid
+  // "3 series" incorrectly matching "3 series m3 competition"
+  const partials = Object.keys(MODEL_BASE).filter(
     (k) => k.startsWith(`${m}|`) && mod.startsWith(k.split("|")[1])
   );
-  if (partial) {
+  if (partials.length > 0) {
+    const best = partials.reduce((a, b) => (a.length >= b.length ? a : b));
     const mult = trim ? getTrimMultiplier(trim) : 1.0;
-    return Math.round(MODEL_BASE[partial] * mult);
+    return Math.round(MODEL_BASE[best] * mult);
   }
   return MAKE_BASE[m] ?? MAKE_BASE["default"];
 }
