@@ -32,15 +32,13 @@ export function CreditsProvider({ children }: { children: React.ReactNode }) {
 
   const refresh = useCallback(async () => {
     setLoading(true);
-    const { data: { user }, error: authErr } = await supabase.auth.getUser();
-    console.log("[credits] auth user:", user?.id, user?.email, "error:", authErr?.message);
+    const { data: { user } } = await supabase.auth.getUser();
     if (!user) { setCredits(null); setRole(null); setReferralCode(null); setLoading(false); return; }
-    const { data, error: profileErr } = await supabase
+    const { data } = await supabase
       .from("profiles")
       .select("credits, role, referral_code")
       .eq("id", user.id)
       .single();
-    console.log("[credits] profile:", data, "error:", profileErr?.message);
     setCredits(data?.credits ?? null);
     setRole((data?.role as UserRole) ?? "user");
     setReferralCode(data?.referral_code ?? null);
