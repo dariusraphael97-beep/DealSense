@@ -219,51 +219,140 @@ const LOADING_STEPS = [
   "Scoring the deal…",
   "Writing your negotiation script…",
 ];
+
+const CIRCUMFERENCE = 2 * Math.PI * 26; // ~163.36
+
 function LoadingOverlay() {
   const [step, setStep] = useState(0);
+  const [progress, setProgress] = useState(0);
+
   useEffect(() => {
-    const timings = [900, 1800, 2700];
-    const timers = timings.map((t, i) => setTimeout(() => setStep(i + 1), t));
-    return () => timers.forEach(clearTimeout);
+    // Smooth progress: ramp up within each step, pause briefly, then jump to next
+    const stepDurations = [1000, 1200, 1000, 800]; // ms per step
+    let cancelled = false;
+    let elapsed = 0;
+
+    const tick = () => {
+      if (cancelled) return;
+      elapsed += 16; // ~60fps
+      const totalDuration = stepDurations.reduce((a, b) => a + b, 0);
+      const pct = Math.min(elapsed / totalDuration, 1);
+
+      // Ease-out curve for overall progress
+      const eased = 1 - Math.pow(1 - pct, 2.5);
+      setProgress(eased * 100);
+
+      // Determine which step we're on
+      let cumulative = 0;
+      for (let i = 0; i < stepDurations.length; i++) {
+        cumulative += stepDurations[i];
+        if (elapsed < cumulative) { setStep(i); break; }
+        if (i === stepDurations.length - 1) setStep(i);
+      }
+
+      if (pct < 1) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+    return () => { cancelled = true; };
   }, []);
+
+  const strokeOffset = CIRCUMFERENCE - (progress / 100) * CIRCUMFERENCE;
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: "var(--ds-overlay)", backdropFilter: "blur(12px)" }}>
       <motion.div
-        initial={{ opacity: 0, scale: 0.95, y: 16 }} animate={{ opacity: 1, scale: 1, y: 0 }}
-        transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+        initial={{ opacity: 0, scale: 0.92, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }}
+        transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
         className="rounded-3xl p-8 max-w-sm w-full mx-4 text-center"
         style={{ background: "var(--ds-card-bg)", border: "1px solid var(--ds-card-border)", boxShadow: "0 24px 80px rgba(0,0,0,0.3)" }}
       >
-        <div className="relative w-16 h-16 mx-auto mb-6">
-          <svg className="w-16 h-16 -rotate-90 animate-spin" viewBox="0 0 64 64" style={{ animationDuration: "1.4s" }}>
-            <circle cx="32" cy="32" r="26" fill="none" stroke="rgba(99,102,241,0.15)" strokeWidth="5"/>
-            <circle cx="32" cy="32" r="26" fill="none" stroke="#6366f1" strokeWidth="5" strokeDasharray="164" strokeDashoffset="120" strokeLinecap="round"/>
+        {/* Progress ring */}
+        <div className="relative w-20 h-20 mx-auto mb-6">
+          <svg className="w-20 h-20 -rotate-90" viewBox="0 0 64 64">
+            {/* Track */}
+            <circle cx="32" cy="32" r="26" fill="none" stroke="rgba(99,102,241,0.1)" strokeWidth="4"/>
+            {/* Progress arc — smoothly sweeps around */}
+            <motion.circle
+              cx="32" cy="32" r="26" fill="none"
+              stroke="url(#progressGrad)" strokeWidth="4.5" strokeLinecap="round"
+              strokeDasharray={CIRCUMFERENCE}
+              strokeDashoffset={strokeOffset}
+              style={{ transition: "stroke-dashoffset 0.08s linear", filter: "drop-shadow(0 0 6px rgba(99,102,241,0.5))" }}
+            />
+            <defs>
+              <linearGradient id="progressGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#818cf8"/>
+                <stop offset="50%" stopColor="#6366f1"/>
+                <stop offset="100%" stopColor="#4f46e5"/>
+              </linearGradient>
+            </defs>
           </svg>
+          {/* Center percentage */}
           <div className="absolute inset-0 flex items-center justify-center">
-            <div className="w-3 h-3 rounded-full bg-indigo-500" style={{ boxShadow: "0 0 12px rgba(99,102,241,0.8)" }}/>
+            <motion.span
+              key={Math.round(progress)}
+              className="font-heading text-sm font-bold tabular-nums"
+              style={{ color: "var(--ds-text-1)" }}
+            >
+              {Math.round(progress)}%
+            </motion.span>
+          </div>
+          {/* Glow dot at the tip of the arc */}
+          <div className="absolute inset-0" style={{ transform: `rotate(${(progress / 100) * 360}deg)` }}>
+            <div
+              className="absolute rounded-full"
+              style={{
+                width: 8, height: 8, top: 2, left: "50%", marginLeft: -4,
+                background: "#818cf8",
+                boxShadow: "0 0 12px 3px rgba(99,102,241,0.7)",
+                opacity: progress > 2 && progress < 98 ? 1 : 0,
+                transition: "opacity 0.3s",
+              }}
+            />
           </div>
         </div>
+
         <p className="font-heading text-base font-semibold mb-5" style={{ color: "var(--ds-text-1)" }}>Analyzing your deal</p>
+
+        {/* Step list */}
         <div className="space-y-2.5 text-left">
-          {LOADING_STEPS.map((s, i) => (
-            <div key={i} className="flex items-center gap-3">
-              <div className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-500"
-                style={{
-                  background: i < step ? "rgba(52,211,153,0.15)" : i === step ? "rgba(99,102,241,0.15)" : "var(--ds-badge-bg)",
-                  border: `1px solid ${i < step ? "rgba(52,211,153,0.35)" : i === step ? "rgba(99,102,241,0.35)" : "var(--ds-badge-border)"}`,
-                }}>
-                {i < step ? (
-                  <svg viewBox="0 0 24 24" fill="none" stroke="#34d399" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="w-2.5 h-2.5"><polyline points="20 6 9 17 4 12"/></svg>
-                ) : i === step ? (
-                  <div className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-pulse"/>
-                ) : null}
-              </div>
-              <span className="text-xs transition-all duration-300"
-                style={{ color: i < step ? "#34d399" : i === step ? "var(--ds-text-1)" : "var(--ds-text-4)" }}>
-                {s}
-              </span>
-            </div>
-          ))}
+          {LOADING_STEPS.map((s, i) => {
+            const isDone = i < step || (i === step && progress >= 98);
+            const isActive = i === step && progress < 98;
+            return (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, x: -8 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: i * 0.12, duration: 0.35 }}
+                className="flex items-center gap-3"
+              >
+                <div className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-500"
+                  style={{
+                    background: isDone ? "rgba(52,211,153,0.15)" : isActive ? "rgba(99,102,241,0.15)" : "var(--ds-badge-bg)",
+                    border: `1px solid ${isDone ? "rgba(52,211,153,0.4)" : isActive ? "rgba(99,102,241,0.4)" : "var(--ds-badge-border)"}`,
+                    transform: isActive ? "scale(1.1)" : "scale(1)",
+                  }}>
+                  {isDone ? (
+                    <motion.svg
+                      initial={{ scale: 0 }} animate={{ scale: 1 }}
+                      transition={{ type: "spring", stiffness: 400, damping: 15 }}
+                      viewBox="0 0 24 24" fill="none" stroke="#34d399" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="w-2.5 h-2.5"
+                    ><polyline points="20 6 9 17 4 12"/></motion.svg>
+                  ) : isActive ? (
+                    <div className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-pulse"/>
+                  ) : null}
+                </div>
+                <span className="text-xs transition-all duration-300"
+                  style={{
+                    color: isDone ? "#34d399" : isActive ? "var(--ds-text-1)" : "var(--ds-text-4)",
+                    fontWeight: isActive ? 500 : 400,
+                  }}>
+                  {s}
+                </span>
+              </motion.div>
+            );
+          })}
         </div>
         <p className="text-xs mt-5" style={{ color: "var(--ds-text-4)" }}>Takes about 3–5 seconds</p>
       </motion.div>
