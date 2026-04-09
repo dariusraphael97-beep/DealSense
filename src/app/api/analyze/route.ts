@@ -128,6 +128,87 @@ async function fetchMarketCheckValue(input: CarInput): Promise<PriceRange | null
   return null;
 }
 
+/**
+ * Edmunds True Market Value (TMV) API — transaction-based pricing, no VIN required.
+ * Uses real closed-sale data, not just listing prices. More accurate than listing-based APIs.
+ * Sign up at developer.edmunds.com (free tier available).
+ *
+ * Flow: year/make/model → styleId lookup → TMV call with mileage + zip
+ */
+async function fetchEdmundsTMV(input: CarInput): Promise<PriceRange | null> {
+  const apiKey = process.env.EDMUNDS_API_KEY;
+  if (!apiKey) return null;
+
+  try {
+    // Edmunds uses "niceId" format: lowercase, spaces → hyphens, strip special chars
+    const toNiceId = (s: string) =>
+      s.toLowerCase().trim().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
+
+    const makeNiceId  = toNiceId(input.make);
+    const modelNiceId = toNiceId(input.model);
+
+    // Step 1: Get all styles (trim levels) for this year/make/model
+    const stylesRes = await fetch(
+      `https://api.edmunds.com/api/vehicle/v2/${makeNiceId}/${modelNiceId}/${input.year}/styles?view=basic&api_key=${apiKey}`,
+      { cache: "no-store" }
+    );
+    if (!stylesRes.ok) {
+      console.log(`[Edmunds] styles ${stylesRes.status} — ${makeNiceId}/${modelNiceId}/${input.year}`);
+      return null;
+    }
+
+    const stylesData = await stylesRes.json();
+    const styles: Array<{ id: number; name: string }> = stylesData?.styles ?? [];
+    if (styles.length === 0) {
+      console.log(`[Edmunds] no styles found for ${makeNiceId}/${modelNiceId}/${input.year}`);
+      return null;
+    }
+
+    // Step 2: Find best matching style for the given trim
+    let bestStyle = styles[0];
+    if (input.trim) {
+      const trimLower = input.trim.toLowerCase();
+      const exact   = styles.find(s => s.name.toLowerCase() === trimLower);
+      const partial = styles.find(s =>
+        s.name.toLowerCase().includes(trimLower) || trimLower.includes(s.name.toLowerCase())
+      );
+      bestStyle = exact ?? partial ?? styles[0];
+    }
+    console.log(`[Edmunds] matched style "${bestStyle.name}" (id=${bestStyle.id})`);
+
+    // Step 3: Get TMV for this style + mileage + zip
+    const tmvRes = await fetch(
+      `https://api.edmunds.com/v1/api/tmv/tmvservice/calculateusedtmv?styleid=${bestStyle.id}&condition=Good&mileage=${input.mileage}&zip=${input.zipCode}&api_key=${apiKey}`,
+      { cache: "no-store" }
+    );
+    if (!tmvRes.ok) {
+      console.log(`[Edmunds] TMV ${tmvRes.status} for styleId=${bestStyle.id}`);
+      return null;
+    }
+
+    const tmvData = await tmvRes.json();
+    const base = tmvData?.tmv?.nationalBasePrice;
+    if (!base) return null;
+
+    // Edmunds returns three price points — use private party as midpoint (most relevant for buyers)
+    const privateParty = base.usedPrivateParty as number | undefined;
+    const retail       = base.usedTmvRetail    as number | undefined;
+    const tradeIn      = base.usedTradeIn      as number | undefined;
+
+    const midpoint = privateParty ?? retail;
+    if (!midpoint || midpoint < 500) return null;
+
+    return {
+      low:      tradeIn      ?? Math.round(midpoint * 0.88),
+      high:     retail       ?? Math.round(midpoint * 1.08),
+      midpoint: midpoint,
+    };
+  } catch (err) {
+    console.error("[Edmunds] error:", err);
+    return null;
+  }
+}
+
 // AI explanation using Anthropic (or falls back gracefully)
 async function generateAiSummary(
   input: CarInput,
@@ -295,11 +376,13 @@ export async function POST(req: NextRequest) {
 
   // Pricing priority order:
   // 1. VinAudit — real transaction data, most accurate (requires VIN)
-  // 2. MarketCheck ML prediction → listings search (paid API key)
-  // 3. Craigslist regional listings — free, real asking prices near user's ZIP
-  // 4. Built-in per-model depreciation model — always runs as final fallback
-  const [vinAuditValue, marketCheckValue, craigslistValue] = await Promise.all([
+  // 2. Edmunds TMV — real transaction data, no VIN needed (year/make/model/mileage/zip)
+  // 3. MarketCheck — live listings search (paid API key, radius-restricted on free tier)
+  // 4. Craigslist regional listings — free, real asking prices near user's ZIP
+  // 5. Built-in per-model depreciation model — always runs as final fallback
+  const [vinAuditValue, edmundsValue, marketCheckValue, craigslistValue] = await Promise.all([
     fetchVinAuditValue(input),
+    fetchEdmundsTMV(input),
     fetchMarketCheckValue(input),
     fetchCraigslistPrices(input),
   ]);
@@ -311,6 +394,9 @@ export async function POST(req: NextRequest) {
   if (vinAuditValue) {
     marketValue = vinAuditValue;
     priceSource = "VinAudit transaction data";
+  } else if (edmundsValue) {
+    marketValue = edmundsValue;
+    priceSource = "Edmunds True Market Value (TMV)";
   } else if (marketCheckValue) {
     marketValue = marketCheckValue;
     priceSource = "MarketCheck live listings";
