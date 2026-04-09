@@ -169,7 +169,7 @@ const faqs = [
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen" style={{ background: "var(--ds-bg)" }}>
+    <div className="min-h-screen transition-colors duration-300" style={{ background: "var(--ds-bg)" }}>
 
       {/* ── Nav ── */}
       <motion.nav
@@ -209,7 +209,7 @@ export default function HomePage() {
       </motion.nav>
 
       {/* ── Hero ── */}
-      <section className="relative min-h-[92vh] flex flex-col items-center justify-center overflow-hidden"
+      <section className="relative min-h-[92vh] flex flex-col items-center justify-center overflow-hidden transition-colors"
         style={{ background: "var(--ds-bg)" }}>
         {/* Flowing path backgrounds */}
         <FloatingPaths position={1} />
@@ -327,7 +327,7 @@ export default function HomePage() {
 
       {/* ── Trust bar ── */}
       <ScrollSection>
-        <motion.div variants={fadeIn} className="py-3"
+        <motion.div variants={fadeIn} className="py-3 transition-colors"
           style={{ borderTop: "1px solid var(--ds-divider)", borderBottom: "1px solid var(--ds-divider)", background: "var(--ds-card-bg)" }}>
           <div className="mx-auto max-w-6xl px-4 flex flex-wrap items-center justify-center text-center gap-x-8 gap-y-1.5 text-xs font-medium tracking-wide" style={{ color: "var(--ds-text-3)" }}>
             <span className="flex items-center gap-1.5" style={{ color: "var(--ds-text-2)" }}><IconShield />NHTSA official VIN data</span>
@@ -388,7 +388,7 @@ export default function HomePage() {
       </section>
 
       {/* ── Live Example ── */}
-      <section className="py-14" style={{ borderTop: "1px solid var(--ds-divider)" }}>
+      <section className="py-14 transition-colors" style={{ borderTop: "1px solid var(--ds-divider)" }}>
         <div className="mx-auto max-w-6xl px-4">
           <ScrollSection className="text-center mb-12">
             <motion.span variants={fadeUp} className="inline-block text-xs font-semibold uppercase tracking-[0.2em] mb-4 text-indigo-600 dark:text-indigo-400/70">
@@ -486,7 +486,7 @@ export default function HomePage() {
       </section>
 
       {/* ── How it works ── */}
-      <section id="how-it-works" className="py-14" style={{ borderTop: "1px solid var(--ds-divider)" }}>
+      <section id="how-it-works" className="py-14 transition-colors" style={{ borderTop: "1px solid var(--ds-divider)" }}>
         <div className="mx-auto max-w-2xl px-4">
           <ScrollSection className="text-center mb-14">
             <motion.span variants={fadeUp} className="inline-block text-xs font-semibold uppercase tracking-[0.2em] mb-4 text-indigo-600 dark:text-indigo-400/70">
@@ -526,7 +526,7 @@ export default function HomePage() {
       </section>
 
       {/* ── Why Trust This? ── */}
-      <section className="py-16" style={{ borderTop: "1px solid var(--ds-divider)" }}>
+      <section className="py-16 transition-colors" style={{ borderTop: "1px solid var(--ds-divider)" }}>
         <div className="mx-auto max-w-6xl px-4">
           <ScrollSection className="mb-10">
             <motion.div variants={fadeUp} className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
@@ -567,7 +567,7 @@ export default function HomePage() {
       </section>
 
       {/* ── Testimonials ── */}
-      <section className="py-14" style={{ borderTop: "1px solid var(--ds-divider)" }}>
+      <section className="py-14 transition-colors" style={{ borderTop: "1px solid var(--ds-divider)" }}>
         <div className="mx-auto max-w-6xl px-4">
           <ScrollSection className="text-center mb-12">
             <motion.span variants={fadeUp} className="inline-block text-xs font-semibold uppercase tracking-[0.2em] mb-4 text-indigo-600 dark:text-indigo-400/70">
@@ -611,7 +611,7 @@ export default function HomePage() {
       </section>
 
       {/* ── Pricing ── */}
-      <section id="pricing" className="py-14" style={{ borderTop: "1px solid var(--ds-divider)" }}>
+      <section id="pricing" className="py-14 transition-colors" style={{ borderTop: "1px solid var(--ds-divider)" }}>
         <div className="mx-auto max-w-6xl px-4">
           <ScrollSection className="text-center mb-4">
             <motion.span variants={fadeUp} className="inline-block text-xs font-semibold uppercase tracking-[0.2em] mb-4 text-indigo-600 dark:text-indigo-400/70">
@@ -747,7 +747,7 @@ export default function HomePage() {
       </section>
 
       {/* ── FAQ ── */}
-      <section id="faq" className="py-14" style={{ borderTop: "1px solid var(--ds-divider)" }}>
+      <section id="faq" className="py-14 transition-colors" style={{ borderTop: "1px solid var(--ds-divider)" }}>
         <div className="mx-auto max-w-2xl px-4">
           <ScrollSection className="text-center mb-12">
             <motion.span variants={fadeUp} className="inline-block text-xs font-semibold uppercase tracking-[0.2em] mb-4 text-indigo-600 dark:text-indigo-400/70">FAQ</motion.span>
@@ -768,7 +768,7 @@ export default function HomePage() {
       </section>
 
       {/* ── CTA ── */}
-      <section className="py-14" style={{ borderTop: "1px solid var(--ds-divider)" }}>
+      <section className="py-14 transition-colors" style={{ borderTop: "1px solid var(--ds-divider)" }}>
         <ScrollSection className="mx-auto max-w-2xl px-4 text-center">
           <motion.h2 variants={fadeUp} className="font-heading text-4xl font-bold mb-4">
             <GlassHeading>Stop overpaying for used cars.</GlassHeading>
@@ -791,7 +791,7 @@ export default function HomePage() {
 
       {/* ── Footer ── */}
       <ScrollSection>
-        <motion.footer variants={fadeIn} className="py-8" style={{ borderTop: "1px solid var(--ds-divider)" }}>
+        <motion.footer variants={fadeIn} className="py-8 transition-colors" style={{ borderTop: "1px solid var(--ds-divider)" }}>
           <div className="mx-auto max-w-6xl px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
             <span className="font-heading font-bold text-base bg-clip-text text-transparent bg-gradient-to-r from-slate-700 to-slate-500 dark:from-white/70 dark:to-white/40">
               DealSense

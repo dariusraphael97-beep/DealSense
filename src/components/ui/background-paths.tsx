@@ -1,24 +1,18 @@
 "use client";
 
-/**
- * FloatingPaths — lightweight background decoration.
- * Uses CSS animations instead of framer-motion to avoid
- * 72+ concurrent JS-driven animations that stall Windows GPUs.
- * Reduced from 36 paths to 12 for performance.
- */
+import { motion } from "framer-motion";
+
 export function FloatingPaths({ position }: { position: number }) {
-  const paths = Array.from({ length: 12 }, (_, i) => ({
+  const paths = Array.from({ length: 36 }, (_, i) => ({
     id: i,
-    d: `M-${380 - i * 15 * position} -${189 + i * 18}C-${
-      380 - i * 15 * position
-    } -${189 + i * 18} -${312 - i * 15 * position} ${216 - i * 18} ${
-      152 - i * 15 * position
-    } ${343 - i * 18}C${616 - i * 15 * position} ${470 - i * 18} ${
-      684 - i * 15 * position
-    } ${875 - i * 18} ${684 - i * 15 * position} ${875 - i * 18}`,
-    width: 0.5 + i * 0.08,
-    opacity: 0.04 + i * 0.025,
-    duration: 25 + (i % 5) * 5,
+    d: `M-${380 - i * 5 * position} -${189 + i * 6}C-${
+      380 - i * 5 * position
+    } -${189 + i * 6} -${312 - i * 5 * position} ${216 - i * 6} ${
+      152 - i * 5 * position
+    } ${343 - i * 6}C${616 - i * 5 * position} ${470 - i * 6} ${
+      684 - i * 5 * position
+    } ${875 - i * 6} ${684 - i * 5 * position} ${875 - i * 6}`,
+    width: 0.5 + i * 0.03,
   }));
 
   return (
@@ -31,28 +25,26 @@ export function FloatingPaths({ position }: { position: number }) {
       >
         <title>Background Paths</title>
         {paths.map((path) => (
-          <path
+          <motion.path
             key={path.id}
             d={path.d}
             stroke="currentColor"
             strokeWidth={path.width}
-            strokeOpacity={path.opacity}
-            strokeDasharray="8 4"
-            style={{
-              animation: `floatPath ${path.duration}s linear infinite`,
-              animationDelay: `${-path.id * 2}s`,
+            strokeOpacity={0.08 + path.id * 0.018}
+            initial={{ pathLength: 0.3, opacity: 0.6 }}
+            animate={{
+              pathLength: 1,
+              opacity: [0.3, 0.6, 0.3],
+              pathOffset: [0, 1, 0],
+            }}
+            transition={{
+              duration: 20 + (path.id % 7) * 3,
+              repeat: Number.POSITIVE_INFINITY,
+              ease: "linear",
             }}
           />
         ))}
       </svg>
-
-      <style>{`
-        @keyframes floatPath {
-          0% { stroke-dashoffset: 0; opacity: 0.3; }
-          50% { opacity: 0.6; }
-          100% { stroke-dashoffset: -100; opacity: 0.3; }
-        }
-      `}</style>
     </div>
   );
 }
