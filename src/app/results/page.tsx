@@ -329,7 +329,8 @@ function ResultsContent() {
   }
 
   const { input, score, verdict, fairValueRange, priceDelta, priceDeltaPct,
-          monthlyPayment, reasons, aiSummary, negotiationScript } = result;
+          monthlyPayment, reasons, aiSummary, negotiationScript, priceSource } = result;
+  const isVinVerified = typeof priceSource === "string" && priceSource.toLowerCase().includes("vinaudit");
 
   const vehicleLabel = `${input.year} ${input.make} ${input.model}${input.trim ? ` ${input.trim}` : ""}`;
 
@@ -426,13 +427,20 @@ function ResultsContent() {
                 {aiSummary}
               </p>
               <div className="flex items-center gap-2 flex-wrap justify-center sm:justify-start">
+                {isVinVerified ? (
+                  <span className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-lg font-semibold"
+                    style={{ background: "rgba(52,211,153,0.10)", border: "1px solid rgba(52,211,153,0.25)", color: "#34d399" }}>
+                    <IconShield />VIN-verified · Real transaction data
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-lg"
+                    style={{ background: "var(--ds-badge-bg)", border: "1px solid var(--ds-badge-border)", color: "var(--ds-text-3)" }}>
+                    <IconShield />Data-driven analysis
+                  </span>
+                )}
                 <span className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-lg"
                   style={{ background: "var(--ds-badge-bg)", border: "1px solid var(--ds-badge-border)", color: "var(--ds-text-3)" }}>
-                  <IconShield />Data-driven analysis
-                </span>
-                <span className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-lg"
-                  style={{ background: "var(--ds-badge-bg)", border: "1px solid var(--ds-badge-border)", color: "var(--ds-text-3)" }}>
-                  <IconGauge />Market comps included
+                  <IconGauge />{priceSource ?? "Market analysis"}
                 </span>
               </div>
             </div>

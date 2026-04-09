@@ -343,6 +343,14 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  // VIN is required for verified transaction data
+  if (!input.vin || input.vin.trim().length < 11) {
+    return NextResponse.json(
+      { error: "A VIN is required for verified pricing. Enter your VIN and click Decode before submitting." },
+      { status: 400 }
+    );
+  }
+
   // Check and deduct credits
   let userId: string | null = null;
   try {
@@ -375,19 +383,17 @@ export async function POST(req: NextRequest) {
   }
 
   // Pricing priority order:
-  // 1. VinAudit — real transaction data, most accurate (requires VIN)
-  // 2. Edmunds TMV — real transaction data, no VIN needed (year/make/model/mileage/zip)
-  // 3. MarketCheck — live listings search (paid API key, radius-restricted on free tier)
-  // 4. Craigslist regional listings — free, real asking prices near user's ZIP
-  // 5. Built-in per-model depreciation model — always runs as final fallback
-  const [vinAuditValue, edmundsValue, marketCheckValue, craigslistValue] = await Promise.all([
+  // 1. VinAudit — real transaction data, most accurate (VIN always provided)
+  // 2. Edmunds TMV — real transaction data fallback (requires EDMUNDS_API_KEY)
+  // 3. Statistical depreciation model — always-on fallback, no API needed
+  //
+  // Note: MarketCheck and Craigslist removed — VIN is required so we always
+  // have access to real transaction data via VinAudit.
+  const [vinAuditValue, edmundsValue] = await Promise.all([
     fetchVinAuditValue(input),
     fetchEdmundsTMV(input),
-    fetchMarketCheckValue(input),
-    fetchCraigslistPrices(input),
   ]);
 
-  // Blend Craigslist with the model if no paid API is available
   let marketValue: PriceRange | undefined;
   let priceSource: string;
 
@@ -397,20 +403,8 @@ export async function POST(req: NextRequest) {
   } else if (edmundsValue) {
     marketValue = edmundsValue;
     priceSource = "Edmunds True Market Value (TMV)";
-  } else if (marketCheckValue) {
-    marketValue = marketCheckValue;
-    priceSource = "MarketCheck live listings";
-  } else if (craigslistValue) {
-    // Blend Craigslist (real asking prices) with the statistical model (50/50)
-    const modelValue = estimateFairValue(input);
-    marketValue = {
-      low:      Math.round((craigslistValue.low      + modelValue.low)      / 200) * 100,
-      high:     Math.round((craigslistValue.high     + modelValue.high)     / 200) * 100,
-      midpoint: Math.round((craigslistValue.midpoint + modelValue.midpoint) / 200) * 100,
-    };
-    priceSource = "Craigslist regional listings + statistical model";
   } else {
-    priceSource = "Statistical model (iSeeCars/CarEdge depreciation data)";
+    priceSource = "Statistical model (depreciation data)";
   }
 
   const scored = scoreCarDeal(input, marketValue);

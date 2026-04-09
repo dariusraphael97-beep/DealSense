@@ -186,9 +186,9 @@ function Field({ label, required, hint, children }: { label: string; required?: 
 }
 
 const LOADING_STEPS = [
-  "Gathering market comparables…",
-  "Calculating fair value range…",
-  "Scoring the deal…",
+  "Pulling real transaction data for your VIN…",
+  "Calculating fair market value…",
+  "Scoring the deal against real sales…",
   "Writing your negotiation script…",
 ];
 
@@ -308,7 +308,8 @@ export default function AnalyzePage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault(); setSubmitError("");
-    if (!form.make || !form.model) { setSubmitError("Make and model are required."); return; }
+    if (!form.vin || form.vin.length < 11) { setSubmitError("A valid VIN is required for verified transaction data. Enter your VIN above and click Decode."); return; }
+    if (!form.make || !form.model) { setSubmitError("Make and model are required. Use the VIN decoder above or fill them in manually."); return; }
     if (form.mileage <= 0 || form.askingPrice <= 0) { setSubmitError("Mileage and asking price must be greater than 0."); return; }
     if (!/^\d{5}$/.test(form.zipCode)) { setSubmitError("ZIP code must be 5 digits."); return; }
 
@@ -426,20 +427,39 @@ export default function AnalyzePage() {
             Analyze a car
           </h1>
           <p className="mt-2 text-sm leading-relaxed" style={{ color: "var(--ds-text-3)" }}>
-            Enter the listing details — we&apos;ll score the deal and write your negotiation script.
+            Enter the VIN from the listing — we pull real transaction data, score the deal, and write your negotiation script.
           </p>
+          <div className="mt-3 flex items-center gap-1.5 text-xs" style={{ color: "var(--ds-text-4)" }}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="#34d399" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5 flex-shrink-0"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            <span>Powered by real transaction data — not estimates or listing prices</span>
+          </div>
         </motion.div>
 
-        {/* VIN decode */}
+        {/* VIN — Required step */}
         <motion.div
           initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.08, ease: [0.22, 1, 0.36, 1] }}
-          className="rounded-2xl p-5 mb-4" style={glassCard}>
-          <div className="flex items-center gap-2 text-sm font-semibold mb-4" style={{ color: "var(--ds-text-2)" }}>
-            <span className="text-indigo-500"><IconVin /></span>
-            Decode a VIN
-            <span className="font-normal" style={{ color: "var(--ds-text-4)" }}>(optional — auto-fills year, make &amp; model)</span>
+          className="rounded-2xl p-5 mb-4"
+          style={{ ...glassCard, border: vinSuccess ? "1px solid rgba(52,211,153,0.3)" : "1px solid var(--ds-card-border)" }}>
+
+          {/* Header */}
+          <div className="flex items-start justify-between mb-1">
+            <div className="flex items-center gap-2 text-sm font-semibold" style={{ color: "var(--ds-text-1)" }}>
+              <span className="text-indigo-500"><IconVin /></span>
+              Vehicle VIN
+              <span className="text-red-400/80 text-xs font-normal">Required</span>
+            </div>
+            {vinSuccess && (
+              <span className="flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full"
+                style={{ background: "rgba(52,211,153,0.12)", border: "1px solid rgba(52,211,153,0.25)", color: "#34d399" }}>
+                <IconCheck /> Verified
+              </span>
+            )}
           </div>
+          <p className="text-xs mb-4" style={{ color: "var(--ds-text-4)" }}>
+            Found on the listing, dashboard, or door jamb. Required for real transaction data — not estimates.
+          </p>
+
           <div className="flex gap-3">
             <input type="text" placeholder="e.g. 1HGBH41JXMN109186"
               value={vinInput}
@@ -455,23 +475,31 @@ export default function AnalyzePage() {
               disabled={vinLoading || vinInput.trim().length < 11}
               className="flex-shrink-0 px-5 py-3 rounded-xl text-sm font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed"
               style={{
-                background: "var(--ds-badge-bg)",
-                border: "1px solid var(--ds-badge-border)",
-                color: "var(--ds-text-2)",
+                background: vinInput.trim().length >= 11 && !vinSuccess
+                  ? "linear-gradient(135deg,#4f46e5,#6366f1)"
+                  : "var(--ds-badge-bg)",
+                border: vinInput.trim().length >= 11 && !vinSuccess
+                  ? "none"
+                  : "1px solid var(--ds-badge-border)",
+                color: vinInput.trim().length >= 11 && !vinSuccess ? "#fff" : "var(--ds-text-2)",
+                boxShadow: vinInput.trim().length >= 11 && !vinSuccess
+                  ? "0 0 16px rgba(99,102,241,0.3)"
+                  : "none",
               }}>
               {vinLoading ? <span className="flex items-center gap-2"><IconSpinner />Decoding…</span> : "Decode VIN"}
             </button>
           </div>
+
           {vinError && (
             <p className="mt-2.5 text-xs text-red-500 flex items-center gap-1.5"><IconAlert />{vinError}</p>
           )}
           {vinSuccess && (
-            <p className="mt-2.5 text-xs text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5">
-              <span className="w-4 h-4 rounded-full flex items-center justify-center"
+            <p className="mt-2.5 text-xs text-emerald-400 flex items-center gap-1.5">
+              <span className="w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0"
                 style={{ background: "rgba(52,211,153,0.12)", border: "1px solid rgba(52,211,153,0.25)" }}>
                 <IconCheck />
               </span>
-              VIN decoded — fields updated below. Enter the mileage and asking price from the listing.
+              VIN verified — year, make &amp; model updated. Now enter the mileage and asking price.
             </p>
           )}
         </motion.div>
@@ -554,7 +582,16 @@ export default function AnalyzePage() {
               Score this deal <IconArrow />
             </button>
 
-            <p className="text-center text-xs" style={{ color: "var(--ds-text-4)" }}>Analysis takes ~3 seconds</p>
+            <div className="flex items-center justify-center gap-4 text-xs" style={{ color: "var(--ds-text-4)" }}>
+              <span className="flex items-center gap-1">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                VIN-verified accuracy
+              </span>
+              <span>·</span>
+              <span>Results in ~3 seconds</span>
+              <span>·</span>
+              <span>Uses 1 credit</span>
+            </div>
           </div>
         </motion.form>
       </div>
