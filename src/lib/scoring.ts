@@ -639,9 +639,22 @@ function getBasePrice(make: string, model: string, trim?: string): number {
   //    e.g. model="3 Series" trim="M3 Competition" → "bmw|3 series m3 competition" = $86k
   //    e.g. model="C-Class"  trim="AMG C 63 S"     → "mercedes-benz|c-class amg c 63 s" = $88k
   if (t) {
-    const combinedKey = `${m}|${mod} ${t}`;
+    // If trim starts with model name, avoid duplication:
+    //   model="M3" trim="M3 Competition" → try "bmw|m3 competition" NOT "bmw|m3 m3 competition"
+    const deduped = t.startsWith(mod) ? t : `${mod} ${t}`;
+    const combinedKey = `${m}|${deduped}`;
     if (MODEL_BASE[combinedKey]) {
-      return MODEL_BASE[combinedKey]; // exact MSRP for this variant — no extra multiplier
+      return MODEL_BASE[combinedKey];
+    }
+    // Also try the raw combined form (model="3 Series" trim="M3 Competition")
+    const rawCombined = `${m}|${mod} ${t}`;
+    if (rawCombined !== combinedKey && MODEL_BASE[rawCombined]) {
+      return MODEL_BASE[rawCombined];
+    }
+    // Also try just the trim as the key (trim="M3 Competition" → "bmw|m3 competition")
+    const trimOnlyKey = `${m}|${t}`;
+    if (trimOnlyKey !== combinedKey && MODEL_BASE[trimOnlyKey]) {
+      return MODEL_BASE[trimOnlyKey];
     }
   }
 
@@ -650,8 +663,10 @@ function getBasePrice(make: string, model: string, trim?: string): number {
   const exactKey = `${m}|${mod}`;
   if (MODEL_BASE[exactKey]) {
     // Model name already identifies the specific variant — trim mult only applies
-    // when trim adds something beyond what the model key covers (rare edge case)
-    const trimBakedIn = !t || mod.includes(t);
+    // when trim adds something BEYOND what the model key covers.
+    // If trim contains model name (e.g. model="M3", trim="M3 Competition"),
+    // the base is already a performance variant — skip the big multiplier.
+    const trimBakedIn = !t || mod.includes(t) || t.startsWith(mod);
     const mult = trimBakedIn ? 1.0 : getTrimMultiplier(t!);
     return Math.round(MODEL_BASE[exactKey] * mult);
   }
