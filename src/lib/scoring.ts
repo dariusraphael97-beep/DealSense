@@ -635,6 +635,9 @@ function getBasePrice(make: string, model: string, trim?: string): number {
   const mod = model.toLowerCase().trim().replace(/\s+/g, " ");
   const t   = trim?.toLowerCase().trim().replace(/\s+/g, " ");
 
+  console.log(`[getBasePrice] INPUT make="${make}" model="${model}" trim="${trim}"`);
+  console.log(`[getBasePrice] NORMALIZED m="${m}" mod="${mod}" t="${t}"`);
+
   // 1. Combined "model + trim" key checked FIRST — most specific wins.
   //    e.g. model="3 Series" trim="M3 Competition" → "bmw|3 series m3 competition" = $86k
   //    e.g. model="C-Class"  trim="AMG C 63 S"     → "mercedes-benz|c-class amg c 63 s" = $88k
@@ -643,17 +646,23 @@ function getBasePrice(make: string, model: string, trim?: string): number {
     //   model="M3" trim="M3 Competition" → try "bmw|m3 competition" NOT "bmw|m3 m3 competition"
     const deduped = t.startsWith(mod) ? t : `${mod} ${t}`;
     const combinedKey = `${m}|${deduped}`;
+    console.log(`[getBasePrice] STEP1 deduped="${deduped}" combinedKey="${combinedKey}" hit=${!!MODEL_BASE[combinedKey]}`);
     if (MODEL_BASE[combinedKey]) {
+      console.log(`[getBasePrice] → RETURN ${MODEL_BASE[combinedKey]} (combined key)`);
       return MODEL_BASE[combinedKey];
     }
     // Also try the raw combined form (model="3 Series" trim="M3 Competition")
     const rawCombined = `${m}|${mod} ${t}`;
+    console.log(`[getBasePrice] STEP1b rawCombined="${rawCombined}" hit=${rawCombined !== combinedKey && !!MODEL_BASE[rawCombined]}`);
     if (rawCombined !== combinedKey && MODEL_BASE[rawCombined]) {
+      console.log(`[getBasePrice] → RETURN ${MODEL_BASE[rawCombined]} (raw combined)`);
       return MODEL_BASE[rawCombined];
     }
     // Also try just the trim as the key (trim="M3 Competition" → "bmw|m3 competition")
     const trimOnlyKey = `${m}|${t}`;
+    console.log(`[getBasePrice] STEP1c trimOnlyKey="${trimOnlyKey}" hit=${trimOnlyKey !== combinedKey && !!MODEL_BASE[trimOnlyKey]}`);
     if (trimOnlyKey !== combinedKey && MODEL_BASE[trimOnlyKey]) {
+      console.log(`[getBasePrice] → RETURN ${MODEL_BASE[trimOnlyKey]} (trim-only key)`);
       return MODEL_BASE[trimOnlyKey];
     }
   }
@@ -661,21 +670,20 @@ function getBasePrice(make: string, model: string, trim?: string): number {
   // 2. MODEL_BASE exact match on model name alone
   //    e.g. model="M3 Competition" → "bmw|m3 competition" = $86k (no extra mult needed)
   const exactKey = `${m}|${mod}`;
+  console.log(`[getBasePrice] STEP2 exactKey="${exactKey}" hit=${!!MODEL_BASE[exactKey]}`);
   if (MODEL_BASE[exactKey]) {
-    // Model name already identifies the specific variant — trim mult only applies
-    // when trim adds something BEYOND what the model key covers.
-    // If trim contains model name (e.g. model="M3", trim="M3 Competition"),
-    // the base is already a performance variant — skip the big multiplier.
     const trimBakedIn = !t || mod.includes(t) || t.startsWith(mod);
     const mult = trimBakedIn ? 1.0 : getTrimMultiplier(t!);
+    console.log(`[getBasePrice] STEP2 trimBakedIn=${trimBakedIn} mult=${mult} → RETURN ${Math.round(MODEL_BASE[exactKey] * mult)}`);
     return Math.round(MODEL_BASE[exactKey] * mult);
   }
 
   // 3. carData database lookup + trim multiplier
-  //    Covers broad model catalog (35+ makes). Trim multiplier approximates variant premium.
   const carDataMSRP = getModelMSRP(make, model);
+  console.log(`[getBasePrice] STEP3 carDataMSRP=${carDataMSRP} (32000 = miss)`);
   if (carDataMSRP !== 32000) {
     const mult = t ? getTrimMultiplier(t) : 1.0;
+    console.log(`[getBasePrice] STEP3 → RETURN ${Math.round(carDataMSRP * mult)} (carData ${carDataMSRP} × ${mult})`);
     return Math.round(carDataMSRP * mult);
   }
 
@@ -686,10 +694,12 @@ function getBasePrice(make: string, model: string, trim?: string): number {
   if (partials.length > 0) {
     const best = partials.reduce((a, b) => (a.length >= b.length ? a : b));
     const mult = t ? getTrimMultiplier(t) : 1.0;
+    console.log(`[getBasePrice] STEP4 partial best="${best}" mult=${mult} → RETURN ${Math.round(MODEL_BASE[best] * mult)}`);
     return Math.round(MODEL_BASE[best] * mult);
   }
 
   // 5. Make-level fallback
+  console.log(`[getBasePrice] STEP5 fallback → RETURN ${MAKE_BASE[m] ?? MAKE_BASE["default"]}`);
   return MAKE_BASE[m] ?? MAKE_BASE["default"];
 }
 

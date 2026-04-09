@@ -441,7 +441,10 @@ export async function POST(req: NextRequest) {
     }
   }
 
+  console.log(`[analyze] make="${input.make}" model="${input.model}" trim="${input.trim}" vin="${input.vin}"`);
+  console.log(`[analyze] priceSource="${priceSource}" marketValue=${JSON.stringify(marketValue)}`);
   const scored = scoreCarDeal(input, marketValue);
+  console.log(`[analyze] fairValue=${JSON.stringify(scored.fairValueRange)} score=${scored.score} verdict=${scored.verdict}`);
 
   // AI summary (gracefully degrades if no API key)
   const { summary, script } = await generateAiSummary(input, scored);
