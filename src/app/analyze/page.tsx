@@ -36,39 +36,39 @@ function IconSpinner() {
 function IconAlert() {
   return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 flex-shrink-0"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>;
 }
-function IconChevron() {
-  return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 pointer-events-none flex-shrink-0" style={{ color: "var(--ds-text-4)" }}><polyline points="6 9 12 15 18 9" /></svg>;
+function IconChevron({ open }: { open?: boolean }) {
+  return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 pointer-events-none flex-shrink-0 transition-transform duration-200" style={{ color: "var(--ds-text-4)", transform: open ? "rotate(180deg)" : "rotate(0deg)" }}><polyline points="6 9 12 15 18 9" /></svg>;
 }
 function IconX() {
   return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>;
 }
+function IconLink() {
+  return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>;
+}
+function IconShield() {
+  return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>;
+}
+function IconMapPin() {
+  return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5 flex-shrink-0 mt-0.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>;
+}
+function IconCar() {
+  return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5 flex-shrink-0 mt-0.5"><path d="M5 17H3a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v9a2 2 0 0 1-2 2h-2"/><circle cx="7.5" cy="17.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg>;
+}
+function IconDoor() {
+  return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5 flex-shrink-0 mt-0.5"><path d="M3 3h18v18H3z"/><circle cx="15" cy="12" r="1"/></svg>;
+}
 
 /* ── Shared input styles ── */
 const inputCls = "w-full rounded-xl px-4 py-3 text-sm focus:outline-none transition-all duration-150 disabled:opacity-40";
-const iStyle = {
-  background: "var(--ds-input-bg)",
-  border: "1px solid var(--ds-input-border)",
-  color: "var(--ds-text-1)",
-} as const;
-const iFocus = {
-  background: "var(--ds-input-bg)",
-  border: "1px solid var(--ds-input-focus)",
-  boxShadow: "0 0 0 3px var(--ds-input-ring)",
-  color: "var(--ds-text-1)",
-} as const;
-
-const glassCard = {
-  background: "var(--ds-card-bg)",
-  border: "1px solid var(--ds-card-border)",
-  boxShadow: "var(--ds-card-shadow)",
-} as const;
+const iStyle = { background: "var(--ds-input-bg)", border: "1px solid var(--ds-input-border)", color: "var(--ds-text-1)" } as const;
+const iFocus = { background: "var(--ds-input-bg)", border: "1px solid var(--ds-input-focus)", boxShadow: "0 0 0 3px var(--ds-input-ring)", color: "var(--ds-text-1)" } as const;
+const glassCard = { background: "var(--ds-card-bg)", border: "1px solid var(--ds-card-border)", boxShadow: "var(--ds-card-shadow)" } as const;
 
 /* ── Combobox ── */
 interface ComboboxProps {
   value: string; onChange: (v: string) => void; options: string[];
   placeholder: string; disabled?: boolean; id?: string;
 }
-
 function Combobox({ value, onChange, options, placeholder, disabled = false, id }: ComboboxProps) {
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
@@ -77,27 +77,20 @@ function Combobox({ value, onChange, options, placeholder, disabled = false, id 
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
-
   const filtered = query.trim() ? options.filter((o) => o.toLowerCase().includes(query.toLowerCase())) : options;
-
   useEffect(() => {
     function handler(e: MouseEvent) {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        setOpen(false); setQuery(""); setFocused(false);
-      }
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) { setOpen(false); setQuery(""); setFocused(false); }
     }
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, []);
-
   useEffect(() => {
     if (!listRef.current) return;
     const el = listRef.current.children[highlighted] as HTMLElement;
     el?.scrollIntoView({ block: "nearest" });
   }, [highlighted]);
-
   function select(opt: string) { onChange(opt); setQuery(""); setOpen(false); setHighlighted(0); }
-
   function handleKey(e: React.KeyboardEvent) {
     if (!open && (e.key === "ArrowDown" || e.key === "Enter")) { setOpen(true); setHighlighted(0); return; }
     if (e.key === "ArrowDown") { e.preventDefault(); setHighlighted((h) => Math.min(h + 1, filtered.length - 1)); }
@@ -105,19 +98,11 @@ function Combobox({ value, onChange, options, placeholder, disabled = false, id 
     if (e.key === "Enter")     { e.preventDefault(); if (filtered[highlighted]) select(filtered[highlighted]); }
     if (e.key === "Escape")    { setOpen(false); setQuery(""); }
   }
-
-  const dropdownStyle = {
-    background: "var(--ds-card-bg)",
-    border: "1px solid var(--ds-card-border)",
-    boxShadow: "0 8px 32px rgba(0,0,0,0.3)",
-    backdropFilter: "blur(16px)",
-  };
-
+  const dropStyle = { background: "var(--ds-card-bg)", border: "1px solid var(--ds-card-border)", boxShadow: "0 8px 32px rgba(0,0,0,0.3)", backdropFilter: "blur(16px)" };
   return (
     <div ref={containerRef} className="relative">
       <div className={disabled ? "opacity-40 pointer-events-none" : ""}>
-        <input
-          ref={inputRef} id={id} type="text"
+        <input ref={inputRef} id={id} type="text"
           value={open ? query : value}
           onChange={(e) => { setQuery(e.target.value); setOpen(true); setHighlighted(0); }}
           onFocus={() => { setOpen(true); setHighlighted(0); setFocused(true); }}
@@ -134,29 +119,21 @@ function Combobox({ value, onChange, options, placeholder, disabled = false, id 
             <button type="button"
               onMouseDown={(e) => { e.preventDefault(); onChange(""); setQuery(""); inputRef.current?.focus(); }}
               className="p-0.5 rounded transition-colors cursor-pointer"
-              style={{ color: "var(--ds-text-4)" }}
-              aria-label="Clear">
-              <IconX />
-            </button>
+              style={{ color: "var(--ds-text-4)" }}><IconX /></button>
           )}
           <IconChevron />
         </div>
       </div>
-
       {open && !disabled && filtered.length > 0 && (
         <ul ref={listRef} role="listbox"
           className="absolute z-50 mt-1.5 w-full max-h-56 overflow-y-auto rounded-xl py-1.5"
-          style={dropdownStyle}>
+          style={dropStyle}>
           {filtered.map((opt, i) => (
             <li key={opt} role="option" aria-selected={opt === value}
               onMouseDown={(e) => { e.preventDefault(); select(opt); }}
               onMouseEnter={() => setHighlighted(i)}
               className="flex items-center justify-between px-3.5 py-2.5 text-sm cursor-pointer select-none transition-colors"
-              style={{
-                color: i === highlighted || opt === value ? "var(--ds-text-1)" : "var(--ds-text-2)",
-                fontWeight: opt === value ? 600 : undefined,
-                background: i === highlighted ? "rgba(99,102,241,0.12)" : undefined,
-              }}>
+              style={{ color: i === highlighted || opt === value ? "var(--ds-text-1)" : "var(--ds-text-2)", fontWeight: opt === value ? 600 : undefined, background: i === highlighted ? "rgba(99,102,241,0.12)" : undefined }}>
               {opt}
               {opt === value && <span className="text-indigo-500 flex-shrink-0"><IconCheck /></span>}
             </li>
@@ -164,8 +141,7 @@ function Combobox({ value, onChange, options, placeholder, disabled = false, id 
         </ul>
       )}
       {open && !disabled && filtered.length === 0 && query && (
-        <div className="absolute z-50 mt-1.5 w-full rounded-xl px-4 py-3 text-sm"
-          style={{ ...dropdownStyle, color: "var(--ds-text-3)" }}>
+        <div className="absolute z-50 mt-1.5 w-full rounded-xl px-4 py-3 text-sm" style={{ ...dropStyle, color: "var(--ds-text-3)" }}>
           No matches for &ldquo;{query}&rdquo;
         </div>
       )}
@@ -185,13 +161,64 @@ function Field({ label, required, hint, children }: { label: string; required?: 
   );
 }
 
+/* ── "How to Find Your VIN" collapsible ── */
+function HowToFindVin() {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="mt-3 rounded-xl overflow-hidden" style={{ border: "1px solid var(--ds-input-border)" }}>
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className="w-full flex items-center justify-between px-4 py-2.5 text-xs font-medium transition-colors text-left"
+        style={{ background: "var(--ds-badge-bg)", color: "var(--ds-text-3)" }}
+      >
+        <span className="flex items-center gap-1.5">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5 text-indigo-400"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+          How to find your VIN
+        </span>
+        <IconChevron open={open} />
+      </button>
+      <AnimatePresence initial={false}>
+        {open && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+            style={{ overflow: "hidden" }}
+          >
+            <div className="px-4 py-3 space-y-2.5" style={{ background: "var(--ds-input-bg)", borderTop: "1px solid var(--ds-input-border)" }}>
+              <p className="text-xs font-semibold" style={{ color: "var(--ds-text-2)" }}>
+                The VIN is a 17-character code unique to every vehicle.
+              </p>
+              <div className="space-y-2">
+                {[
+                  { icon: <IconLink />, text: "On car listing sites like CarGurus, AutoTrader, and dealer websites — look for a field labeled "VIN" in the listing details." },
+                  { icon: <IconCar />, text: "On the car itself — visible through the windshield on the driver-side dashboard." },
+                  { icon: <IconDoor />, text: "Inside the driver-side door frame on a white sticker." },
+                  { icon: <IconMapPin />, text: "In the title, registration, or insurance documents." },
+                ].map(({ icon, text }, i) => (
+                  <div key={i} className="flex gap-2.5">
+                    <span style={{ color: "var(--ds-text-4)", marginTop: "1px" }}>{icon}</span>
+                    <p className="text-xs leading-relaxed" style={{ color: "var(--ds-text-3)" }}>{text}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+/* ── Loading overlay ── */
 const LOADING_STEPS = [
-  "Pulling real transaction data for your VIN…",
-  "Calculating fair market value…",
-  "Scoring the deal against real sales…",
+  "Verifying VIN with transaction database…",
+  "Calculating real market value…",
+  "Scoring the deal…",
   "Writing your negotiation script…",
 ];
-
 function LoadingOverlay() {
   const [step, setStep] = useState(0);
   useEffect(() => {
@@ -202,29 +229,21 @@ function LoadingOverlay() {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: "var(--ds-overlay)", backdropFilter: "blur(12px)" }}>
       <motion.div
-        initial={{ opacity: 0, scale: 0.95, y: 16 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
+        initial={{ opacity: 0, scale: 0.95, y: 16 }} animate={{ opacity: 1, scale: 1, y: 0 }}
         transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
         className="rounded-3xl p-8 max-w-sm w-full mx-4 text-center"
         style={{ background: "var(--ds-card-bg)", border: "1px solid var(--ds-card-border)", boxShadow: "0 24px 80px rgba(0,0,0,0.3)" }}
       >
-        {/* Spinner ring */}
         <div className="relative w-16 h-16 mx-auto mb-6">
           <svg className="w-16 h-16 -rotate-90 animate-spin" viewBox="0 0 64 64" style={{ animationDuration: "1.4s" }}>
             <circle cx="32" cy="32" r="26" fill="none" stroke="rgba(99,102,241,0.15)" strokeWidth="5"/>
-            <circle cx="32" cy="32" r="26" fill="none" stroke="#6366f1" strokeWidth="5"
-              strokeDasharray="164" strokeDashoffset="120" strokeLinecap="round"/>
+            <circle cx="32" cy="32" r="26" fill="none" stroke="#6366f1" strokeWidth="5" strokeDasharray="164" strokeDashoffset="120" strokeLinecap="round"/>
           </svg>
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="w-3 h-3 rounded-full bg-indigo-500" style={{ boxShadow: "0 0 12px rgba(99,102,241,0.8)" }}/>
           </div>
         </div>
-
-        <p className="font-heading text-base font-semibold mb-5" style={{ color: "var(--ds-text-1)" }}>
-          Analyzing your listing
-        </p>
-
-        {/* Step list */}
+        <p className="font-heading text-base font-semibold mb-5" style={{ color: "var(--ds-text-1)" }}>Analyzing your deal</p>
         <div className="space-y-2.5 text-left">
           {LOADING_STEPS.map((s, i) => (
             <div key={i} className="flex items-center gap-3">
@@ -246,14 +265,12 @@ function LoadingOverlay() {
             </div>
           ))}
         </div>
-
         <p className="text-xs mt-5" style={{ color: "var(--ds-text-4)" }}>Takes about 3–5 seconds</p>
       </motion.div>
     </div>
   );
 }
 
-// Tiny component so useSearchParams is inside a Suspense boundary
 function CreditsAddedDetector({ onDetected }: { onDetected: () => void }) {
   const searchParams = useSearchParams();
   useEffect(() => {
@@ -262,16 +279,26 @@ function CreditsAddedDetector({ onDetected }: { onDetected: () => void }) {
   return null;
 }
 
+/* ══════════════════════════════════════════════════
+   Main page
+══════════════════════════════════════════════════ */
 export default function AnalyzePage() {
   const router = useRouter();
   const { settings } = useSettings();
   const { credits, refresh: refreshCredits } = useCredits();
-  const [form, setForm] = useState<CarInput>(defaultForm);
-  const [vinInput, setVinInput] = useState("");
+
+  const [form, setForm]           = useState<CarInput>(defaultForm);
+  const [vinInput, setVinInput]   = useState("");
   const [vinLoading, setVinLoading] = useState(false);
-  const [vinError, setVinError] = useState("");
+  const [vinError, setVinError]   = useState("");
   const [vinSuccess, setVinSuccess] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
+
+  const [listingUrl, setListingUrl]   = useState("");
+  const [linkLoading, setLinkLoading] = useState(false);
+  const [linkError, setLinkError]     = useState("");
+  const [linkSuccess, setLinkSuccess] = useState(false);
+
+  const [submitting, setSubmitting]   = useState(false);
   const [submitError, setSubmitError] = useState("");
   const [showPaywall, setShowPaywall] = useState(false);
   const [creditsBanner, setCreditsBanner] = useState(false);
@@ -293,38 +320,90 @@ export default function AnalyzePage() {
   function handleMakeChange(make: string)  { setForm((p) => ({ ...p, make, model: "", trim: "" })); }
   function handleModelChange(model: string) { setForm((p) => ({ ...p, model, trim: "" })); }
 
-  const handleVinDecode = useCallback(async () => {
-    if (vinInput.trim().length < 11) { setVinError("VIN must be at least 11 characters."); return; }
+  // Core decode logic — accepts an explicit VIN string so it can be called
+  // after listing-link extraction without waiting for state to settle.
+  const decodeVin = useCallback(async (vin: string) => {
+    if (vin.length < 11) { setVinError("VIN must be at least 11 characters."); return; }
     setVinError(""); setVinSuccess(false); setVinLoading(true);
     try {
-      const res = await fetch(`/api/vin?vin=${encodeURIComponent(vinInput.trim())}`);
+      const res = await fetch(`/api/vin?vin=${encodeURIComponent(vin)}`);
       const data: VinDecodeResult = await res.json();
       if (data.error) { setVinError(data.error); return; }
-      setForm((p) => ({ ...p, vin: vinInput.trim(), year: data.year ?? p.year, make: data.make ?? p.make, model: data.model ?? p.model, trim: data.trim ?? p.trim }));
+      setVinInput(vin);
+      setForm((p) => ({
+        ...p, vin,
+        year:  data.year  ?? p.year,
+        make:  data.make  ?? p.make,
+        model: data.model ?? p.model,
+        trim:  data.trim  ?? p.trim,
+      }));
       setVinSuccess(true);
     } catch { setVinError("Failed to decode VIN. Check your connection."); }
-    finally { setVinLoading(false); }
+    finally   { setVinLoading(false); }
+  }, []);
+
+  const handleVinDecode = useCallback(() => decodeVin(vinInput.trim()), [vinInput, decodeVin]);
+
+  // Auto-decode when the user types exactly 17 chars
+  useEffect(() => {
+    if (vinInput.trim().length === 17 && !vinSuccess && !vinLoading) {
+      decodeVin(vinInput.trim());
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [vinInput]);
+
+  // Extract VIN from a listing link
+  const handleListingLink = useCallback(async () => {
+    if (!listingUrl.trim()) return;
+    setLinkError(""); setLinkSuccess(false); setLinkLoading(true);
+    try {
+      const res  = await fetch("/api/extract-vin", {
+        method:  "POST",
+        headers: { "content-type": "application/json" },
+        body:    JSON.stringify({ url: listingUrl.trim() }),
+      });
+      const data = await res.json();
+      if (data.vin) {
+        setListingUrl("");
+        setLinkSuccess(true);
+        setTimeout(() => setLinkSuccess(false), 3000);
+        await decodeVin(data.vin);
+      } else {
+        setLinkError(data.error ?? "VIN not found. Please enter it manually.");
+      }
+    } catch { setLinkError("Could not process link. Please enter VIN manually."); }
+    finally   { setLinkLoading(false); }
+  }, [listingUrl, decodeVin]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault(); setSubmitError("");
-    if (!form.vin || form.vin.length < 11) { setSubmitError("A valid VIN is required for verified transaction data. Enter your VIN above and click Decode."); return; }
-    if (!form.make || !form.model) { setSubmitError("Make and model are required. Use the VIN decoder above or fill them in manually."); return; }
-    if (form.mileage <= 0 || form.askingPrice <= 0) { setSubmitError("Mileage and asking price must be greater than 0."); return; }
-    if (!/^\d{5}$/.test(form.zipCode)) { setSubmitError("ZIP code must be 5 digits."); return; }
-
-    // Gate on credits
+    if (!form.vin || form.vin.length < 11) {
+      setSubmitError("Please enter and decode your VIN first — it's required for verified transaction data.");
+      return;
+    }
+    if (!form.make || !form.model) {
+      setSubmitError("Make and model are required. Use the VIN decoder above or fill them in manually.");
+      return;
+    }
+    if (form.mileage <= 0 || form.askingPrice <= 0) {
+      setSubmitError("Mileage and asking price must be greater than 0.");
+      return;
+    }
+    if (!/^\d{5}$/.test(form.zipCode)) {
+      setSubmitError("ZIP code must be 5 digits.");
+      return;
+    }
     if (credits !== null && credits <= 0) { setShowPaywall(true); return; }
 
     setSubmitting(true);
     try {
       const payload: CarInput = {
         ...form,
-        loanApr: settings.defaultAPR,
-        loanDownPct: settings.defaultDownPayment,
+        loanApr:        settings.defaultAPR,
+        loanDownPct:    settings.defaultDownPayment,
         loanTermMonths: settings.defaultLoanTerm,
       };
-      const res = await fetch("/api/analyze", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(payload) });
+      const res  = await fetch("/api/analyze", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(payload) });
       const data = await res.json();
       if (!res.ok) {
         if (res.status === 402) { setShowPaywall(true); return; }
@@ -333,7 +412,7 @@ export default function AnalyzePage() {
       refreshCredits();
       router.push(`/results?data=${encodeURIComponent(JSON.stringify(data))}`);
     } catch { setSubmitError("Network error. Please try again."); }
-    finally { setSubmitting(false); }
+    finally   { setSubmitting(false); }
   };
 
   const creditsColor =
@@ -342,14 +421,14 @@ export default function AnalyzePage() {
     : credits === 1  ? "#fbbf24"
     : "#34d399";
 
+  const ease = [0.22, 1, 0.36, 1] as const;
+
   return (
     <div className="min-h-screen" style={{ background: "var(--ds-bg)", position: "relative" }}>
-      {/* Detect ?credits_added=true from Stripe redirect */}
       <Suspense fallback={null}>
         <CreditsAddedDetector onDetected={handleCreditsAdded} />
       </Suspense>
 
-      {/* Paywall modal */}
       <PaywallModal open={showPaywall} onClose={() => setShowPaywall(false)} />
 
       {/* Credits added banner */}
@@ -366,234 +445,295 @@ export default function AnalyzePage() {
         )}
       </AnimatePresence>
 
-      {/* Loading overlay */}
       <AnimatePresence>
         {submitting && <LoadingOverlay />}
       </AnimatePresence>
 
-      {/* Ethereal background */}
-      <EtherealShadow
-        color="rgba(79, 70, 229, 1)"
-        animation={{ scale: 60, speed: 90 }}
-        noise={{ opacity: 0.6, scale: 1.2 }}
-        sizing="fill"
-        style={{ position: "fixed", inset: 0, zIndex: 0 }}
-      />
-      {/* Overlay adapts to theme */}
+      {/* Background */}
+      <EtherealShadow color="rgba(79, 70, 229, 1)" animation={{ scale: 60, speed: 90 }} noise={{ opacity: 0.6, scale: 1.2 }} sizing="fill" style={{ position: "fixed", inset: 0, zIndex: 0 }} />
       <div className="fixed inset-0 z-0" style={{ background: "var(--ds-overlay)" }} />
 
       {/* Nav */}
       <nav className="sticky top-0 z-50" style={{ background: "var(--ds-nav-bg)", borderBottom: "1px solid var(--ds-nav-border)", backdropFilter: "blur(20px)" }}>
         <div className="mx-auto max-w-3xl px-4 py-3.5 flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <Link href="/"
-              className="font-heading text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-slate-800 to-slate-600 dark:from-white dark:to-white/70 hover:opacity-80 transition-opacity">
+            <Link href="/" className="font-heading text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-slate-800 to-slate-600 dark:from-white dark:to-white/70 hover:opacity-80 transition-opacity">
               DealSense
             </Link>
             <span style={{ color: "var(--ds-text-4)" }}>/</span>
-            <span className="text-sm" style={{ color: "var(--ds-text-3)" }}>Analyze a listing</span>
+            <span className="text-sm" style={{ color: "var(--ds-text-3)" }}>Analyze</span>
           </div>
           <div className="flex items-center gap-3">
-            {/* Credits badge */}
             <button
               onClick={() => credits === 0 ? setShowPaywall(true) : undefined}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all"
-              style={{
-                background: "rgba(255,255,255,0.04)",
-                border: `1px solid ${creditsColor}30`,
-                color: creditsColor,
-                cursor: credits === 0 ? "pointer" : "default",
-              }}
+              style={{ background: "rgba(255,255,255,0.04)", border: `1px solid ${creditsColor}30`, color: creditsColor, cursor: credits === 0 ? "pointer" : "default" }}
             >
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3">
                 <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/>
               </svg>
-              {credits === null ? "—" : credits === 0 ? "Buy credits" : `${credits} credit${credits !== 1 ? "s" : ""}`}
+              {credits === null ? "—" : credits === 0 ? "Buy credits" : `${credits} credit${credits !== 1 ? "s" : ""} left`}
             </button>
             <UserNav />
           </div>
         </div>
       </nav>
 
-      {/* Content */}
+      {/* Page content */}
       <div className="relative z-10 mx-auto max-w-2xl px-4 py-10">
 
         {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-          className="mb-8">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease }} className="mb-8">
           <h1 className="font-heading text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-b from-slate-800 to-slate-600 dark:from-white dark:to-white/70">
             Analyze a car
           </h1>
           <p className="mt-2 text-sm leading-relaxed" style={{ color: "var(--ds-text-3)" }}>
-            Enter the VIN from the listing — we pull real transaction data, score the deal, and write your negotiation script.
+            Enter the VIN from any listing — we pull real transaction data, score the deal, and write your negotiation script.
           </p>
           <div className="mt-3 flex items-center gap-1.5 text-xs" style={{ color: "var(--ds-text-4)" }}>
-            <svg viewBox="0 0 24 24" fill="none" stroke="#34d399" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5 flex-shrink-0"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-            <span>Powered by real transaction data — not estimates or listing prices</span>
+            <IconShield />
+            <span style={{ color: "#34d399" }}>Real transaction data</span>
+            <span>— not estimates or listing prices</span>
           </div>
         </motion.div>
 
-        {/* VIN — Required step */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.08, ease: [0.22, 1, 0.36, 1] }}
-          className="rounded-2xl p-5 mb-4"
-          style={{ ...glassCard, border: vinSuccess ? "1px solid rgba(52,211,153,0.3)" : "1px solid var(--ds-card-border)" }}>
+        <form onSubmit={handleSubmit} noValidate>
 
-          {/* Header */}
-          <div className="flex items-start justify-between mb-1">
-            <div className="flex items-center gap-2 text-sm font-semibold" style={{ color: "var(--ds-text-1)" }}>
-              <span className="text-indigo-500"><IconVin /></span>
-              Vehicle VIN
-              <span className="text-red-400/80 text-xs font-normal">Required</span>
-            </div>
-            {vinSuccess && (
-              <span className="flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full"
-                style={{ background: "rgba(52,211,153,0.12)", border: "1px solid rgba(52,211,153,0.25)", color: "#34d399" }}>
-                <IconCheck /> Verified
-              </span>
-            )}
-          </div>
-          <p className="text-xs mb-4" style={{ color: "var(--ds-text-4)" }}>
-            Found on the listing, dashboard, or door jamb. Required for real transaction data — not estimates.
-          </p>
+          {/* ── Step 1: VIN ── */}
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.06, ease }} className="mb-3">
+            <div className="rounded-2xl p-5"
+              style={vinSuccess
+                ? { ...glassCard, border: "1px solid rgba(52,211,153,0.35)", boxShadow: "0 0 24px rgba(52,211,153,0.06)" }
+                : glassCard}>
 
-          <div className="flex gap-3">
-            <input type="text" placeholder="e.g. 1HGBH41JXMN109186"
-              value={vinInput}
-              onChange={(e) => { setVinInput(e.target.value.toUpperCase()); setVinSuccess(false); setVinError(""); }}
-              maxLength={17}
-              className={inputCls + " font-mono tracking-wider flex-1 placeholder:opacity-40"}
-              style={iStyle}
-              onFocus={(e) => Object.assign(e.target.style, iFocus)}
-              onBlur={(e) => Object.assign(e.target.style, iStyle)}
-              aria-label="VIN number"
-            />
-            <button type="button" onClick={handleVinDecode}
-              disabled={vinLoading || vinInput.trim().length < 11}
-              className="flex-shrink-0 px-5 py-3 rounded-xl text-sm font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-              style={{
-                background: vinInput.trim().length >= 11 && !vinSuccess
-                  ? "linear-gradient(135deg,#4f46e5,#6366f1)"
-                  : "var(--ds-badge-bg)",
-                border: vinInput.trim().length >= 11 && !vinSuccess
-                  ? "none"
-                  : "1px solid var(--ds-badge-border)",
-                color: vinInput.trim().length >= 11 && !vinSuccess ? "#fff" : "var(--ds-text-2)",
-                boxShadow: vinInput.trim().length >= 11 && !vinSuccess
-                  ? "0 0 16px rgba(99,102,241,0.3)"
-                  : "none",
-              }}>
-              {vinLoading ? <span className="flex items-center gap-2"><IconSpinner />Decoding…</span> : "Decode VIN"}
-            </button>
-          </div>
-
-          {vinError && (
-            <p className="mt-2.5 text-xs text-red-500 flex items-center gap-1.5"><IconAlert />{vinError}</p>
-          )}
-          {vinSuccess && (
-            <p className="mt-2.5 text-xs text-emerald-400 flex items-center gap-1.5">
-              <span className="w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0"
-                style={{ background: "rgba(52,211,153,0.12)", border: "1px solid rgba(52,211,153,0.25)" }}>
-                <IconCheck />
-              </span>
-              VIN verified — year, make &amp; model updated. Now enter the mileage and asking price.
-            </p>
-          )}
-        </motion.div>
-
-        {/* Form */}
-        <motion.form onSubmit={handleSubmit} noValidate
-          initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}>
-          <div className="rounded-2xl p-6 space-y-6" style={glassCard}>
-
-            {/* Year + Make */}
-            <div className="grid sm:grid-cols-2 gap-5">
-              <Field label="Year" required>
-                <div className="relative">
-                  <select value={form.year} onChange={(e) => setField("year", parseInt(e.target.value, 10))}
-                    required className={inputCls + " cursor-pointer appearance-none pr-10"} style={iStyle}>
-                    {YEARS.map((y) => <option key={y} value={y}>{y}</option>)}
-                  </select>
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none"><IconChevron /></div>
+              {/* Step label */}
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold"
+                    style={vinSuccess
+                      ? { background: "rgba(52,211,153,0.15)", border: "1px solid rgba(52,211,153,0.3)", color: "#34d399" }
+                      : { background: "rgba(99,102,241,0.15)", border: "1px solid rgba(99,102,241,0.3)", color: "#818cf8" }}>
+                    {vinSuccess ? <IconCheck /> : "1"}
+                  </div>
+                  <span className="text-sm font-semibold" style={{ color: "var(--ds-text-1)" }}>
+                    Enter VIN
+                  </span>
+                  <span className="text-xs px-2 py-0.5 rounded-md font-medium"
+                    style={{ background: "rgba(99,102,241,0.1)", color: "#818cf8", border: "1px solid rgba(99,102,241,0.2)" }}>
+                    Required
+                  </span>
                 </div>
-              </Field>
-              <Field label="Make" required>
-                <Combobox id="make" value={form.make} onChange={handleMakeChange} options={ALL_MAKES} placeholder="e.g. Toyota" />
-              </Field>
-            </div>
-
-            {/* Model + Trim */}
-            <div className="grid sm:grid-cols-2 gap-5">
-              <Field label="Model" required hint={form.make && modelOptions.length === 0 ? "Type any model name" : undefined}>
-                <Combobox id="model" value={form.model} onChange={handleModelChange} options={modelOptions} placeholder="e.g. Camry" disabled={!form.make} />
-              </Field>
-              <Field label="Trim" hint={form.model && trimOptions.length === 0 ? "Type any trim name" : undefined}>
-                <Combobox id="trim" value={form.trim ?? ""} onChange={(v) => setField("trim", v)} options={trimOptions} placeholder="e.g. XLE, Sport…" disabled={!form.model} />
-              </Field>
-            </div>
-
-            <div className="h-px" style={{ background: "var(--ds-divider)" }} />
-
-            {/* Mileage + Price + ZIP */}
-            <div className="grid sm:grid-cols-3 gap-5">
-              <Field label="Mileage" required>
-                <div className="relative">
-                  <input type="number" value={form.mileage || ""} onChange={(e) => setField("mileage", parseInt(e.target.value, 10) || 0)}
-                    placeholder="45,000" min={1} required className={inputCls + " pr-9 placeholder:opacity-40"} style={iStyle}
-                    onFocus={(e) => Object.assign(e.target.style, iFocus)}
-                    onBlur={(e) => Object.assign(e.target.style, iStyle)} />
-                  <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs pointer-events-none" style={{ color: "var(--ds-text-4)" }}>mi</span>
-                </div>
-              </Field>
-              <Field label="Asking Price" required>
-                <div className="relative">
-                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm pointer-events-none" style={{ color: "var(--ds-text-3)" }}>$</span>
-                  <input type="number" value={form.askingPrice || ""} onChange={(e) => setField("askingPrice", parseInt(e.target.value, 10) || 0)}
-                    placeholder="18,500" min={1} required className={inputCls + " pl-7 placeholder:opacity-40"} style={iStyle}
-                    onFocus={(e) => Object.assign(e.target.style, iFocus)}
-                    onBlur={(e) => Object.assign(e.target.style, iStyle)} />
-                </div>
-              </Field>
-              <Field label="ZIP Code" required>
-                <input type="text" value={form.zipCode}
-                  onChange={(e) => setField("zipCode", e.target.value.replace(/\D/g, "").slice(0, 5))}
-                  placeholder="90210" pattern="\d{5}" required
-                  className={inputCls + " font-mono tracking-widest placeholder:opacity-40"} style={iStyle}
-                  onFocus={(e) => Object.assign(e.target.style, iFocus)}
-                  onBlur={(e) => Object.assign(e.target.style, iStyle)}
-                  aria-label="ZIP code" />
-              </Field>
-            </div>
-
-            {submitError && (
-              <div className="rounded-xl px-4 py-3 text-sm text-red-500 flex items-center gap-2"
-                style={{ background: "rgba(248,113,113,0.07)", border: "1px solid rgba(248,113,113,0.18)" }}>
-                <IconAlert />{submitError}
+                {vinSuccess && (
+                  <span className="flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full"
+                    style={{ background: "rgba(52,211,153,0.12)", border: "1px solid rgba(52,211,153,0.25)", color: "#34d399" }}>
+                    <IconCheck /> Verified
+                  </span>
+                )}
               </div>
-            )}
 
-            <button type="submit" disabled={submitting}
-              className="w-full py-3.5 rounded-xl text-sm font-semibold text-white flex items-center justify-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:brightness-110 active:scale-[0.99]"
-              style={{ background: "linear-gradient(135deg, #4f46e5, #6366f1)", boxShadow: "0 0 24px rgba(99,102,241,0.35), 0 4px 16px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.12)" }}>
-              Score this deal <IconArrow />
-            </button>
+              {/* VIN input row */}
+              <div className="flex gap-2.5">
+                <div className="flex-1 relative">
+                  <input
+                    type="text"
+                    placeholder="e.g. 1HGBH41JXMN109186"
+                    value={vinInput}
+                    onChange={(e) => {
+                      const v = e.target.value.toUpperCase().replace(/[^A-HJ-NPR-Z0-9]/gi, "");
+                      setVinInput(v); setVinSuccess(false); setVinError("");
+                    }}
+                    maxLength={17}
+                    className={inputCls + " font-mono tracking-widest placeholder:opacity-30 placeholder:tracking-normal pr-14"}
+                    style={iStyle}
+                    onFocus={(e) => Object.assign(e.target.style, iFocus)}
+                    onBlur={(e)  => Object.assign(e.target.style, iStyle)}
+                    aria-label="VIN number"
+                  />
+                  <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs tabular-nums pointer-events-none"
+                    style={{ color: vinInput.length === 17 ? "#34d399" : "var(--ds-text-4)" }}>
+                    {vinInput.length}/17
+                  </span>
+                </div>
+                <button type="button" onClick={handleVinDecode}
+                  disabled={vinLoading || vinInput.trim().length < 11}
+                  className="flex-shrink-0 px-5 py-3 rounded-xl text-sm font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                  style={vinInput.trim().length >= 11 && !vinSuccess
+                    ? { background: "linear-gradient(135deg,#4f46e5,#6366f1)", color: "#fff", boxShadow: "0 0 16px rgba(99,102,241,0.3)", border: "none" }
+                    : { background: "var(--ds-badge-bg)", border: "1px solid var(--ds-badge-border)", color: "var(--ds-text-2)" }}>
+                  {vinLoading ? <span className="flex items-center gap-2"><IconSpinner />Decoding…</span> : "Decode"}
+                </button>
+              </div>
 
-            <div className="flex items-center justify-center gap-4 text-xs" style={{ color: "var(--ds-text-4)" }}>
-              <span className="flex items-center gap-1">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-                VIN-verified accuracy
-              </span>
-              <span>·</span>
-              <span>Results in ~3 seconds</span>
-              <span>·</span>
-              <span>Uses 1 credit</span>
+              {/* VIN error / success */}
+              {vinError && (
+                <p className="mt-2.5 text-xs text-red-500 flex items-center gap-1.5"><IconAlert />{vinError}</p>
+              )}
+              {vinSuccess && (
+                <div className="mt-2.5 flex items-center gap-2 text-xs" style={{ color: "#34d399" }}>
+                  <span className="w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0"
+                    style={{ background: "rgba(52,211,153,0.12)", border: "1px solid rgba(52,211,153,0.25)" }}>
+                    <IconCheck />
+                  </span>
+                  VIN verified — {form.year} {form.make} {form.model}{form.trim ? ` ${form.trim}` : ""}. Confirm details below.
+                </div>
+              )}
+
+              {/* "How to find your VIN" collapsible */}
+              <HowToFindVin />
             </div>
-          </div>
-        </motion.form>
+          </motion.div>
+
+          {/* ── OR divider + listing link ── */}
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.1, ease }} className="mb-3">
+            {/* OR divider */}
+            <div className="flex items-center gap-3 mb-3">
+              <div className="flex-1 h-px" style={{ background: "var(--ds-divider)" }} />
+              <span className="text-xs font-medium px-2" style={{ color: "var(--ds-text-4)" }}>or auto-detect from a listing</span>
+              <div className="flex-1 h-px" style={{ background: "var(--ds-divider)" }} />
+            </div>
+
+            {/* Listing link card */}
+            <div className="rounded-2xl p-4" style={glassCard}>
+              <div className="flex items-center gap-2 text-xs font-medium mb-3" style={{ color: "var(--ds-text-3)" }}>
+                <span className="text-indigo-400"><IconLink /></span>
+                Paste a listing link
+                <span style={{ color: "var(--ds-text-4)" }}>— we'll extract the VIN automatically</span>
+              </div>
+              <div className="flex gap-2.5">
+                <input
+                  type="url"
+                  placeholder="https://cargurus.com/... or autotrader.com/..."
+                  value={listingUrl}
+                  onChange={(e) => { setListingUrl(e.target.value); setLinkError(""); setLinkSuccess(false); }}
+                  onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleListingLink(); } }}
+                  className={inputCls + " flex-1 placeholder:opacity-30 text-xs"}
+                  style={iStyle}
+                  onFocus={(e) => Object.assign(e.target.style, iFocus)}
+                  onBlur={(e)  => Object.assign(e.target.style, iStyle)}
+                />
+                <button type="button" onClick={handleListingLink}
+                  disabled={linkLoading || !listingUrl.trim()}
+                  className="flex-shrink-0 px-4 py-3 rounded-xl text-xs font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                  style={{ background: "var(--ds-badge-bg)", border: "1px solid var(--ds-badge-border)", color: "var(--ds-text-2)" }}>
+                  {linkLoading ? <span className="flex items-center gap-1.5"><IconSpinner />Extracting…</span> : "Extract VIN"}
+                </button>
+              </div>
+              {linkError && (
+                <p className="mt-2 text-xs text-amber-500 flex items-center gap-1.5"><IconAlert />{linkError}</p>
+              )}
+              {linkSuccess && (
+                <p className="mt-2 text-xs flex items-center gap-1.5" style={{ color: "#34d399" }}>
+                  <span className="w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0"
+                    style={{ background: "rgba(52,211,153,0.12)", border: "1px solid rgba(52,211,153,0.25)" }}>
+                    <IconCheck />
+                  </span>
+                  VIN extracted from listing!
+                </p>
+              )}
+            </div>
+          </motion.div>
+
+          {/* ── Step 2: Car Details ── */}
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.14, ease }}>
+            <div className="rounded-2xl p-6 space-y-6" style={glassCard}>
+
+              {/* Step label */}
+              <div className="flex items-center gap-2.5 -mb-2">
+                <div className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold"
+                  style={{ background: "rgba(99,102,241,0.15)", border: "1px solid rgba(99,102,241,0.3)", color: "#818cf8" }}>
+                  2
+                </div>
+                <span className="text-sm font-semibold" style={{ color: "var(--ds-text-1)" }}>Confirm details</span>
+                {vinSuccess && (
+                  <span className="text-xs" style={{ color: "var(--ds-text-4)" }}>— auto-filled from VIN</span>
+                )}
+              </div>
+
+              {/* Year + Make */}
+              <div className="grid sm:grid-cols-2 gap-5">
+                <Field label="Year" required>
+                  <div className="relative">
+                    <select value={form.year} onChange={(e) => setField("year", parseInt(e.target.value, 10))}
+                      required className={inputCls + " cursor-pointer appearance-none pr-10"} style={iStyle}>
+                      {YEARS.map((y) => <option key={y} value={y}>{y}</option>)}
+                    </select>
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none"><IconChevron /></div>
+                  </div>
+                </Field>
+                <Field label="Make" required>
+                  <Combobox id="make" value={form.make} onChange={handleMakeChange} options={ALL_MAKES} placeholder="e.g. Toyota" />
+                </Field>
+              </div>
+
+              {/* Model + Trim */}
+              <div className="grid sm:grid-cols-2 gap-5">
+                <Field label="Model" required hint={form.make && modelOptions.length === 0 ? "Type any model name" : undefined}>
+                  <Combobox id="model" value={form.model} onChange={handleModelChange} options={modelOptions} placeholder="e.g. Camry" disabled={!form.make} />
+                </Field>
+                <Field label="Trim" hint={form.model && trimOptions.length === 0 ? "Type any trim name" : undefined}>
+                  <Combobox id="trim" value={form.trim ?? ""} onChange={(v) => setField("trim", v)} options={trimOptions} placeholder="e.g. XLE, Sport…" disabled={!form.model} />
+                </Field>
+              </div>
+
+              <div className="h-px" style={{ background: "var(--ds-divider)" }} />
+
+              {/* Mileage + Price + ZIP */}
+              <div className="grid sm:grid-cols-3 gap-5">
+                <Field label="Mileage" required>
+                  <div className="relative">
+                    <input type="number" value={form.mileage || ""} onChange={(e) => setField("mileage", parseInt(e.target.value, 10) || 0)}
+                      placeholder="45,000" min={1} required className={inputCls + " pr-9 placeholder:opacity-40"} style={iStyle}
+                      onFocus={(e) => Object.assign(e.target.style, iFocus)}
+                      onBlur={(e)  => Object.assign(e.target.style, iStyle)} />
+                    <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs pointer-events-none" style={{ color: "var(--ds-text-4)" }}>mi</span>
+                  </div>
+                </Field>
+                <Field label="Asking Price" required>
+                  <div className="relative">
+                    <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm pointer-events-none" style={{ color: "var(--ds-text-3)" }}>$</span>
+                    <input type="number" value={form.askingPrice || ""} onChange={(e) => setField("askingPrice", parseInt(e.target.value, 10) || 0)}
+                      placeholder="18,500" min={1} required className={inputCls + " pl-7 placeholder:opacity-40"} style={iStyle}
+                      onFocus={(e) => Object.assign(e.target.style, iFocus)}
+                      onBlur={(e)  => Object.assign(e.target.style, iStyle)} />
+                  </div>
+                </Field>
+                <Field label="ZIP Code" required>
+                  <input type="text" value={form.zipCode}
+                    onChange={(e) => setField("zipCode", e.target.value.replace(/\D/g, "").slice(0, 5))}
+                    placeholder="90210" pattern="\d{5}" required
+                    className={inputCls + " font-mono tracking-widest placeholder:opacity-40"} style={iStyle}
+                    onFocus={(e) => Object.assign(e.target.style, iFocus)}
+                    onBlur={(e)  => Object.assign(e.target.style, iStyle)}
+                    aria-label="ZIP code" />
+                </Field>
+              </div>
+
+              {/* Error */}
+              {submitError && (
+                <div className="rounded-xl px-4 py-3 text-sm text-red-500 flex items-center gap-2"
+                  style={{ background: "rgba(248,113,113,0.07)", border: "1px solid rgba(248,113,113,0.18)" }}>
+                  <IconAlert />{submitError}
+                </div>
+              )}
+
+              {/* Submit */}
+              <button type="submit" disabled={submitting}
+                className="w-full py-3.5 rounded-xl text-sm font-semibold text-white flex items-center justify-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:brightness-110 active:scale-[0.99]"
+                style={{ background: "linear-gradient(135deg, #4f46e5, #6366f1)", boxShadow: "0 0 24px rgba(99,102,241,0.35), 0 4px 16px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.12)" }}>
+                Score this deal <IconArrow />
+              </button>
+
+              <div className="flex items-center justify-center gap-4 text-xs" style={{ color: "var(--ds-text-4)" }}>
+                <span className="flex items-center gap-1"><IconShield />VIN-verified accuracy</span>
+                <span>·</span>
+                <span>~3 seconds</span>
+                <span>·</span>
+                <span>Uses 1 credit</span>
+              </div>
+            </div>
+          </motion.div>
+
+        </form>
       </div>
     </div>
   );

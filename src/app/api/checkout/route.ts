@@ -9,9 +9,9 @@ function getStripe() {
 }
 
 const PRICE_CREDITS: Record<string, { credits: number; label: string }> = {
-  "price_1TK6MGJ5w276rD5yy4QjjsP8": { credits: 3,  label: "Starter Pack"  },
-  "price_1TK6MLJ5w276rD5yqPV0eCom": { credits: 10, label: "Standard Pack" },
-  "price_1TK6MQJ5w276rD5yqpR1sVEo": { credits: 25, label: "Pro Pack"      },
+  "price_1TKM2PJ5w276rD5y6NBfq0A5": { credits: 3,  label: "Starter Pack"  },
+  "price_1TKM2QJ5w276rD5yxetJGqq6": { credits: 10, label: "Standard Pack" },
+  "price_1TKM2RJ5w276rD5y3wqLUg90": { credits: 25, label: "Pro Pack"      },
 };
 
 export async function POST(req: NextRequest) {

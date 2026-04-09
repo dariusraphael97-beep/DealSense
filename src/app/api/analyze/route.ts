@@ -382,29 +382,57 @@ export async function POST(req: NextRequest) {
     // Non-fatal for now — don't block analysis if credit check fails
   }
 
+  // ── VIN cache check: skip API call if we already have recent data ────────
+  // Queries the analyses table for a result on this VIN within the last 7 days.
+  // Saves ~$0.40/lookup on repeated VINs (same car checked by multiple users).
+  let cachedMarketValue: PriceRange | undefined;
+  try {
+    const { createClient: cc } = await import("@/lib/supabase/server");
+    const sbCache = await cc();
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+    const { data: cached } = await sbCache
+      .from("analyses")
+      .select("estimated_value_low, estimated_value_high")
+      .eq("vin", input.vin!)
+      .not("estimated_value_low", "is", null)
+      .gte("created_at", sevenDaysAgo)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .single();
+    if (cached?.estimated_value_low && cached?.estimated_value_high) {
+      cachedMarketValue = {
+        low:      cached.estimated_value_low,
+        high:     cached.estimated_value_high,
+        midpoint: Math.round((cached.estimated_value_low + cached.estimated_value_high) / 2),
+      };
+    }
+  } catch { /* non-fatal */ }
+
   // Pricing priority order:
+  // 0. VIN cache — free, instant, reuses data from previous analyses on same VIN
   // 1. VinAudit — real transaction data, most accurate (VIN always provided)
   // 2. Edmunds TMV — real transaction data fallback (requires EDMUNDS_API_KEY)
   // 3. Statistical depreciation model — always-on fallback, no API needed
-  //
-  // Note: MarketCheck and Craigslist removed — VIN is required so we always
-  // have access to real transaction data via VinAudit.
-  const [vinAuditValue, edmundsValue] = await Promise.all([
-    fetchVinAuditValue(input),
-    fetchEdmundsTMV(input),
-  ]);
-
   let marketValue: PriceRange | undefined;
   let priceSource: string;
 
-  if (vinAuditValue) {
-    marketValue = vinAuditValue;
-    priceSource = "VinAudit transaction data";
-  } else if (edmundsValue) {
-    marketValue = edmundsValue;
-    priceSource = "Edmunds True Market Value (TMV)";
+  if (cachedMarketValue) {
+    marketValue = cachedMarketValue;
+    priceSource = "VinAudit transaction data (cached)";
   } else {
-    priceSource = "Statistical model (depreciation data)";
+    const [vinAuditValue, edmundsValue] = await Promise.all([
+      fetchVinAuditValue(input),
+      fetchEdmundsTMV(input),
+    ]);
+    if (vinAuditValue) {
+      marketValue = vinAuditValue;
+      priceSource = "VinAudit transaction data";
+    } else if (edmundsValue) {
+      marketValue = edmundsValue;
+      priceSource = "Edmunds True Market Value (TMV)";
+    } else {
+      priceSource = "Statistical model (depreciation data)";
+    }
   }
 
   const scored = scoreCarDeal(input, marketValue);

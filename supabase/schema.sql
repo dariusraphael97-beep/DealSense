@@ -61,6 +61,23 @@ insert into public.plans (name, analysis_limit)
 values ('Free', 3), ('Pro', null)
 on conflict do nothing;
 
+-- Trigger: give new users 1 free credit on signup
+-- Run this in Supabase SQL editor if not already applied:
+--
+-- CREATE OR REPLACE FUNCTION public.handle_new_user()
+-- RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+-- BEGIN
+--   INSERT INTO public.profiles (id, email, credits)
+--   VALUES (NEW.id, NEW.email, 1)
+--   ON CONFLICT (id) DO NOTHING;
+--   RETURN NEW;
+-- END; $$;
+--
+-- DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+-- CREATE TRIGGER on_auth_user_created
+--   AFTER INSERT ON auth.users
+--   FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+
 -- Row-level security
 alter table public.profiles enable row level security;
 alter table public.analyses enable row level security;
