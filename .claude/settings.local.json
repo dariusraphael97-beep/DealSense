@@ -135,7 +135,12 @@
       "mcp__9182f1d1-ab54-4586-9bf6-3c490c9a2003__list_prices",
       "mcp__9182f1d1-ab54-4586-9bf6-3c490c9a2003__list_products",
       "Bash(find /Users/darius/Downloads/myproject/src -type f \\\\\\( -name \"*.tsx\" -o -name \"*.ts\" -o -name \"*.html\" \\\\\\) -exec grep -l \"script\\\\|<html\" {} \\\\;)",
-      "Bash(npx next:*)"
+      "Bash(npx next:*)",
+      "Bash(git revert:*)",
+      "Bash(git checkout:*)",
+      "Bash(git reset:*)",
+      "Bash(find /Users/darius/Downloads/myproject/src -name \"*.tsx\" -exec grep -l \"three\\\\|Three\\\\|3D\" {} \\\\;)",
+      "Bash(npm uninstall:*)"
     ]
   }
 }

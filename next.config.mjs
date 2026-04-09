@@ -6,6 +6,9 @@ const nextConfig = {
       { protocol: "https", hostname: "github.com" },
     ],
   },
+  experimental: {
+    optimizePackageImports: ["framer-motion", "lucide-react", "recharts"],
+  },
 };
 
 export default nextConfig;

@@ -233,34 +233,30 @@ export default function HomePage() {
             VIN-verified pricing · 1 free analysis
           </motion.div>
 
-          {/* Animated letter-by-letter headline */}
+          {/* Animated word-by-word headline */}
           <h1 className="font-heading text-5xl sm:text-7xl md:text-8xl font-bold tracking-tight leading-[1.05] mb-6">
             {[["Is this used car"], ["worth the price?"]].map((line, lineIdx) =>
               line.map((phrase) => (
                 <span key={lineIdx} className="block">
                   {phrase.split(" ").map((word, wordIdx) => (
-                    <span key={wordIdx} className="inline-block mr-[0.25em] last:mr-0">
-                      {word.split("").map((letter, letterIdx) => (
-                        <motion.span
-                          key={`${lineIdx}-${wordIdx}-${letterIdx}`}
-                          initial={{ y: 80, opacity: 0 }}
-                          animate={{ y: 0, opacity: 1 }}
-                          transition={{
-                            delay: lineIdx * 0.18 + wordIdx * 0.06 + letterIdx * 0.025,
-                            type: "spring",
-                            stiffness: 160,
-                            damping: 22,
-                          }}
-                          className={`inline-block bg-clip-text text-transparent ${
-                            lineIdx === 0
-                              ? "bg-gradient-to-b from-slate-900 to-slate-600 dark:from-white dark:to-white/75"
-                              : "bg-gradient-to-r from-blue-500 via-indigo-500 to-violet-500 dark:from-blue-400 dark:via-indigo-300 dark:to-violet-400"
-                          }`}
-                        >
-                          {letter}
-                        </motion.span>
-                      ))}
-                    </span>
+                    <motion.span
+                      key={`${lineIdx}-${wordIdx}`}
+                      initial={{ y: 80, opacity: 0 }}
+                      animate={{ y: 0, opacity: 1 }}
+                      transition={{
+                        delay: lineIdx * 0.22 + wordIdx * 0.08,
+                        type: "spring",
+                        stiffness: 160,
+                        damping: 22,
+                      }}
+                      className={`inline-block mr-[0.25em] last:mr-0 bg-clip-text text-transparent ${
+                        lineIdx === 0
+                          ? "bg-gradient-to-b from-slate-900 to-slate-600 dark:from-white dark:to-white/75"
+                          : "bg-gradient-to-r from-blue-500 via-indigo-500 to-violet-500 dark:from-blue-400 dark:via-indigo-300 dark:to-violet-400"
+                      }`}
+                    >
+                      {word}
+                    </motion.span>
                   ))}
                 </span>
               ))

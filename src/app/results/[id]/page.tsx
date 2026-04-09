@@ -5,7 +5,8 @@ import { useParams } from "next/navigation";
 import { motion, useInView } from "framer-motion";
 import type { AnalysisResult } from "@/lib/types";
 import Link from "next/link";
-import { DepreciationChart } from "@/components/ui/depreciation-chart";
+import dynamic from "next/dynamic";
+const DepreciationChart = dynamic(() => import("@/components/ui/depreciation-chart").then(m => m.DepreciationChart), { ssr: false });
 import { UserNav } from "@/components/ui/user-nav";
 
 const ease = [0.22, 1, 0.36, 1] as const;
