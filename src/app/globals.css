@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+/* Fonts loaded via <link> in layout.tsx for non-blocking preconnect */
 
 @tailwind base;
 @tailwind components;
@@ -160,15 +160,24 @@
   }
 }
 
-/* Prevent transition flash on page load */
-html.no-transitions * {
+/* ── Windows flickering fixes ── */
+
+/* Suppress ALL animations/transitions until theme is settled */
+html:not([data-theme-set]) * {
   transition: none !important;
+  animation-play-state: paused !important;
 }
 
-/* Fix backdrop-filter GPU issues on Windows */
-.backdrop-blur-sm, .backdrop-blur-2xl, [style*="backdrop-filter"] {
+/* GPU compositing for backdrop-filter on Windows (Tailwind + inline styles) */
+[class*="backdrop-blur"],
+[style*="backdrop-filter"] {
   -webkit-backface-visibility: hidden;
   backface-visibility: hidden;
   transform: translateZ(0);
-  will-change: transform;
+}
+
+/* Prevent layout shift from font swap */
+body {
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
 }

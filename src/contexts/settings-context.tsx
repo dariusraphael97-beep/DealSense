@@ -20,35 +20,41 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
     setMounted(true);
   }, []);
 
-  // Apply theme class to <html> whenever theme or mount changes
+  // Apply theme — only when user CHANGES theme after mount, not on initial load
+  // (the inline script in layout.tsx already set the correct class before paint)
   useEffect(() => {
     if (!mounted) return;
     const root = document.documentElement;
+
     const applyTheme = (dark: boolean) => {
       root.classList.toggle("dark", dark);
       root.classList.toggle("light", !dark);
     };
 
+    // Skip the first application if the inline script already handled it
+    const alreadySet = root.getAttribute("data-theme-set") === "1";
+    if (alreadySet) {
+      root.removeAttribute("data-theme-set");
+      // Still set up system theme listener if needed
+      if (settings.theme === "system") {
+        const mq = window.matchMedia("(prefers-color-scheme: dark)");
+        const handler = (e: MediaQueryListEvent) => applyTheme(e.matches);
+        mq.addEventListener("change", handler);
+        return () => mq.removeEventListener("change", handler);
+      }
+      return;
+    }
+
+    // Subsequent theme changes (user toggled in settings)
     if (settings.theme === "system") {
       const mq = window.matchMedia("(prefers-color-scheme: dark)");
       applyTheme(mq.matches);
       const handler = (e: MediaQueryListEvent) => applyTheme(e.matches);
       mq.addEventListener("change", handler);
-      // Remove no-transitions class and enable body transition after initial theme is applied
-      requestAnimationFrame(() => {
-        root.classList.remove("no-transitions");
-        document.body.classList.add("transition-colors", "duration-300");
-      });
       return () => mq.removeEventListener("change", handler);
     } else {
       applyTheme(settings.theme === "dark");
     }
-
-    // Remove no-transitions class and enable body transition after initial theme is applied
-    requestAnimationFrame(() => {
-      root.classList.remove("no-transitions");
-      document.body.classList.add("transition-colors", "duration-300");
-    });
   }, [settings.theme, mounted]);
 
   const update = useCallback(<K extends keyof AppSettings>(key: K, value: AppSettings[K]) => {
