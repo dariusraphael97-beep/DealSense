@@ -114,3 +114,54 @@ export interface VinDecodeResult {
   displacement?: string;
   error?: string;
 }
+
+/* ══════════════════════════════════════════════════════════════════════
+   Normalized provider types — decoupled from any specific API response
+   ══════════════════════════════════════════════════════════════════════ */
+
+/** Normalized vehicle identity from VIN decode */
+export interface NormalizedVehicle {
+  vin?: string;
+  year?: number;
+  make?: string;
+  model?: string;
+  trim?: string;
+  bodyClass?: string;
+  driveType?: string;
+  fuelType?: string;
+  engineCylinders?: string;
+  displacement?: string;
+  transmission?: string;
+}
+
+/** Data extracted from a listing URL */
+export interface ListingExtraction {
+  vin: string | null;
+  price: number | null;
+  mileage: number | null;
+  zipCode: string | null;
+  title: string | null;
+  source: string;
+}
+
+/** Normalized valuation from any pricing provider */
+export interface NormalizedValuation {
+  range: PriceRange;
+  source: string;
+  sourceType: "transaction" | "listings" | "broad_model" | "statistical";
+  timestamp: number;
+}
+
+/** Window sticker availability */
+export interface StickerResult {
+  available: boolean;
+  url?: string;
+  provider?: string;
+}
+
+/** Standardized provider error */
+export interface ProviderError {
+  provider: string;
+  message: string;
+  code: "network" | "auth" | "not_found" | "rate_limit" | "parse" | "unknown";
+}

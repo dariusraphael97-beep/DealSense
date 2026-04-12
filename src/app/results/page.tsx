@@ -59,6 +59,9 @@ function IconDollar() {
 function IconShield() {
   return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>;
 }
+function IconFileText() {
+  return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>;
+}
 
 /* ── Loan calculator ── */
 function calcMonthly(price: number, apr: number, downPct: number, termMonths: number): number {
@@ -855,6 +858,14 @@ function ResultsContent() {
                 {copied ? <><IconCheckLg />Copied!</> : <><IconCopy />{verdict === "Buy" ? "Copy closing script" : "Copy script"}</>}
               </button>
             </div>
+
+            {/* Window Sticker — coming soon */}
+            <button disabled
+              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-xs font-medium transition-all opacity-40 cursor-not-allowed"
+              style={{ background: "var(--ds-badge-bg)", border: "1px solid var(--ds-badge-border)", color: "var(--ds-text-3)" }}
+              title="Window sticker lookup coming soon">
+              <IconFileText /> Window Sticker <span className="text-[10px] ml-1 px-1.5 py-0.5 rounded-md" style={{ background: "rgba(99,102,241,0.1)", color: "#818cf8", border: "1px solid rgba(99,102,241,0.2)" }}>Soon</span>
+            </button>
           </motion.div>
         </FadeSection>
 

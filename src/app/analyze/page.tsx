@@ -395,6 +395,7 @@ export default function AnalyzePage() {
   const [linkLoading, setLinkLoading] = useState(false);
   const [linkError, setLinkError]     = useState("");
   const [linkSuccess, setLinkSuccess] = useState(false);
+  const [linkExtracted, setLinkExtracted] = useState<string[]>([]);
 
   const [submitting, setSubmitting]   = useState(false);
   const [submitError, setSubmitError] = useState("");
@@ -472,10 +473,10 @@ export default function AnalyzePage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [vinInput]);
 
-  // Extract VIN from a listing link
+  // Extract VIN + listing data from a link
   const handleListingLink = useCallback(async () => {
     if (!listingUrl.trim()) return;
-    setLinkError(""); setLinkSuccess(false); setLinkLoading(true);
+    setLinkError(""); setLinkSuccess(false); setLinkExtracted([]); setLinkLoading(true);
     try {
       const res  = await fetch("/api/extract-vin", {
         method:  "POST",
@@ -484,9 +485,21 @@ export default function AnalyzePage() {
       });
       const data = await res.json();
       if (data.vin) {
+        const filled: string[] = ["VIN"];
+
+        // Autofill price, mileage, and ZIP when the listing provides them
+        setForm((prev) => {
+          const updates: Partial<CarInput> = {};
+          if (typeof data.price === "number" && data.price > 0) { updates.askingPrice = data.price; filled.push("price"); }
+          if (typeof data.mileage === "number" && data.mileage > 0) { updates.mileage = data.mileage; filled.push("mileage"); }
+          if (typeof data.zipCode === "string" && /^\d{5}$/.test(data.zipCode)) { updates.zipCode = data.zipCode; filled.push("ZIP"); }
+          return { ...prev, ...updates };
+        });
+
         setListingUrl("");
+        setLinkExtracted(filled);
         setLinkSuccess(true);
-        setTimeout(() => setLinkSuccess(false), 3000);
+        setTimeout(() => setLinkSuccess(false), 5000);
         await decodeVin(data.vin);
       } else {
         setLinkError(data.error ?? "VIN not found. Please enter it manually.");
@@ -762,7 +775,7 @@ export default function AnalyzePage() {
               <div className="flex items-center gap-2 text-xs font-medium mb-3" style={{ color: "var(--ds-text-3)" }}>
                 <span className="text-indigo-400"><IconLink /></span>
                 Paste a listing link
-                <span style={{ color: "var(--ds-text-4)" }}>— we'll extract the VIN automatically</span>
+                <span style={{ color: "var(--ds-text-4)" }}>— we&apos;ll autofill the details when available</span>
               </div>
               <div className="flex gap-2.5">
                 <input
@@ -792,7 +805,9 @@ export default function AnalyzePage() {
                     style={{ background: "rgba(52,211,153,0.12)", border: "1px solid rgba(52,211,153,0.25)" }}>
                     <IconCheck />
                   </span>
-                  VIN extracted from listing!
+                  {linkExtracted.length > 1
+                    ? `Extracted ${linkExtracted.join(", ")} from listing`
+                    : "VIN extracted from listing!"}
                 </p>
               )}
             </div>

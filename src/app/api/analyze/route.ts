@@ -1,273 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { scoreCarDeal, estimateFairValue, determineVehicleCategory } from "@/lib/scoring";
 import type { CarInput, AnalysisResult, PriceRange, ConfidenceLevel, VehicleCategory } from "@/lib/types";
-import { fetchCraigslistPrices } from "@/lib/craigslist";
-import { AutoDev } from "@auto.dev/sdk";
-
-/**
- * VinAudit Market Value API — most accurate when a VIN is provided.
- * Uses 90-day rolling window of real transaction data.
- * Sign up at vinaudit.com/market-value-api (pay-per-use, ~$0.40/lookup).
- */
-async function fetchVinAuditValue(input: CarInput): Promise<PriceRange | null> {
-  const apiKey = process.env.VINAUDIT_API_KEY;
-  if (!apiKey || !input.vin) return null;
-
-  try {
-    const params = new URLSearchParams({
-      key: apiKey,
-      vin: input.vin,
-      format: "json",
-      period: "90",
-    });
-    const res = await fetch(
-      `https://api.vinaudit.com/query.php?${params}`,
-      { next: { revalidate: 3600 } }
-    );
-    if (!res.ok) return null;
-    const data = await res.json();
-    if (!data?.success || !data?.prices?.average) return null;
-
-    const { average, below, above } = data.prices as {
-      average: number;
-      below: number;
-      above: number;
-    };
-    if (!average || average < 500) return null;
-
-    return {
-      low: below ?? Math.round(average * 0.93),
-      high: above ?? Math.round(average * 1.07),
-      midpoint: average,
-    };
-  } catch {
-    return null;
-  }
-}
-
-/**
- * MarketCheck Price Prediction API — uses ML model trained on live listings.
- * More accurate than raw listing search. Set MARKETCHECK_API_KEY in env.
- */
-async function fetchMarketCheckValue(input: CarInput): Promise<PriceRange | null> {
-  const apiKey = process.env.MARKETCHECK_API_KEY;
-  if (!apiKey) return null;
-
-  // Build mileage range filter — compare to similar-mileage vehicles only
-  const miles = input.mileage;
-  const milesMin = Math.max(0, Math.round(miles * 0.4));
-  const milesMax = Math.round(miles * 2.5 + 15000); // generous upper bound
-
-  for (const radius of ["100", "500", "2000"]) {
-    try {
-      const params = new URLSearchParams({
-        api_key:   apiKey,
-        year:      String(input.year),
-        make:      input.make,
-        model:     input.model,
-        ...(input.trim ? { trim: input.trim } : {}),
-        zip:       input.zipCode,
-        radius,
-        rows:      "50",
-        miles_min: String(milesMin),
-        miles_max: String(milesMax),
-      });
-      const res = await fetch(
-        `https://mc-api.marketcheck.com/v2/search/car/active?${params}`,
-        { cache: "no-store" }
-      );
-      if (!res.ok) {
-        // debug:`[MC] listings radius=${radius} status=${res.status}`);
-        // If radius restriction on free tier, still try without mileage filter
-        const params2 = new URLSearchParams({
-          api_key: apiKey,
-          year:    String(input.year),
-          make:    input.make,
-          model:   input.model,
-          ...(input.trim ? { trim: input.trim } : {}),
-          zip:     input.zipCode,
-          radius,
-          rows:    "50",
-        });
-        params2.set("radius", "100");
-        const res2 = await fetch(
-          `https://mc-api.marketcheck.com/v2/search/car/active?${params2}`,
-          { cache: "no-store" }
-        );
-        if (!res2.ok) continue;
-        const data2 = await res2.json();
-        const listings2: { price: number; miles: number }[] = data2?.listings ?? [];
-        // Filter by mileage client-side
-        const filtered2 = listings2.filter((l) => l.miles >= milesMin && l.miles <= milesMax);
-        const src = filtered2.length >= 3 ? filtered2 : listings2;
-        const prices2 = src.map((l) => l.price).filter((p) => p > 500).sort((a, b) => a - b);
-        // debug:`[MC] fallback radius=${radius} total=${listings2.length} mileage-filtered=${filtered2.length}`);
-        if (prices2.length < 3) continue;
-        const tc2 = Math.floor(prices2.length * 0.1);
-        const tr2 = prices2.slice(tc2, prices2.length - tc2);
-        return { low: tr2[0], high: tr2[tr2.length - 1], midpoint: tr2[Math.floor(tr2.length / 2)] };
-      }
-
-      const data = await res.json();
-      const listings: { price: number; miles: number }[] = data?.listings ?? [];
-      // debug:`[MC] listings radius=${radius} found=${listings.length}`);
-      if (listings.length < 3) continue;
-
-      const prices = listings.map((l) => l.price).filter((p) => p > 500).sort((a, b) => a - b);
-      const trimCount = Math.floor(prices.length * 0.1);
-      const trimmed = prices.slice(trimCount, prices.length - trimCount);
-      return {
-        low:      trimmed[0],
-        high:     trimmed[trimmed.length - 1],
-        midpoint: trimmed[Math.floor(trimmed.length / 2)],
-      };
-    } catch (e) {
-      // debug:`[MC] listings radius=${radius} error=${e}`);
-      continue;
-    }
-  }
-  return null;
-}
-
-/**
- * Edmunds True Market Value (TMV) API — transaction-based pricing, no VIN required.
- * Uses real closed-sale data, not just listing prices. More accurate than listing-based APIs.
- * Sign up at developer.edmunds.com (free tier available).
- *
- * Flow: year/make/model → styleId lookup → TMV call with mileage + zip
- */
-async function fetchEdmundsTMV(input: CarInput): Promise<PriceRange | null> {
-  const apiKey = process.env.EDMUNDS_API_KEY;
-  if (!apiKey) return null;
-
-  try {
-    // Edmunds uses "niceId" format: lowercase, spaces → hyphens, strip special chars
-    const toNiceId = (s: string) =>
-      s.toLowerCase().trim().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
-
-    const makeNiceId  = toNiceId(input.make);
-    const modelNiceId = toNiceId(input.model);
-
-    // Step 1: Get all styles (trim levels) for this year/make/model
-    const stylesRes = await fetch(
-      `https://api.edmunds.com/api/vehicle/v2/${makeNiceId}/${modelNiceId}/${input.year}/styles?view=basic&api_key=${apiKey}`,
-      { cache: "no-store" }
-    );
-    if (!stylesRes.ok) {
-      // debug:`[Edmunds] styles ${stylesRes.status} — ${makeNiceId}/${modelNiceId}/${input.year}`);
-      return null;
-    }
-
-    const stylesData = await stylesRes.json();
-    const styles: Array<{ id: number; name: string }> = stylesData?.styles ?? [];
-    if (styles.length === 0) {
-      // debug:`[Edmunds] no styles found for ${makeNiceId}/${modelNiceId}/${input.year}`);
-      return null;
-    }
-
-    // Step 2: Find best matching style for the given trim
-    let bestStyle = styles[0];
-    if (input.trim) {
-      const trimLower = input.trim.toLowerCase();
-      const exact   = styles.find(s => s.name.toLowerCase() === trimLower);
-      const partial = styles.find(s =>
-        s.name.toLowerCase().includes(trimLower) || trimLower.includes(s.name.toLowerCase())
-      );
-      bestStyle = exact ?? partial ?? styles[0];
-    }
-    // debug:`[Edmunds] matched style "${bestStyle.name}" (id=${bestStyle.id})`);
-
-    // Step 3: Get TMV for this style + mileage + zip
-    const tmvRes = await fetch(
-      `https://api.edmunds.com/v1/api/tmv/tmvservice/calculateusedtmv?styleid=${bestStyle.id}&condition=Good&mileage=${input.mileage}&zip=${input.zipCode}&api_key=${apiKey}`,
-      { cache: "no-store" }
-    );
-    if (!tmvRes.ok) {
-      // debug:`[Edmunds] TMV ${tmvRes.status} for styleId=${bestStyle.id}`);
-      return null;
-    }
-
-    const tmvData = await tmvRes.json();
-    const base = tmvData?.tmv?.nationalBasePrice;
-    if (!base) return null;
-
-    // Edmunds returns three price points — use private party as midpoint (most relevant for buyers)
-    const privateParty = base.usedPrivateParty as number | undefined;
-    const retail       = base.usedTmvRetail    as number | undefined;
-    const tradeIn      = base.usedTradeIn      as number | undefined;
-
-    const midpoint = privateParty ?? retail;
-    if (!midpoint || midpoint < 500) return null;
-
-    return {
-      low:      tradeIn      ?? Math.round(midpoint * 0.88),
-      high:     retail       ?? Math.round(midpoint * 1.08),
-      midpoint: midpoint,
-    };
-  } catch (err) {
-    console.error("[Edmunds] error:", err);
-    return null;
-  }
-}
-
-/**
- * Auto.dev Listings API — searches real dealer listings to derive fair value.
- * Free tier: 1,000 calls/mo. Uses median of comparable listings as anchor.
- * Set AUTODEV_API_KEY in env (get one at auto.dev/pricing).
- */
-async function fetchAutoDevValue(input: CarInput): Promise<PriceRange | null> {
-  const apiKey = process.env.AUTODEV_API_KEY;
-  if (!apiKey) return null;
-
-  try {
-    const auto = new AutoDev({ apiKey });
-
-    // Build mileage bounds for filtering (±50% of input mileage, min 5k window)
-    const milesLow = Math.max(0, Math.round(input.mileage * 0.5));
-    const milesHigh = Math.max(milesLow + 5000, Math.round(input.mileage * 1.8));
-
-    const result = await auto.listings({
-      "vehicle.make": input.make,
-      "vehicle.model": input.model,
-      "vehicle.year": String(input.year),
-      ...(input.trim ? { "vehicle.trim": input.trim } : {}),
-    });
-
-    // SDK types result.data as {} — cast to array
-    const listings = (Array.isArray(result?.data) ? result.data : []) as Record<string, unknown>[];
-    if (listings.length < 3) {
-      // debug:`[Auto.dev] only ${listings.length} listings found — skipping`);
-      return null;
-    }
-
-    // Extract prices, filter to valid range and mileage window
-    const prices = listings
-      .filter((l: Record<string, unknown>) => {
-        const p = Number(l.price ?? l.askingPrice ?? 0);
-        const m = Number(l.mileage ?? l.miles ?? 0);
-        return p > 2000 && (m === 0 || (m >= milesLow && m <= milesHigh));
-      })
-      .map((l: Record<string, unknown>) => Number(l.price ?? l.askingPrice))
-      .sort((a: number, b: number) => a - b);
-
-    // debug:`[Auto.dev] ${listings.length} total listings, ${prices.length} after mileage/price filter`);
-    if (prices.length < 3) return null;
-
-    // Trim outliers (10% from each end) and take median
-    const trimCount = Math.floor(prices.length * 0.1);
-    const trimmed = prices.slice(trimCount, prices.length - trimCount);
-    const mid = trimmed[Math.floor(trimmed.length / 2)];
-
-    return {
-      low: trimmed[0],
-      high: trimmed[trimmed.length - 1],
-      midpoint: mid,
-    };
-  } catch (err) {
-    console.error("[Auto.dev] error:", err);
-    return null;
-  }
-}
+import { decodeVin, fetchValuation } from "@/lib/providers";
 
 // AI explanation using Anthropic (or falls back gracefully)
 async function generateAiSummary(
@@ -534,40 +268,18 @@ export async function POST(req: NextRequest) {
   // we can reliably distinguish real API responses from model output.
   // ─────────────────────────────────────────────────────────────────────────
 
-  // Pricing priority order:
-  // 1. VinAudit — real transaction data, most accurate (requires VINAUDIT_API_KEY)
-  // 2. Auto.dev — real dealer listings data (requires AUTODEV_API_KEY, free tier)
-  // 3. Edmunds TMV — real transaction data fallback (requires EDMUNDS_API_KEY)
-  // 4. MarketCheck — live listings data (requires MARKETCHECK_API_KEY)
-  // 5. Statistical depreciation model — always-on fallback, no API needed
+  const { valuation } = await fetchValuation(input);
   let marketValue: PriceRange | undefined;
   let priceSource: string;
 
-  const [vinAuditValue, autoDevValue, edmundsValue, marketCheckValue] = await Promise.all([
-    fetchVinAuditValue(input),
-    fetchAutoDevValue(input),
-    fetchEdmundsTMV(input),
-    fetchMarketCheckValue(input),
-  ]);
-  if (vinAuditValue) {
-    marketValue = vinAuditValue;
-    priceSource = "VinAudit transaction data";
-  } else if (autoDevValue) {
-    marketValue = autoDevValue;
-    priceSource = "Auto.dev dealer listings";
-  } else if (edmundsValue) {
-    marketValue = edmundsValue;
-    priceSource = "Edmunds True Market Value (TMV)";
-  } else if (marketCheckValue) {
-    marketValue = marketCheckValue;
-    priceSource = "MarketCheck live listings";
+  if (valuation) {
+    marketValue = valuation.range;
+    priceSource = valuation.source;
   } else {
     priceSource = "Statistical model (depreciation data)";
   }
 
   // ── VIN decode metadata for confidence/config adjustment ──────────────
-  // If VIN was decoded (via NHTSA), pass that data through to the scoring
-  // engine so it can adjust for drivetrain, body, cylinders, etc.
   let vinData: {
     driveType?: string;
     bodyClass?: string;
@@ -577,27 +289,17 @@ export async function POST(req: NextRequest) {
     trim?: string;
   } | undefined;
 
-  // Attempt to fetch VIN decode data from NHTSA for confidence/config scoring
   if (input.vin) {
     try {
-      const nhtsa = await fetch(
-        `https://vpic.nhtsa.dot.gov/api/vehicles/decodevinvalues/${input.vin}?format=json`,
-        { next: { revalidate: 86400 } }
-      );
-      if (nhtsa.ok) {
-        const nhtsaData = await nhtsa.json();
-        const r = nhtsaData?.Results?.[0];
-        if (r) {
-          vinData = {
-            driveType: r.DriveType || undefined,
-            bodyClass: r.BodyClass || undefined,
-            fuelType: r.FuelTypePrimary || undefined,
-            engineCylinders: r.EngineCylinders || undefined,
-            displacement: r.DisplacementL || undefined,
-            trim: r.Trim || undefined,
-          };
-        }
-      }
+      const vehicle = await decodeVin(input.vin);
+      vinData = {
+        driveType: vehicle.driveType,
+        bodyClass: vehicle.bodyClass,
+        fuelType: vehicle.fuelType,
+        engineCylinders: vehicle.engineCylinders,
+        displacement: vehicle.displacement,
+        trim: vehicle.trim,
+      };
     } catch {
       // Non-fatal — scoring will proceed with less confidence
     }

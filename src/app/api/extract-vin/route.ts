@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
+import { extractFromHtml, getCachedListing, cacheListing } from "@/lib/providers";
 
 /** Matches a 17-char VIN (excludes I, O, Q per NHTSA standard) */
-const VIN_RE = /\b([A-HJ-NPR-Z0-9]{17})\b/g;
+const URL_VIN_RE = /\b([A-HJ-NPR-Z0-9]{17})\b/g;
 
 // ─── SSRF protection — only allow known car-listing domains ────────────────
 const ALLOWED_DOMAINS = [
@@ -60,7 +61,7 @@ export async function POST(req: NextRequest) {
   const trimmed = url.trim();
 
   // ── 1. VIN embedded directly in the URL string ─────────────────────────
-  const urlMatches = Array.from(trimmed.matchAll(VIN_RE));
+  const urlMatches = Array.from(trimmed.matchAll(URL_VIN_RE));
   if (urlMatches.length) {
     return NextResponse.json({ vin: urlMatches[0][1].toUpperCase() });
   }
@@ -94,7 +95,28 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // ── 3. Fetch the listing page and scan HTML ────────────────────────────
+  // ── 3. Check cache before fetching ─────────────────────────────────────
+  const cached = getCachedListing(trimmed);
+  if (cached) {
+    if (cached.vin) {
+      return NextResponse.json({
+        vin: cached.vin,
+        price: cached.price,
+        mileage: cached.mileage,
+        zipCode: cached.zipCode,
+        title: cached.title,
+      });
+    }
+    return NextResponse.json(
+      {
+        vin: null,
+        error: "VIN not found in that listing. Please enter it manually.",
+      },
+      { status: 404 }
+    );
+  }
+
+  // ── 4. Fetch the listing page and extract data ─────────────────────────
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 7000);
 
@@ -139,20 +161,17 @@ export async function POST(req: NextRequest) {
       html = await res.text();
     }
 
-    // Ordered from most specific to most general
-    const patterns: RegExp[] = [
-      /["']vin["']\s*:\s*["']([A-HJ-NPR-Z0-9]{17})["']/i,
-      /data-vin=["']([A-HJ-NPR-Z0-9]{17})["']/i,
-      /vin=([A-HJ-NPR-Z0-9]{17})/i,
-      /\bvin\b[^A-Z0-9]{1,10}([A-HJ-NPR-Z0-9]{17})/i,
-      /vehicle.{1,30}identification.{1,30}([A-HJ-NPR-Z0-9]{17})/i,
-    ];
+    const extraction = extractFromHtml(html, parsed.hostname);
+    cacheListing(trimmed, extraction);
 
-    for (const re of patterns) {
-      const m = html.match(re);
-      if (m?.[1]) {
-        return NextResponse.json({ vin: m[1].toUpperCase() });
-      }
+    if (extraction.vin) {
+      return NextResponse.json({
+        vin: extraction.vin,
+        price: extraction.price,
+        mileage: extraction.mileage,
+        zipCode: extraction.zipCode,
+        title: extraction.title,
+      });
     }
 
     return NextResponse.json(
