@@ -39,72 +39,13 @@ function isAllowedHost(hostname: string): boolean {
   return ALLOWED_DOMAINS.some((d) => lower === d || lower.endsWith(`.${d}`));
 }
 
-// ─── AutoTrader: try their internal listing API for VIN/price/mileage ────────
-async function tryAutoTraderApi(
-  url: URL,
-): Promise<{ vin?: string; price?: number; mileage?: number; zipCode?: string; title?: string } | null> {
-  // Extract listingId from URL params or path
-  const listingId =
-    url.searchParams.get("listingId") ??
-    url.pathname.match(/vehicledetails\.xhtml.*?(\d{8,12})/)?.[1] ??
-    url.pathname.match(/\/(\d{8,12})(?:[/?#]|$)/)?.[1];
+// ─── Sites that need a search-engine UA to get SSR content ──────────────────
+const BOT_UA_DOMAINS = ["autotrader.com"];
 
-  if (!listingId) return null;
-
-  try {
-    // AutoTrader's public listing detail API
-    const apiUrl = `https://www.autotrader.com/rest/lsc/listing/${listingId}`;
-    const res = await fetch(apiUrl, {
-      headers: {
-        "User-Agent":
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
-        Accept: "application/json",
-        "Accept-Language": "en-US,en;q=0.9",
-        Referer: "https://www.autotrader.com/",
-      },
-      signal: AbortSignal.timeout(6000),
-    });
-
-    if (!res.ok) return null;
-
-    const data = await res.json();
-    const result: { vin?: string; price?: number; mileage?: number; zipCode?: string; title?: string } = {};
-
-    // Deep search the JSON for vehicle data
-    const json = JSON.stringify(data);
-
-    // VIN
-    const vinMatch = json.match(/"vin"\s*:\s*"([A-HJ-NPR-Z0-9]{17})"/i);
-    if (vinMatch?.[1]) result.vin = vinMatch[1].toUpperCase();
-
-    // Price — look for common price field names
-    const priceMatch = json.match(/"(?:price|listPrice|displayPrice|askingPrice|internetPrice)"\s*:\s*"?\$?\s*([\d,]+)"?/i);
-    if (priceMatch?.[1]) {
-      const p = parseFloat(priceMatch[1].replace(/,/g, ""));
-      if (p > 500 && p < 500000) result.price = Math.round(p);
-    }
-
-    // Mileage
-    const mileageMatch = json.match(/"(?:mileage|miles|odometer)"\s*:\s*"?\s*([\d,]+)"?/i);
-    if (mileageMatch?.[1]) {
-      const m = parseFloat(mileageMatch[1].replace(/,/g, ""));
-      if (m > 0 && m < 1000000) result.mileage = Math.round(m);
-    }
-
-    // ZIP
-    const zipMatch = json.match(/"(?:zip|zipCode|postalCode)"\s*:\s*"(\d{5})"/i);
-    if (zipMatch?.[1]) result.zipCode = zipMatch[1];
-
-    // Title
-    const titleMatch = json.match(/"(?:title|heading|name)"\s*:\s*"([^"]{5,100})"/i);
-    if (titleMatch?.[1]) result.title = titleMatch[1];
-
-    if (result.vin) return result;
-  } catch {
-    // API not available — fall through
-  }
-
-  return null;
+function needsBotUA(hostname: string): boolean {
+  return BOT_UA_DOMAINS.some(
+    (d) => hostname === d || hostname.endsWith(`.${d}`),
+  );
 }
 
 export async function POST(req: NextRequest) {
@@ -183,50 +124,24 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // ── 4a. AutoTrader: try their listing API first (more reliable than HTML scraping)
-  if (parsed.hostname.includes("autotrader")) {
-    const atResult = await tryAutoTraderApi(parsed);
-    if (atResult?.vin) {
-      const extraction = {
-        vin: atResult.vin,
-        price: atResult.price ?? null,
-        mileage: atResult.mileage ?? null,
-        zipCode: atResult.zipCode ?? null,
-        title: atResult.title ?? null,
-        source: parsed.hostname,
-      };
-      cacheListing(trimmed, extraction);
-      return NextResponse.json({
-        vin: extraction.vin,
-        price: extraction.price,
-        mileage: extraction.mileage,
-        zipCode: extraction.zipCode,
-        title: extraction.title,
-      });
-    }
-  }
+  // ── 4. Fetch the listing page and extract data ─────────────────────────
+  // Some SPAs (AutoTrader) only serve full HTML to search-engine bots.
+  // We try a Googlebot-like UA for those domains so we get SSR content.
+  const useBotUA = needsBotUA(parsed.hostname);
 
-  // ── 4b. Fetch the listing page and extract data ────────────────────────
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 10000);
 
   try {
     const res = await fetch(trimmed, {
       headers: {
-        "User-Agent":
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 " +
-          "(KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
+        "User-Agent": useBotUA
+          ? "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)"
+          : "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 " +
+            "(KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
         Accept:
-          "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
+          "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
         "Accept-Language": "en-US,en;q=0.9",
-        "Accept-Encoding": "gzip, deflate, br",
-        "Cache-Control": "no-cache",
-        Pragma: "no-cache",
-        "Sec-Fetch-Dest": "document",
-        "Sec-Fetch-Mode": "navigate",
-        "Sec-Fetch-Site": "none",
-        "Sec-Fetch-User": "?1",
-        "Upgrade-Insecure-Requests": "1",
       },
       redirect: "follow",
       signal: controller.signal,
