@@ -50,11 +50,13 @@ export function UserNav() {
     <div className="relative" ref={menuRef}>
       <button
         onClick={() => setOpen(o => !o)}
+        aria-haspopup="true"
+        aria-expanded={open}
         className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium transition-all"
         style={{
-          background: "rgba(255,255,255,0.06)",
-          border: "1px solid rgba(255,255,255,0.10)",
-          color: "rgba(255,255,255,0.80)",
+          background: "var(--ds-badge-bg)",
+          border: "1px solid var(--ds-badge-border)",
+          color: "var(--ds-text-2)",
         }}
       >
         <span className="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
@@ -63,7 +65,7 @@ export function UserNav() {
         </span>
         <span className="hidden sm:inline max-w-[140px] truncate">{shortEmail}</span>
         <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${open ? "rotate-180" : ""}`}
-          style={{ color: "rgba(255,255,255,0.35)" }} />
+          style={{ color: "var(--ds-text-4)" }} />
       </button>
 
       <AnimatePresence>
@@ -73,50 +75,44 @@ export function UserNav() {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: -4 }}
             transition={{ duration: 0.15, ease: "easeOut" }}
+            role="menu"
             className="absolute right-0 mt-2 w-58 rounded-xl overflow-hidden z-50"
             style={{
               width: 220,
-              background: "rgba(12,12,20,0.96)",
-              border: "1px solid rgba(255,255,255,0.10)",
-              boxShadow: "0 8px 32px rgba(0,0,0,0.6), 0 0 0 1px rgba(99,102,241,0.06)",
-              backdropFilter: "blur(20px)",
+              background: "var(--ds-dropdown-bg, #ffffff)",
+              border: "1px solid var(--ds-card-border)",
+              boxShadow: "0 8px 30px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.08), 0 0 0 1px rgba(99,102,241,0.06)",
             }}
           >
             {/* Account info */}
-            <div className="px-4 py-3" style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
-              <p className="text-xs font-medium mb-0.5" style={{ color: "rgba(255,255,255,0.35)" }}>Signed in as</p>
-              <p className="text-sm font-semibold truncate" style={{ color: "rgba(255,255,255,0.85)" }}>{email}</p>
+            <div className="px-4 py-3" style={{ borderBottom: "1px solid var(--ds-divider)" }}>
+              <p className="text-xs font-medium mb-0.5" style={{ color: "var(--ds-text-4)" }}>Signed in as</p>
+              <p className="text-sm font-semibold truncate" style={{ color: "var(--ds-text-1)" }}>{email}</p>
             </div>
 
             {/* Menu items */}
-            <div className="p-1.5 space-y-0.5">
-              <Link href="/history" onClick={() => setOpen(false)}
-                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors"
-                style={{ color: "rgba(255,255,255,0.65)" }}
-                onMouseEnter={e => (e.currentTarget.style.background = "rgba(255,255,255,0.06)")}
-                onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
+            <div className="p-1.5 space-y-0.5" role="none">
+              <Link href="/history" onClick={() => setOpen(false)} role="menuitem"
+                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
+                style={{ color: "var(--ds-text-3)" }}
               >
                 <Clock className="w-4 h-4" />
                 History
               </Link>
 
               {role === "admin" && (
-                <Link href="/admin" onClick={() => setOpen(false)}
-                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors"
-                  style={{ color: "rgba(192,132,252,0.85)" }}
-                  onMouseEnter={e => (e.currentTarget.style.background = "rgba(168,85,247,0.08)")}
-                  onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
+                <Link href="/admin" onClick={() => setOpen(false)} role="menuitem"
+                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors hover:bg-purple-500/[0.08]"
+                  style={{ color: "rgba(168,85,247,0.85)" }}
                 >
                   <Shield className="w-4 h-4" />
                   Admin Panel
                 </Link>
               )}
 
-              <Link href="/settings" onClick={() => setOpen(false)}
-                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors"
-                style={{ color: "rgba(255,255,255,0.65)" }}
-                onMouseEnter={e => (e.currentTarget.style.background = "rgba(255,255,255,0.06)")}
-                onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
+              <Link href="/settings" onClick={() => setOpen(false)} role="menuitem"
+                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
+                style={{ color: "var(--ds-text-3)" }}
               >
                 <Settings className="w-4 h-4" />
                 Settings
@@ -125,10 +121,9 @@ export function UserNav() {
               <button
                 onClick={signOut}
                 disabled={signingOut}
-                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors disabled:opacity-50"
+                role="menuitem"
+                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors disabled:opacity-50 hover:bg-red-500/[0.08]"
                 style={{ color: "rgba(239,68,68,0.85)" }}
-                onMouseEnter={e => (e.currentTarget.style.background = "rgba(239,68,68,0.08)")}
-                onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
               >
                 <LogOut className="w-4 h-4" />
                 {signingOut ? "Signing out…" : "Sign out"}

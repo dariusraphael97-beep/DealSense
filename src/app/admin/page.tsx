@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { useCredits } from "@/contexts/credits-context";
 import Link from "next/link";
+import { Logo } from "@/components/ui/logo";
 
 interface User {
   id: string;
@@ -88,8 +89,8 @@ export default function AdminPage() {
       <nav className="sticky top-0 z-50" style={{ background: "var(--ds-nav-bg)", borderBottom: "1px solid var(--ds-nav-border)", backdropFilter: "blur(20px)" }}>
         <div className="mx-auto max-w-6xl px-4 py-3.5 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Link href="/" className="font-heading text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-slate-800 to-slate-600 dark:from-white dark:to-white/70">
-              DealSense
+            <Link href="/" className="hover:opacity-80 transition-opacity">
+              <Logo variant="full" size={26} />
             </Link>
             <span style={{ color: "var(--ds-text-4)" }}>/</span>
             <span className="text-xs font-semibold px-2.5 py-1 rounded-lg"

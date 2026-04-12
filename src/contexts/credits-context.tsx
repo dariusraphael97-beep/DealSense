@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect, useCallback } from "react";
+import { createContext, useContext, useState, useEffect, useCallback, useRef } from "react";
 import { createClient } from "@/lib/supabase/client";
 
 export type UserRole = "user" | "staff" | "admin";
@@ -28,10 +28,11 @@ export function CreditsProvider({ children }: { children: React.ReactNode }) {
   const [role, setRole]                 = useState<UserRole | null>(null);
   const [referralCode, setReferralCode] = useState<string | null>(null);
   const [loading, setLoading]           = useState(true);
-  const supabase = createClient();
+  const supabaseRef = useRef(createClient());
 
   const refresh = useCallback(async () => {
     setLoading(true);
+    const supabase = supabaseRef.current;
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { setCredits(null); setRole(null); setReferralCode(null); setLoading(false); return; }
     const { data } = await supabase
@@ -43,7 +44,7 @@ export function CreditsProvider({ children }: { children: React.ReactNode }) {
     setRole((data?.role as UserRole) ?? "user");
     setReferralCode(data?.referral_code ?? null);
     setLoading(false);
-  }, [supabase]);
+  }, []);
 
   useEffect(() => { refresh(); }, [refresh]);
 

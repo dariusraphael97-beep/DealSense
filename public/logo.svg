@@ -1,0 +1,45 @@
+<svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4f46e5"/>
+      <stop offset="50%" stop-color="#6366f1"/>
+      <stop offset="100%" stop-color="#7c3aed"/>
+    </linearGradient>
+    <linearGradient id="shine" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="rgba(255,255,255,0.15)"/>
+      <stop offset="50%" stop-color="rgba(255,255,255,0)"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+  <rect width="512" height="512" rx="112" fill="url(#shine)"/>
+
+  <!--
+    Gauge geometry — verified center alignment:
+    Circle center = (256, 300), radius = 140
+    240° sweep from 210° to 330° (math angles)
+
+    Start (210°): (135, 370)   End (330°): (377, 370)
+    70% mark (42°): (360, 206)
+
+    SVG flags: large-arc=1, sweep=1 → center at (256, 300) [verified via spec F.6.5]
+    Active arc: large-arc=0, sweep=1 → same center [verified]
+  -->
+
+  <!-- Gauge track (full arc, faded) -->
+  <path d="M 135 370 A 140 140 0 1 1 377 370"
+        fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="28" stroke-linecap="round"/>
+
+  <!-- Gauge fill (70%, bright) — same circle, verified same center -->
+  <path d="M 135 370 A 140 140 0 0 1 360 206"
+        fill="none" stroke="white" stroke-width="28" stroke-linecap="round"/>
+
+  <!-- Needle — from hub toward 70% mark -->
+  <line x1="256" y1="300" x2="339" y2="225"
+        stroke="white" stroke-width="12" stroke-linecap="round"/>
+
+  <!-- Hub -->
+  <circle cx="256" cy="300" r="18" fill="white"/>
+  <circle cx="256" cy="300" r="8" fill="url(#bg)"/>
+</svg>

@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
 import { UserNav } from "@/components/ui/user-nav";
+import { Logo } from "@/components/ui/logo";
 
 interface Analysis {
   id: string;
@@ -59,8 +60,8 @@ export default function HistoryPage() {
       <nav className="sticky top-0 z-50" style={{ background: "var(--ds-nav-bg)", borderBottom: "1px solid var(--ds-nav-border)", backdropFilter: "blur(20px)" }}>
         <div className="mx-auto max-w-4xl px-4 py-3.5 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Link href="/" className="font-heading text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-slate-800 to-slate-600 dark:from-white dark:to-white/70">
-              DealSense
+            <Link href="/" className="hover:opacity-80 transition-opacity">
+              <Logo variant="full" size={26} />
             </Link>
             <span style={{ color: "var(--ds-text-4)" }}>/</span>
             <span className="text-sm" style={{ color: "var(--ds-text-3)" }}>History</span>
@@ -92,7 +93,7 @@ export default function HistoryPage() {
 
         {error && <p className="text-sm text-red-500">{error}</p>}
 
-        {!loading && analyses.length === 0 && (
+        {!loading && !error && analyses.length === 0 && (
           <div className="rounded-2xl p-12 text-center" style={{ background: "var(--ds-card-bg)", border: "1px solid var(--ds-card-border)" }}>
             <p className="text-4xl mb-4">🔍</p>
             <p className="font-semibold mb-1" style={{ color: "var(--ds-text-1)" }}>No analyses yet</p>

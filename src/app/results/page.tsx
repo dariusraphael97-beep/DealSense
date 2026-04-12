@@ -2,12 +2,14 @@
 
 import { useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useState, useEffect, useRef } from "react";
-import { motion, useInView } from "framer-motion";
+import { motion, AnimatePresence, useInView } from "framer-motion";
 import type { AnalysisResult } from "@/lib/types";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 const DepreciationChart = dynamic(() => import("@/components/ui/depreciation-chart").then(m => m.DepreciationChart), { ssr: false });
 import { UserNav } from "@/components/ui/user-nav";
+import { Logo } from "@/components/ui/logo";
+import { USMapPin } from "@/components/ui/us-map-pin";
 
 const ease = [0.22, 1, 0.36, 1] as const;
 const fadeUp = { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0, transition: { duration: 0.5, ease } } };
@@ -111,6 +113,9 @@ function LoanCalculator({
           </div>
           <input type="range" min={1} max={20} step={0.1} value={apr}
             onChange={(e) => setApr(parseFloat(e.target.value))}
+            aria-label={`APR: ${apr.toFixed(1)}%`}
+            aria-valuemin={1} aria-valuemax={20} aria-valuenow={apr}
+            aria-valuetext={`${apr.toFixed(1)} percent`}
             className={sliderCls}
             style={{ background: `linear-gradient(to right, #6366f1 ${(apr - 1) / 19 * 100}%, var(--ds-divider) ${(apr - 1) / 19 * 100}%)` }} />
           <div className="flex justify-between text-xs mt-1" style={{ color: "var(--ds-text-4)" }}>
@@ -128,6 +133,9 @@ function LoanCalculator({
           </div>
           <input type="range" min={0} max={60} step={1} value={downPct}
             onChange={(e) => setDownPct(parseInt(e.target.value))}
+            aria-label={`Down payment: ${downPct}%, $${downAmount.toLocaleString()}`}
+            aria-valuemin={0} aria-valuemax={60} aria-valuenow={downPct}
+            aria-valuetext={`${downPct} percent, ${downAmount.toLocaleString()} dollars`}
             className={sliderCls}
             style={{ background: `linear-gradient(to right, #6366f1 ${downPct / 60 * 100}%, var(--ds-divider) ${downPct / 60 * 100}%)` }} />
           <div className="flex justify-between text-xs mt-1" style={{ color: "var(--ds-text-4)" }}>
@@ -141,9 +149,11 @@ function LoanCalculator({
             <label className="text-xs font-medium" style={{ color: "var(--ds-text-2)" }}>Loan term</label>
             <span className="font-mono text-xs font-semibold text-indigo-500">{term} months</span>
           </div>
-          <div className="flex rounded-xl overflow-hidden" style={{ border: "1px solid var(--ds-input-border)", background: "var(--ds-badge-bg)" }}>
+          <div className="flex rounded-xl overflow-hidden" role="group" aria-label="Loan term in months" style={{ border: "1px solid var(--ds-input-border)", background: "var(--ds-badge-bg)" }}>
             {[24, 36, 48, 60, 72, 84].map((t) => (
               <button key={t} onClick={() => setTerm(t)}
+                aria-pressed={t === term}
+                aria-label={`${t} months`}
                 className="flex-1 py-2 text-xs font-medium transition-all"
                 style={t === term
                   ? { background: "linear-gradient(135deg,#4f46e5,#6366f1)", color: "#fff", boxShadow: "0 0 12px rgba(99,102,241,0.3)" }
@@ -178,9 +188,11 @@ function LoanCalculator({
 }
 
 /* ── Animated score ring ── */
-function ScoreRing({ score, size = 160 }: { score: number; size?: number }) {
+function ScoreRing({ score, size = 180 }: { score: number; size?: number }) {
   const [displayScore, setDisplayScore] = useState(0);
   const [revealed, setRevealed] = useState(false);
+  const [showDot, setShowDot] = useState(false);
+  const strokeW = 12;
   const r = size * 0.38;
   const cx = size / 2;
   const startAngle = 215;
@@ -188,11 +200,12 @@ function ScoreRing({ score, size = 160 }: { score: number; size?: number }) {
 
   // Animate the number counting up
   useEffect(() => {
-    const delay = setTimeout(() => setRevealed(true), 300);
+    const delay = setTimeout(() => setRevealed(true), 400);
+    const dotTimer = setTimeout(() => setShowDot(true), 2000);
     let raf: number;
     let start: number | null = null;
-    const duration = 1400;
-    const ease = (t: number) => 1 - Math.pow(1 - t, 3); // ease-out cubic
+    const duration = 1600;
+    const ease = (t: number) => 1 - Math.pow(1 - t, 3);
 
     const tick = (ts: number) => {
       if (!start) start = ts;
@@ -201,14 +214,13 @@ function ScoreRing({ score, size = 160 }: { score: number; size?: number }) {
       setDisplayScore(Math.round(ease(t) * score));
       if (t < 1) raf = requestAnimationFrame(tick);
     };
-    const kickoff = setTimeout(() => { raf = requestAnimationFrame(tick); }, 300);
-    return () => { clearTimeout(delay); clearTimeout(kickoff); cancelAnimationFrame(raf); };
+    const kickoff = setTimeout(() => { raf = requestAnimationFrame(tick); }, 400);
+    return () => { clearTimeout(delay); clearTimeout(dotTimer); clearTimeout(kickoff); cancelAnimationFrame(raf); };
   }, [score]);
 
   const color = score >= 72 ? "#34d399" : score >= 48 ? "#fbbf24" : "#f87171";
-  const glowColor = score >= 72 ? "rgba(52,211,153,0.45)" : score >= 48 ? "rgba(251,191,36,0.45)" : "rgba(248,113,113,0.45)";
-  const label = score >= 72 ? "Good Deal" : score >= 48 ? "Negotiable" : "Walk Away";
-  const labelColor = score >= 72 ? "#34d399" : score >= 48 ? "#fbbf24" : "#f87171";
+  const colorEnd = score >= 72 ? "#6ee7b7" : score >= 48 ? "#fde047" : "#fca5a5";
+  const glowColor = score >= 72 ? "rgba(52,211,153,0.25)" : score >= 48 ? "rgba(251,191,36,0.25)" : "rgba(248,113,113,0.25)";
 
   function polar(angle: number) {
     const rad = (angle * Math.PI) / 180;
@@ -229,78 +241,52 @@ function ScoreRing({ score, size = 160 }: { score: number; size?: number }) {
   const visibleLength = arcLength * progressRatio;
   const dashOffset = revealed ? arcLength - visibleLength : arcLength;
 
-  // Position of the glow dot at the tip of the progress arc
-  const tipAngle = startAngle + sweepAngle * (revealed ? progressRatio : 0);
-  const tipPos = polar(tipAngle);
+  // Dot always at final position — only opacity fades in after arc animation
+  const tipPos = polar(startAngle + sweepAngle * progressRatio);
 
   return (
-    <div className="flex flex-col items-center gap-2">
-      <div className="relative" style={{ width: size, height: size }}>
-        <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-          <defs>
-            <linearGradient id="scoreGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor={color} stopOpacity="1"/>
-              <stop offset="100%" stopColor={color} stopOpacity="0.7"/>
-            </linearGradient>
-            <filter id="scoreGlow" x="-30%" y="-30%" width="160%" height="160%">
-              <feGaussianBlur stdDeviation="4" result="blur"/>
-              <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-            </filter>
-          </defs>
-          {/* Track */}
-          <path d={fullPath} fill="none" stroke="currentColor" strokeWidth="10" strokeLinecap="round"
-            className="text-slate-200 dark:text-white/[0.07]"/>
-          {/* Progress — uses strokeDashoffset for smooth reveal */}
-          <path
-            d={fullPath} fill="none" stroke="url(#scoreGrad)" strokeWidth="10" strokeLinecap="round"
-            strokeDasharray={arcLength}
-            strokeDashoffset={dashOffset}
-            filter="url(#scoreGlow)"
-            style={{
-              transition: "stroke-dashoffset 1.4s cubic-bezier(0.22, 1, 0.36, 1)",
-              filter: `drop-shadow(0 0 10px ${glowColor})`,
-            }}
+    <div className="relative" style={{ width: size, height: size }}>
+      {/* Ambient glow */}
+      <div className="absolute inset-0 rounded-full pointer-events-none" style={{
+        background: `radial-gradient(circle at center, ${glowColor} 0%, transparent 70%)`,
+        opacity: revealed ? 1 : 0,
+        transition: "opacity 1.2s ease-out 0.3s",
+        transform: "scale(1.2)",
+      }}/>
+      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="relative z-[1]">
+        <defs>
+          <linearGradient id="scoreGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor={color}/>
+            <stop offset="100%" stopColor={colorEnd}/>
+          </linearGradient>
+        </defs>
+        {/* Track */}
+        <path d={fullPath} fill="none" stroke="currentColor" strokeWidth={strokeW} strokeLinecap="round"
+          className="text-slate-200 dark:text-white/[0.06]"/>
+        {/* Progress arc */}
+        <path
+          d={fullPath} fill="none" stroke="url(#scoreGrad)" strokeWidth={strokeW} strokeLinecap="round"
+          strokeDasharray={arcLength}
+          strokeDashoffset={dashOffset}
+          style={{
+            transition: "stroke-dashoffset 1.6s cubic-bezier(0.22, 1, 0.36, 1)",
+            filter: `drop-shadow(0 0 8px ${glowColor})`,
+          }}
+        />
+        {/* Tip indicator — conditionally rendered after arc animation completes */}
+        {showDot && (
+          <circle cx={tipPos.x} cy={tipPos.y} r={strokeW / 2 + 1} fill={color}
+            style={{ filter: `drop-shadow(0 0 6px ${glowColor})` }}
           />
-          {/* Glow dot at arc tip */}
-          <circle
-            cx={tipPos.x} cy={tipPos.y} r="5" fill={color}
-            style={{
-              transition: "cx 1.4s cubic-bezier(0.22, 1, 0.36, 1), cy 1.4s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.4s",
-              filter: `drop-shadow(0 0 8px ${glowColor})`,
-              opacity: revealed ? 1 : 0,
-            }}
-          />
-        </svg>
-        {/* Center content */}
-        <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className="font-heading font-extrabold leading-none tabular-nums" style={{ fontSize: size * 0.28, color: "var(--ds-text-1)" }}>
-            {displayScore}
-          </span>
-          <span className="text-xs font-medium" style={{ color: "var(--ds-text-4)" }}>/ 100</span>
-        </div>
+        )}
+      </svg>
+      {/* Center content */}
+      <div className="absolute inset-0 flex flex-col items-center justify-center z-[2]">
+        <span className="font-heading font-extrabold leading-none tabular-nums" style={{ fontSize: size * 0.26, color: "var(--ds-text-1)" }}>
+          {displayScore}
+        </span>
+        <span className="text-[11px] font-medium mt-1" style={{ color: "var(--ds-text-4)" }}>out of 100</span>
       </div>
-      <motion.span
-        initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 1.2, duration: 0.5 }}
-        className="text-xs font-bold uppercase tracking-widest" style={{ color: labelColor }}
-      >{label}</motion.span>
-    </div>
-  );
-}
-
-/* ── Verdict badge ── */
-function VerdictBadge({ verdict }: { verdict: string }) {
-  const config = {
-    "Buy":       { bg: "rgba(52,211,153,0.10)", border: "rgba(52,211,153,0.25)", text: "#34d399", icon: "✓" },
-    "Negotiate": { bg: "rgba(251,191,36,0.10)", border: "rgba(251,191,36,0.25)", text: "#fbbf24", icon: "⟷" },
-    "Walk Away": { bg: "rgba(248,113,113,0.10)", border: "rgba(248,113,113,0.25)", text: "#f87171", icon: "✕" },
-  } as const;
-  const c = config[verdict as keyof typeof config] ?? config["Negotiate"];
-  return (
-    <div className="inline-flex items-center gap-3 rounded-2xl px-5 py-2.5"
-      style={{ background: c.bg, border: `2px solid ${c.border}` }}>
-      <span className="text-lg font-bold" style={{ color: c.text }}>{c.icon}</span>
-      <span className="font-heading text-2xl font-extrabold tracking-tight" style={{ color: c.text }}>{verdict}</span>
     </div>
   );
 }
@@ -343,6 +329,22 @@ function ResultsContent() {
   const [copied, setCopied] = useState(false);
   const [saved, setSaved] = useState(false);
 
+  // PART 3: Confidence explanation dropdown
+  const [confOpen, setConfOpen] = useState(false);
+  const confRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (confRef.current && !confRef.current.contains(e.target as Node)) setConfOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  // PART 1: Feedback system
+  const [feedbackState, setFeedbackState] = useState<"idle" | "negative" | "submitted">("idle");
+  const [feedbackComment, setFeedbackComment] = useState("");
+  const [feedbackSending, setFeedbackSending] = useState(false);
+
   let result: AnalysisResult | null = null;
   let parseError = false;
   try {
@@ -350,12 +352,45 @@ function ResultsContent() {
     if (raw) result = JSON.parse(raw);
   } catch { parseError = true; }
 
+  const submitFeedback = useCallback(async (helpful: boolean, comment?: string) => {
+    if (!result) return;
+    setFeedbackSending(true);
+    try {
+      await fetch("/api/feedback", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          analysisId: (result as AnalysisResult & { savedId?: string }).savedId,
+          vin: result.input.vin,
+          dealScore: result.score,
+          verdict: result.verdict,
+          confidenceLevel: result.confidenceLevel,
+          helpful,
+          comment: comment || undefined,
+        }),
+      });
+    } catch { /* non-fatal */ }
+    setFeedbackSending(false);
+    setFeedbackState("submitted");
+  }, [result]);
+
   const handleCopy = useCallback(async (text: string) => {
     try {
       await navigator.clipboard.writeText(text);
       setCopied(true);
       setTimeout(() => setCopied(false), 2500);
-    } catch { /* silent */ }
+    } catch {
+      // Fallback: select text in a temporary textarea for manual Ctrl+C
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.style.cssText = "position:fixed;left:-9999px";
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      document.body.removeChild(ta);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2500);
+    }
   }, []);
 
   if (parseError || !result) {
@@ -375,8 +410,18 @@ function ResultsContent() {
   }
 
   const { input, score, verdict, fairValueRange, priceDelta, priceDeltaPct,
-          monthlyPayment, reasons, aiSummary, negotiationScript, priceSource } = result;
+          monthlyPayment, reasons, aiSummary, negotiationScript, priceSource,
+          confidenceLevel, confidenceScore, confidenceBreakdown, vehicleCategory,
+          optionDataStatus, valuationWarnings, keyInsights } = result;
   const isVinVerified = typeof priceSource === "string" && priceSource.toLowerCase().includes("vinaudit");
+
+  // Confidence badge styling
+  const confidenceColors = {
+    High:   { bg: "rgba(52,211,153,0.08)", border: "rgba(52,211,153,0.20)", text: "#34d399", icon: "●" },
+    Medium: { bg: "rgba(251,191,36,0.08)", border: "rgba(251,191,36,0.20)", text: "#fbbf24", icon: "●" },
+    Low:    { bg: "rgba(248,113,113,0.08)", border: "rgba(248,113,113,0.20)", text: "#f87171", icon: "●" },
+  };
+  const confStyle = confidenceColors[(confidenceLevel as keyof typeof confidenceColors) ?? "Medium"] ?? confidenceColors.Medium;
 
   // Avoid duplication when trim starts with model name (e.g. model="M3" trim="M3 Competition")
   const trimSuffix = input.trim
@@ -385,8 +430,7 @@ function ResultsContent() {
   const vehicleLabel = `${input.year} ${input.make}${trimSuffix}`;
 
   const scoreColor = score >= 72 ? "#34d399" : score >= 48 ? "#fbbf24" : "#f87171";
-  const scoreBg = score >= 72 ? "rgba(52,211,153,0.06)" : score >= 48 ? "rgba(251,191,36,0.06)" : "rgba(248,113,113,0.06)";
-  const scoreBorder = score >= 72 ? "rgba(52,211,153,0.18)" : score >= 48 ? "rgba(251,191,36,0.18)" : "rgba(248,113,113,0.18)";
+  const scoreColorEnd = score >= 72 ? "#6ee7b7" : score >= 48 ? "#fde047" : "#fca5a5";
 
   const barPct = Math.min(100, Math.max(2, 50 + priceDeltaPct * -150));
   const barColor = priceDelta <= 0 ? "#34d399" : priceDeltaPct < 0.12 ? "#fbbf24" : "#f87171";
@@ -411,8 +455,8 @@ function ResultsContent() {
         style={{ background: "var(--ds-nav-bg)", borderBottom: "1px solid var(--ds-nav-border)", backdropFilter: "blur(20px)" }}>
         <div className="mx-auto max-w-4xl px-4 py-3.5 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3 min-w-0">
-            <Link href="/" className="font-heading text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-slate-800 to-slate-600 dark:from-white dark:to-white/70 hover:opacity-80 transition-opacity flex-shrink-0">
-              DealSense
+            <Link href="/" className="hover:opacity-80 transition-opacity flex-shrink-0">
+              <Logo variant="full" size={26} />
             </Link>
             <span style={{ color: "var(--ds-text-4)" }} className="hidden sm:inline">/</span>
             <span className="text-sm truncate hidden sm:inline" style={{ color: "var(--ds-text-3)" }}>{vehicleLabel}</span>
@@ -433,7 +477,7 @@ function ResultsContent() {
             </button>
             <Link href="/analyze" className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold text-white transition-all hover:brightness-110"
               style={{ background: "linear-gradient(135deg,#4f46e5,#6366f1)", boxShadow: "0 0 16px rgba(99,102,241,0.3)" }}>
-              New analysis
+              Check another deal
             </Link>
             <UserNav />
           </div>
@@ -447,48 +491,114 @@ function ResultsContent() {
           initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, ease }}
           className="rounded-3xl overflow-hidden"
-          style={{ background: scoreBg, border: `1px solid ${scoreBorder}`, boxShadow: `0 0 60px ${scoreBg}` }}
+          style={{
+            background: "var(--ds-card-bg)",
+            border: "1px solid var(--ds-card-border)",
+            boxShadow: "var(--ds-card-shadow)",
+          }}
         >
-          {/* Vehicle header strip */}
-          <div className="px-6 pt-5 pb-0 flex items-center justify-between gap-4 flex-wrap">
-            <div>
-              <p className="font-heading text-lg font-bold" style={{ color: "var(--ds-text-1)" }}>{vehicleLabel}</p>
-              <p className="text-sm font-mono mt-0.5" style={{ color: "var(--ds-text-3)" }}>
-                {input.mileage.toLocaleString()} mi · ZIP {input.zipCode}
-                {input.vin ? ` · VIN …${input.vin.slice(-6)}` : ""}
-              </p>
+          {/* Score accent stripe */}
+          <div style={{ height: 3, background: `linear-gradient(90deg, ${scoreColor}, ${scoreColorEnd})` }} />
+
+          {/* Vehicle header */}
+          <div className="px-6 sm:px-8 pt-6">
+            <div className="flex items-start justify-between gap-4 flex-wrap">
+              <div>
+                <p className="font-heading text-xl font-bold" style={{ color: "var(--ds-text-1)" }}>{vehicleLabel}</p>
+                <p className="text-sm font-mono mt-1" style={{ color: "var(--ds-text-3)" }}>
+                  {input.mileage.toLocaleString()} mi · ZIP {input.zipCode}
+                  {input.vin ? ` · VIN …${input.vin.slice(-6)}` : ""}
+                </p>
+              </div>
+              <DeltaPill delta={priceDelta} pct={priceDeltaPct} />
             </div>
-            <DeltaPill delta={priceDelta} pct={priceDeltaPct} />
           </div>
 
+          {/* Divider */}
+          <div className="mx-6 sm:mx-8 my-5" style={{ height: 1, background: "var(--ds-divider)" }} />
+
           {/* Score + verdict + summary */}
-          <div className="p-6 flex flex-col sm:flex-row items-center sm:items-start gap-8">
+          <div className="px-6 sm:px-8 pb-8 flex flex-col sm:flex-row items-center gap-8 sm:gap-10">
             {/* Score gauge */}
             <div className="flex-shrink-0">
-              <ScoreRing score={score} size={160} />
+              <ScoreRing score={score} size={180} />
             </div>
 
             {/* Right side */}
             <div className="flex-1 min-w-0 space-y-4 text-center sm:text-left">
-              <div>
-                <VerdictBadge verdict={verdict} />
+              {/* Verdict */}
+              <div className="flex items-center gap-3 justify-center sm:justify-start">
+                <div className="w-1 h-10 rounded-full" style={{ background: scoreColor }} />
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-[0.18em] mb-0.5" style={{ color: "var(--ds-text-4)" }}>Verdict</p>
+                  <p className="font-heading text-3xl font-extrabold tracking-tight leading-none" style={{ color: scoreColor }}>{verdict}</p>
+                </div>
               </div>
-              <p className="text-base leading-relaxed" style={{ color: "var(--ds-text-2)", maxWidth: 440 }}>
+
+              {/* AI Summary */}
+              <p className="text-[15px] leading-relaxed" style={{ color: "var(--ds-text-2)", maxWidth: 460 }}>
                 {aiSummary}
               </p>
-              <div className="flex items-center gap-2 flex-wrap justify-center sm:justify-start">
+
+              {/* Badges — confidence + data source */}
+              <div className="flex items-center gap-2 flex-wrap justify-center sm:justify-start pt-1">
+                {/* Confidence badge — clickable with explanation dropdown (PART 3) */}
+                <div className="relative" ref={confRef}>
+                  <button
+                    onClick={() => setConfOpen(o => !o)}
+                    className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg font-semibold transition-all hover:brightness-110 cursor-pointer"
+                    style={{ background: confStyle.bg, border: `1px solid ${confStyle.border}`, color: confStyle.text }}>
+                    <span style={{ fontSize: 8 }}>{confStyle.icon}</span>
+                    {confidenceLevel ?? "Medium"} confidence
+                    {confidenceScore != null && <span className="opacity-60 ml-0.5">({confidenceScore})</span>}
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+                      className={`w-3 h-3 transition-transform duration-200 ${confOpen ? "rotate-180" : ""}`}><polyline points="6 9 12 15 18 9"/></svg>
+                  </button>
+                  <AnimatePresence>
+                    {confOpen && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -4, scale: 0.97 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: -4, scale: 0.97 }}
+                        transition={{ duration: 0.15 }}
+                        className="absolute left-0 top-full mt-2 w-72 rounded-xl p-4 z-50"
+                        style={{
+                          background: "var(--ds-dropdown-bg, #fff)",
+                          border: "1px solid var(--ds-card-border)",
+                          boxShadow: "0 8px 30px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.08)",
+                        }}>
+                        <p className="text-xs font-semibold mb-2.5" style={{ color: "var(--ds-text-1)" }}>How confidence is calculated</p>
+                        <ul className="space-y-1.5">
+                          {[
+                            "VIN decode quality and completeness",
+                            "Availability of real market transaction data",
+                            "How specific the vehicle configuration is",
+                            "Whether option-level details are present",
+                            "Vehicle category (luxury/performance need more data)",
+                            "Regional pricing data availability",
+                          ].map((item, i) => (
+                            <li key={i} className="flex items-start gap-2 text-xs" style={{ color: "var(--ds-text-3)" }}>
+                              <span className="mt-1 w-1 h-1 rounded-full flex-shrink-0" style={{ background: "var(--ds-text-4)" }} />
+                              {item}
+                            </li>
+                          ))}
+                        </ul>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
                 {isVinVerified ? (
-                  <span className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-lg font-semibold"
-                    style={{ background: "rgba(52,211,153,0.10)", border: "1px solid rgba(52,211,153,0.25)", color: "#34d399" }}>
-                    <IconShield />VIN-verified · Real transaction data
+                  <span className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg font-semibold"
+                    style={{ background: "rgba(52,211,153,0.08)", border: "1px solid rgba(52,211,153,0.20)", color: "#34d399" }}>
+                    <IconShield />VIN-verified data
                   </span>
                 ) : (
-                  <span className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-lg"
+                  <span className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg font-medium"
                     style={{ background: "var(--ds-badge-bg)", border: "1px solid var(--ds-badge-border)", color: "var(--ds-text-3)" }}>
-                    <IconShield />Data-driven analysis
+                    <IconShield />Estimated analysis
                   </span>
                 )}
-                <span className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-lg"
+                <span className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg font-medium"
                   style={{ background: "var(--ds-badge-bg)", border: "1px solid var(--ds-badge-border)", color: "var(--ds-text-3)" }}>
                   <IconGauge />{priceSource ?? "Market analysis"}
                 </span>
@@ -496,6 +606,19 @@ function ResultsContent() {
             </div>
           </div>
         </motion.div>
+
+        {/* ── Vehicle Location ── */}
+        {input.zipCode && (
+          <FadeSection>
+            <motion.div variants={fadeUp} className="rounded-2xl overflow-hidden"
+              style={{ background: "var(--ds-card-bg)", border: "1px solid var(--ds-card-border)", boxShadow: "var(--ds-card-shadow)" }}>
+              <div className="px-6 pt-5 pb-1">
+                <SectionLabel>Vehicle Location</SectionLabel>
+              </div>
+              <USMapPin zipCode={input.zipCode} />
+            </motion.div>
+          </FadeSection>
+        )}
 
         {/* ── Two-column grid: Price + Monthly ── */}
         <FadeSection className="grid sm:grid-cols-2 gap-5">
@@ -549,13 +672,13 @@ function ResultsContent() {
                 }}>
                 <p className="text-sm font-semibold" style={{ color: priceDelta < 0 ? "#34d399" : "#f87171" }}>
                   {priceDelta < 0
-                    ? `$${Math.abs(priceDelta).toLocaleString()} below market value`
-                    : `$${priceDelta.toLocaleString()} above market value`}
+                    ? `$${Math.abs(priceDelta).toLocaleString()} below estimated fair value`
+                    : `$${priceDelta.toLocaleString()} above estimated fair value`}
                 </p>
                 <p className="text-xs mt-0.5" style={{ color: "var(--ds-text-3)" }}>
                   {priceDelta < 0
-                    ? "This is a competitively priced listing."
-                    : "Consider negotiating before committing."}
+                    ? "This appears competitively priced based on available data."
+                    : "Consider negotiating or verifying configuration details."}
                 </p>
               </div>
             )}
@@ -570,6 +693,62 @@ function ResultsContent() {
               initialTerm={input.loanTermMonths ?? 60} />
           </motion.div>
         </FadeSection>
+
+        {/* ── Valuation Basis ── */}
+        {confidenceBreakdown && (
+          <FadeSection>
+            <motion.div variants={fadeUp} className="rounded-2xl p-6"
+              style={{ background: "var(--ds-card-bg)", border: "1px solid var(--ds-card-border)", boxShadow: "var(--ds-card-shadow)" }}>
+              <SectionLabel>Valuation Basis</SectionLabel>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                {[
+                  { label: "VIN decoded", value: confidenceBreakdown.vinDecoded ? "Yes" : "No",
+                    ok: confidenceBreakdown.vinDecoded },
+                  { label: "Trim verified", value: confidenceBreakdown.trimVerified ? "Yes" : "No",
+                    ok: confidenceBreakdown.trimVerified },
+                  { label: "Option detail", value: (optionDataStatus ?? "missing").replace("_", " "),
+                    ok: optionDataStatus === "complete" },
+                  { label: "Market data", value: confidenceBreakdown.marketDataSpecificity?.replace("_", " ") ?? "statistical",
+                    ok: confidenceBreakdown.marketDataSpecificity === "transaction" || confidenceBreakdown.marketDataSpecificity === "listings" },
+                  { label: "Region data", value: confidenceBreakdown.regionDataAvailable ? "Available" : "Limited",
+                    ok: confidenceBreakdown.regionDataAvailable },
+                  { label: "Vehicle category", value: vehicleCategory ?? "mainstream",
+                    ok: true },
+                ].map((item) => (
+                  <div key={item.label} className="rounded-xl px-3 py-2.5"
+                    style={{ background: "var(--ds-badge-bg)", border: "1px solid var(--ds-badge-border)" }}>
+                    <p className="text-[10px] font-semibold uppercase tracking-wide mb-0.5" style={{ color: "var(--ds-text-4)" }}>{item.label}</p>
+                    <p className="text-xs font-semibold capitalize flex items-center gap-1.5"
+                      style={{ color: item.ok ? "var(--ds-text-2)" : "var(--ds-text-3)" }}>
+                      <span style={{ fontSize: 7, color: item.ok ? "#34d399" : "#f87171" }}>●</span>
+                      {item.value}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+          </FadeSection>
+        )}
+
+        {/* ── Warnings ── */}
+        {valuationWarnings && valuationWarnings.length > 0 && (
+          <FadeSection>
+            <motion.div variants={fadeUp} className="rounded-2xl px-6 py-5"
+              style={{
+                background: "rgba(251,191,36,0.05)",
+                border: "1px solid rgba(251,191,36,0.18)",
+              }}>
+              <div className="flex items-start gap-3">
+                <span className="text-base flex-shrink-0 mt-0.5">⚠️</span>
+                <div className="space-y-1.5">
+                  {valuationWarnings.map((w, i) => (
+                    <p key={i} className="text-sm leading-relaxed" style={{ color: "var(--ds-text-2)" }}>{w}</p>
+                  ))}
+                </div>
+              </div>
+            </motion.div>
+          </FadeSection>
+        )}
 
         {/* ── Key insights ── */}
         <FadeSection>
@@ -600,7 +779,12 @@ function ResultsContent() {
               <div className="flex items-center gap-2.5">
                 <div className="w-2 h-2 rounded-full bg-indigo-500"/>
                 <p className="text-xs font-bold uppercase tracking-[0.18em] text-indigo-500 dark:text-indigo-400">
-                  {verdict === "Buy" ? "Your Closing Script" : verdict === "Walk Away" ? "Your Walk-Away Script" : "Your Negotiation Script"}
+                  {verdict === "Buy" ? "Your Closing Script"
+                    : verdict === "Walk Away" ? "Your Walk-Away Script"
+                    : verdict === "Needs Option Review" ? "Your Option Inquiry Script"
+                    : verdict === "Possibly Overpriced" ? "Your Inquiry Script"
+                    : verdict === "Fair Deal" ? "Your Closing Script"
+                    : "Your Negotiation Script"}
                 </p>
               </div>
               <button
@@ -623,10 +807,14 @@ function ResultsContent() {
                 &ldquo;{negotiationScript}&rdquo;
               </p>
               <p className="text-xs mt-4 pt-4" style={{ color: "var(--ds-text-4)", borderTop: "1px solid var(--ds-divider)" }}>
-                {verdict === "Buy"
-                  ? "💡 This car is already priced well — focus on confirming out-the-door fees, not pushing the price lower."
+                {verdict === "Buy" || verdict === "Fair Deal"
+                  ? "💡 This car is priced well — focus on confirming out-the-door fees, not pushing the price lower."
                   : verdict === "Walk Away"
                   ? "💡 Be prepared to actually walk. Sellers often come back with a lower number when they see you mean it."
+                  : verdict === "Needs Option Review"
+                  ? "💡 Ask for a full option/package list before discussing price. Configuration can shift the fair value significantly."
+                  : verdict === "Possibly Overpriced"
+                  ? "💡 This may be overpriced, but verify the full configuration first — some options can justify a premium."
                   : "💡 Customize with specifics — service history, competing listings, or anything found in an inspection."}
               </p>
             </div>
@@ -653,13 +841,13 @@ function ResultsContent() {
           <motion.div variants={fadeUp} className="rounded-2xl p-5"
             style={{ background: "var(--ds-card-bg)", border: "1px solid var(--ds-card-border)" }}>
             <p className="text-xs font-medium mb-4 text-center" style={{ color: "var(--ds-text-4)" }}>
-              Ready to move forward?
+              Now you know. Here&apos;s what to do next.
             </p>
             <div className="flex flex-col sm:flex-row gap-3">
               <Link href="/analyze"
                 className="flex-1 flex items-center justify-center gap-2 py-3.5 rounded-xl text-sm font-semibold text-white transition-all hover:brightness-110 active:scale-[0.99]"
                 style={{ background: "linear-gradient(135deg,#4f46e5,#6366f1)", boxShadow: "0 0 24px rgba(99,102,241,0.3), inset 0 1px 0 rgba(255,255,255,0.12)" }}>
-                Analyze another car <IconArrow />
+                Check another deal <IconArrow />
               </Link>
               <button
                 onClick={() => window.print()}
@@ -680,6 +868,79 @@ function ResultsContent() {
             </div>
           </motion.div>
         </FadeSection>
+
+        {/* ── Feedback (PART 1) ── */}
+        <FadeSection>
+          <motion.div variants={fadeUp} className="rounded-2xl p-6 text-center"
+            style={{ background: "var(--ds-card-bg)", border: "1px solid var(--ds-card-border)", boxShadow: "var(--ds-card-shadow)" }}>
+            {feedbackState === "submitted" ? (
+              <div className="flex items-center justify-center gap-2">
+                <span className="text-base">✓</span>
+                <p className="text-sm font-medium" style={{ color: "var(--ds-text-2)" }}>Thanks for your feedback!</p>
+              </div>
+            ) : feedbackState === "negative" ? (
+              <div className="space-y-3">
+                <p className="text-sm font-medium" style={{ color: "var(--ds-text-2)" }}>What was off or missing?</p>
+                <textarea
+                  value={feedbackComment}
+                  onChange={(e) => setFeedbackComment(e.target.value)}
+                  placeholder="e.g. Price seemed too low, missing option data..."
+                  rows={2}
+                  className="w-full max-w-md mx-auto rounded-xl border px-4 py-2.5 text-sm resize-none transition-all"
+                  style={{
+                    background: "var(--ds-input-bg)",
+                    border: "1px solid var(--ds-input-border)",
+                    color: "var(--ds-text-1)",
+                  }}
+                />
+                <div className="flex items-center justify-center gap-2">
+                  <button
+                    onClick={() => submitFeedback(false, feedbackComment)}
+                    disabled={feedbackSending}
+                    className="px-4 py-2 rounded-xl text-xs font-semibold text-white disabled:opacity-50"
+                    style={{ background: "linear-gradient(135deg,#4f46e5,#6366f1)" }}>
+                    {feedbackSending ? "Sending…" : "Submit"}
+                  </button>
+                  <button
+                    onClick={() => { setFeedbackState("idle"); setFeedbackComment(""); }}
+                    className="px-4 py-2 rounded-xl text-xs font-medium"
+                    style={{ color: "var(--ds-text-3)" }}>
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-2.5">
+                <p className="text-sm font-medium" style={{ color: "var(--ds-text-2)" }}>Was this analysis helpful?</p>
+                <div className="flex items-center justify-center gap-3">
+                  <button
+                    onClick={() => submitFeedback(true)}
+                    disabled={feedbackSending}
+                    className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium transition-all hover:scale-105 disabled:opacity-50"
+                    style={{ background: "rgba(52,211,153,0.08)", border: "1px solid rgba(52,211,153,0.20)", color: "#34d399" }}>
+                    👍 Yes
+                  </button>
+                  <button
+                    onClick={() => setFeedbackState("negative")}
+                    disabled={feedbackSending}
+                    className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium transition-all hover:scale-105 disabled:opacity-50"
+                    style={{ background: "rgba(248,113,113,0.08)", border: "1px solid rgba(248,113,113,0.20)", color: "#f87171" }}>
+                    👎 No
+                  </button>
+                </div>
+              </div>
+            )}
+          </motion.div>
+        </FadeSection>
+
+        {/* ── Disclaimer (PART 8) ── */}
+        <div className="text-center px-4 pt-2 pb-4">
+          <p className="text-[11px] leading-relaxed" style={{ color: "var(--ds-text-4)", maxWidth: 520, margin: "0 auto" }}>
+            Estimates are based on available market data and vehicle configuration. Actual value may vary.
+            {(vehicleCategory === "performance" || vehicleCategory === "exotic" || vehicleCategory === "luxury") &&
+              " Value may vary significantly based on factory options and packages."}
+          </p>
+        </div>
 
       </div>
     </div>

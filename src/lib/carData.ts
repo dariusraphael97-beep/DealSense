@@ -563,10 +563,10 @@ export function getTrims(make: string, model: string): string[] {
   return getModels(make).find((m) => m.name === model)?.trims ?? [];
 }
 
-/** Get MSRP for a make+model (trim-aware) */
-export function getModelMSRP(make: string, model: string): number {
+/** Get MSRP for a make+model. Returns null if not found. */
+export function getModelMSRP(make: string, model: string): number | null {
   const entry = getModels(make).find((m) => m.name === model);
-  return entry?.msrp ?? 32000;
+  return entry?.msrp ?? null;
 }
 
 /**

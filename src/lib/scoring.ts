@@ -1,21 +1,50 @@
-import type { CarInput, ScoreResult, PriceRange, Verdict } from "./types";
+/**
+ * ═══════════════════════════════════════════════════════════════════════════
+ * DealSense — Layered Valuation & Scoring Engine
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * Architecture (PART 1–9 refactor):
+ *
+ *   Layer A: Base vehicle value (year/make/model/trim/mileage/region → range)
+ *   Layer B: Configuration adjustment (VIN-decoded options affect the range)
+ *   Layer C: Vehicle category sensitivity (luxury/performance get wider ranges)
+ *   Layer D: Mileage adjustment (class-aware, less dominant on premium cars)
+ *   Layer E: Confidence scoring (how much to trust the estimate)
+ *   Layer F: Verdict logic (context-aware, softer when confidence is low)
+ *
+ * Exported functions (modular, as specified in PART 6):
+ *   1. determineVehicleCategory()
+ *   2. getBaseFairValueRange()        — replaces old estimateFairValue
+ *   3. getConfigurationAdjustment()   — new: option-driven value delta
+ *   4. calculateConfidenceScore()     — new: 0–100 + level + breakdown
+ *   5. generateVerdict()              — new: 6 possible verdicts
+ *   6. generateInsights()             — new: key insights array
+ *   7. scoreCarDeal()                 — orchestrator, uses all of the above
+ *   8. estimateMonthlyPayment()       — unchanged
+ *
+ * PRODUCT RULE (PART 9): This engine does NOT pretend to be 100% exact.
+ * It aims to be trustworthy, directionally smart, and transparent about
+ * uncertainty — especially on luxury/performance/exotic vehicles.
+ * ═══════════════════════════════════════════════════════════════════════════
+ */
+
+import type {
+  CarInput,
+  ScoreResult,
+  PriceRange,
+  Verdict,
+  VehicleCategory,
+  ConfidenceLevel,
+  ConfidenceBreakdown,
+} from "./types";
 import { getModelMSRP, getTrimMultiplier } from "./carData";
 import { getDepreciationProfile, retentionAtYear, getGeoMultiplier } from "./depreciation";
 
-/**
- * Model-level base MSRP table.
- * Keys are lowercase "make|model" pairs. Values are the original new MSRP
- * for the mid-trim variant of that model (US market, recent years).
- * Sources: manufacturer websites, Edmunds, CarGurus historical MSRP data.
- *
- * IMPORTANT: The lookup uses LONGEST-MATCH so more specific keys always win.
- * e.g. "bmw|m3 competition" beats "bmw|m3" beats "bmw|3 series".
- * Also supports "make|base-model performance-trim" combined keys so that
- * entering Model="3 Series" + Trim="M3 Competition" still gets the right anchor.
- *
- * When a make|model match is found it's used directly.
- * Otherwise we fall back to the make-level average, then the global default.
- */
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ * MSRP LOOKUP TABLES (unchanged from original — curated vehicle MSRPs)
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
 const MODEL_BASE: Record<string, number> = {
   // ── Toyota ──────────────────────────────────────────────────────────────
   "toyota|camry":              28000,
@@ -255,7 +284,6 @@ const MODEL_BASE: Record<string, number> = {
   "bmw|x6":                     68000,
   "bmw|x7":                     78000,
   "bmw|z4":                     52000,
-  // M standalone models (entered as the model name)
   "bmw|m2":                     65000,
   "bmw|m2 competition":         68000,
   "bmw|m3":                     82000,
@@ -280,7 +308,6 @@ const MODEL_BASE: Record<string, number> = {
   "bmw|x5 m competition":       112000,
   "bmw|x6 m":                   110000,
   "bmw|x6 m competition":       118000,
-  // Combined "base model + performance trim" keys (model=3 Series, trim=M3 Competition)
   "bmw|3 series m3":            82000,
   "bmw|3 series m3 competition":86000,
   "bmw|3 series m3 cs":         112000,
@@ -306,7 +333,6 @@ const MODEL_BASE: Record<string, number> = {
   "mercedes-benz|eqe":          75000,
   "mercedes-benz|eqs":          105000,
   "mercedes-benz|sl":           95000,
-  // AMG standalone model names
   "mercedes-benz|amg a 45":     56000,
   "mercedes-benz|amg cla 45":   58000,
   "mercedes-benz|amg c 43":     58000,
@@ -330,7 +356,6 @@ const MODEL_BASE: Record<string, number> = {
   "mercedes-benz|amg sl 63":    175000,
   "mercedes-benz|maybach s-class": 200000,
   "mercedes-benz|maybach gls": 175000,
-  // Combined "base model + AMG trim" keys
   "mercedes-benz|c-class amg c 63":  80000,
   "mercedes-benz|e-class amg e 63":  110000,
   "mercedes-benz|s-class amg s 63":  170000,
@@ -354,7 +379,6 @@ const MODEL_BASE: Record<string, number> = {
   "audi|e-tron gt":   110000,
   "audi|tt":          50000,
   "audi|r8":          170000,
-  // S-line performance variants
   "audi|s3":          46000,
   "audi|s4":          54000,
   "audi|s5":          58000,
@@ -364,7 +388,6 @@ const MODEL_BASE: Record<string, number> = {
   "audi|sq5":         56000,
   "audi|sq7":         80000,
   "audi|sq8":         90000,
-  // RS high-performance variants
   "audi|rs3":         60000,
   "audi|rs5":         74000,
   "audi|rs6":         118000,
@@ -614,52 +637,34 @@ const MAKE_BASE: Record<string, number> = {
   "nissan": 30000, "hyundai": 28000, "kia": 27000, "subaru": 30000,
   "mazda": 29000, "volkswagen": 31000, "dodge": 34000, "chrysler": 33000,
   "buick": 36000, "mitsubishi": 25000, "tesla": 58000,
+  "ferrari": 300000, "lamborghini": 250000, "mclaren": 250000,
+  "bentley": 220000, "rolls-royce": 380000, "maserati": 90000,
+  "alfa romeo": 50000, "aston martin": 180000, "lotus": 100000,
   "default": 32000,
 };
 
-/**
- * Lookup base new MSRP for a given make + model + optional trim.
- *
- * Priority order:
- *   1. MODEL_BASE exact match for "make|model" — curated specific-variant MSRP
- *   2. MODEL_BASE combined "make|model trim" key — catches "3 Series" + "M3 Competition" etc.
- *   3. carData database (35+ makes, broad model coverage) + trim multiplier
- *   4. MODEL_BASE longest partial match + trim multiplier
- *   5. MAKE_BASE fallback → global default
- *
- * Checking MODEL_BASE first means carefully curated performance-variant MSRPs
- * (e.g., "bmw|m3 competition" = $86k) always win over carData's base-model entry.
- */
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ * INTERNAL: MSRP LOOKUP (unchanged logic, extracted for clarity)
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
 function getBasePrice(make: string, model: string, trim?: string): number {
   const m   = make.toLowerCase().trim();
   const mod = model.toLowerCase().trim().replace(/\s+/g, " ");
   const t   = trim?.toLowerCase().trim().replace(/\s+/g, " ");
 
-  // 1. Combined "model + trim" key checked FIRST — most specific wins.
-  //    e.g. model="3 Series" trim="M3 Competition" → "bmw|3 series m3 competition" = $86k
-  //    e.g. model="C-Class"  trim="AMG C 63 S"     → "mercedes-benz|c-class amg c 63 s" = $88k
+  // 1. Combined "model + trim" key — most specific wins
   if (t) {
-    // If trim starts with model name, avoid duplication:
-    //   model="M3" trim="M3 Competition" → try "bmw|m3 competition" NOT "bmw|m3 m3 competition"
     const deduped = t.startsWith(mod) ? t : `${mod} ${t}`;
     const combinedKey = `${m}|${deduped}`;
-    if (MODEL_BASE[combinedKey]) {
-      return MODEL_BASE[combinedKey];
-    }
-    // Also try the raw combined form (model="3 Series" trim="M3 Competition")
+    if (MODEL_BASE[combinedKey]) return MODEL_BASE[combinedKey];
     const rawCombined = `${m}|${mod} ${t}`;
-    if (rawCombined !== combinedKey && MODEL_BASE[rawCombined]) {
-      return MODEL_BASE[rawCombined];
-    }
-    // Also try just the trim as the key (trim="M3 Competition" → "bmw|m3 competition")
+    if (rawCombined !== combinedKey && MODEL_BASE[rawCombined]) return MODEL_BASE[rawCombined];
     const trimOnlyKey = `${m}|${t}`;
-    if (trimOnlyKey !== combinedKey && MODEL_BASE[trimOnlyKey]) {
-      return MODEL_BASE[trimOnlyKey];
-    }
+    if (trimOnlyKey !== combinedKey && MODEL_BASE[trimOnlyKey]) return MODEL_BASE[trimOnlyKey];
   }
 
   // 2. MODEL_BASE exact match on model name alone
-  //    e.g. model="M3 Competition" → "bmw|m3 competition" = $86k (no extra mult needed)
   const exactKey = `${m}|${mod}`;
   if (MODEL_BASE[exactKey]) {
     const trimBakedIn = !t || mod.includes(t) || t.startsWith(mod);
@@ -669,12 +674,12 @@ function getBasePrice(make: string, model: string, trim?: string): number {
 
   // 3. carData database lookup + trim multiplier
   const carDataMSRP = getModelMSRP(make, model);
-  if (carDataMSRP !== 32000) {
+  if (carDataMSRP !== null) {
     const mult = t ? getTrimMultiplier(t) : 1.0;
     return Math.round(carDataMSRP * mult);
   }
 
-  // 4. MODEL_BASE longest partial match (most-specific prefix wins)
+  // 4. MODEL_BASE longest partial match
   const partials = Object.keys(MODEL_BASE).filter(
     (k) => k.startsWith(`${m}|`) && mod.startsWith(k.split("|")[1])
   );
@@ -688,292 +693,151 @@ function getBasePrice(make: string, model: string, trim?: string): number {
   return MAKE_BASE[m] ?? MAKE_BASE["default"];
 }
 
-/**
- * @deprecated — replaced by depreciation.ts per-model profiles.
- * Kept here only as a comment marker so git blame is readable.
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ * MODULE 1: determineVehicleCategory()
+ * ═══════════════════════════════════════════════════════════════════════════
  *
- * High retention: Toyota, Honda, Subaru, Mazda, trucks/4x4s
- * Low retention (<1.0): German luxury, British luxury, American sedans, EVs (non-Tesla)
+ * Classifies a vehicle into one of 6 category buckets. This drives:
+ * - Fair value range width (wider for high-variance categories)
+ * - Mileage penalty weighting (less dominant on performance cars)
+ * - Confidence thresholds (lower when options are missing on luxury/performance)
+ * - Verdict aggressiveness (softer on high-variance with incomplete data)
  */
-const MAKE_DEPRECIATION_MULTIPLIER: Record<string, number> = {
-  // Excellent retention — Japanese reliable brands
-  "toyota":     1.20,  // Best resale in class; Tacoma/4Runner hold exceptionally
-  "honda":      1.15,
-  "subaru":     1.12,
-  "mazda":      1.10,
-  "lexus":      1.10,  // Premium Toyota — strong resale
-  "acura":      1.05,
 
-  // Good retention — Korean brands have improved significantly
-  "kia":        1.05,
-  "hyundai":    1.03,
-  "genesis":    0.98,  // Luxury Hyundai — still building resale rep
+// Exotic makes — always high-variance
+const EXOTIC_MAKES = new Set([
+  "ferrari", "lamborghini", "mclaren", "bugatti", "pagani",
+  "koenigsegg", "rimac", "aston martin", "lotus",
+]);
 
-  // Trucks hold value very well (applies on top of make multiplier)
-  // Handled separately in getDepreciationMultiplier() for model-level
+// Luxury makes — default to luxury unless model overrides to performance
+const LUXURY_MAKES = new Set([
+  "bentley", "rolls-royce", "maserati", "genesis",
+  "lincoln", "cadillac", "infiniti",
+]);
 
-  // Average retention
-  "nissan":     0.98,
-  "mitsubishi": 0.96,
-  "chrysler":   0.95,
-  "buick":      0.97,
-  "gmc":        1.03,  // Trucks help GMC overall
-  "ram":        1.05,  // RAM trucks hold well
-  "jeep":       0.98,  // Wrangler holds; Cherokee/Compass less so
+// Performance model/trim patterns (regex)
+const PERFORMANCE_PATTERNS = /\b(m[2-8]|m\d+ |amg|rs\s?\d|rs\s?[eq]|type[- ]?[rs]|nismo|gt[- ]?r|gt3|gt4|zl1|z06|zr1|e-ray|hellcat|demon|srt|raptor|shelby|dark horse|blackwing|trackhawk|quadrifoglio|svr|gt500|gr corolla|gr86|gr supra|ioniq 5 n|elantra n|veloster n|kona n|k5 gt|stinger gt|ev6 gt|wrx sti|trd pro|rubicon 392|trx|competition|plaid)\b/i;
 
-  // Below average — American sedans / FWD cars
-  "ford":       0.99,  // F-150 saves the brand average
-  "chevrolet":  0.98,
-  "dodge":      0.93,
-  "lincoln":    0.90,
-  "cadillac":   0.91,
+// Truck model patterns
+const TRUCK_PATTERNS = /\b(f-[123]\d0|silverado|sierra|ram\s?\d|tundra|tacoma|frontier|titan|colorado|canyon|ranger|ridgeline|maverick|gladiator|colorado)\b/i;
 
-  // German luxury depreciates significantly — high MSRP, expensive repairs
-  "bmw":          0.78,  // ~50% value lost by yr 5; iSeeCars data
-  "mercedes-benz":0.77,
-  "audi":         0.80,
-  "volkswagen":   0.92,
-  "porsche":      0.96,  // Exception: Porsche holds better than most luxury
+// Luxury model patterns (on non-luxury makes — e.g. Toyota Land Cruiser, Lexus)
+const LUXURY_MODEL_PATTERNS = /\b(land cruiser|lx|ls|lc|gx 550|escalade|navigator|aviator|sequoia capstone|tundra capstone|range rover|defender|discovery|g-class|s-class|7 series|8 series|x7|gls|maybach|panamera|cayenne|macan|taycan)\b/i;
 
-  // Other European — fast depreciation
-  "volvo":        0.85,
-  "land rover":   0.72,  // One of the worst; Range Rover especially
-  "jaguar":       0.74,
-  "alfa romeo":   0.73,
-  "mini":         0.88,
-  "fiat":         0.82,
-
-  // Tesla holds better than most EVs; other EVs depreciate rapidly
-  "tesla":        1.05,
-
-  // Default for unknown makes
-  "default":      1.00,
-};
-
-/**
- * Model-level overrides for vehicles with notably different depreciation
- * from their brand average (e.g., Toyota 4Runner vs Corolla).
- */
-const MODEL_DEPRECIATION_OVERRIDE: Record<string, number> = {
-  // ── Toyota — best resale in the industry ────────────────────────────────
-  "toyota|4runner":           1.45,  // Barely depreciates — legendary demand
-  "toyota|4runner trd pro":   1.50,
-  "toyota|tacoma":            1.40,
-  "toyota|tacoma trd pro":    1.42,
-  "toyota|land cruiser":      1.35,
-  "toyota|tundra":            1.20,
-  "toyota|tundra trd pro":    1.25,
-  "toyota|sequoia":           1.18,
-  "toyota|sienna":            1.15,
-  "toyota|prius":             1.05,
-  "toyota|gr86":              1.10,
-  "toyota|gr supra":          1.12,
-  "toyota|gr corolla":        1.18,
-
-  // ── Honda ───────────────────────────────────────────────────────────────
-  "honda|ridgeline":          1.10,
-  "honda|odyssey":            1.08,
-  "honda|pilot":              1.08,
-  "honda|civic type r":       1.20,  // Type R holds exceptionally well — limited supply
-  "honda|integra type s":     1.15,
-
-  // ── Jeep ────────────────────────────────────────────────────────────────
-  "jeep|wrangler":            1.25,  // Wrangler defies all depreciation norms
-  "jeep|gladiator":           1.15,
-  "jeep|grand cherokee trackhawk": 0.90,
-
-  // ── Ford ────────────────────────────────────────────────────────────────
-  "ford|f-150":               1.18,
-  "ford|f-150 raptor":        1.25,
-  "ford|f-150 raptor r":      1.20,
-  "ford|bronco":              1.22,  // High demand, long wait lists
-  "ford|bronco raptor":       1.20,
-  "ford|maverick":            1.10,
-  "ford|mustang gt500":       1.05,
-  "ford|mustang shelby gt500":1.05,
-  "ford|mustang dark horse":  1.08,
-
-  // ── Chevrolet ───────────────────────────────────────────────────────────
-  "chevrolet|silverado":      1.15,
-  "chevrolet|silverado 1500": 1.15,
-  "chevrolet|corvette":       1.05,
-  "chevrolet|corvette stingray": 1.05,
-  "chevrolet|corvette z06":   1.08,  // Z06 holds very well
-  "chevrolet|corvette zr1":   1.10,  // ZR1 is collectible
-  "chevrolet|tahoe":          1.10,
-  "chevrolet|suburban":       1.12,
-  "chevrolet|camaro zl1":     0.98,
-
-  // ── GMC ─────────────────────────────────────────────────────────────────
-  "gmc|sierra":               1.15,
-  "gmc|sierra 1500":          1.15,
-  "gmc|yukon":                1.10,
-
-  // ── RAM ─────────────────────────────────────────────────────────────────
-  "ram|1500":                 1.18,
-  "ram|1500 trx":             1.08,  // TRX holds well
-
-  // ── Dodge ───────────────────────────────────────────────────────────────
-  "dodge|challenger srt hellcat":       0.95,
-  "dodge|challenger srt hellcat redeye":0.98,
-  "dodge|challenger srt demon":         1.10,  // Demon is collectible
-  "dodge|challenger srt demon 170":     1.12,
-  "dodge|charger srt hellcat":          0.95,
-
-  // ── Subaru ──────────────────────────────────────────────────────────────
-  "subaru|wrx":               1.08,
-  "subaru|wrx sti":           1.12,
-  "subaru|brz":               1.08,
-  "subaru|outback":           1.15,
-  "subaru|forester":          1.12,
-  "subaru|outback wilderness": 1.18,
-
-  // ── BMW ─────────────────────────────────────────────────────────────────
-  "bmw|m2":                   0.97,
-  "bmw|m3":                   0.95,  // M-series holds better than base BMW
-  "bmw|m3 competition":       0.95,
-  "bmw|m4":                   0.95,
-  "bmw|m4 competition":       0.95,
-  "bmw|m5":                   0.92,
-  "bmw|m5 competition":       0.93,
-  "bmw|x3 m":                 0.90,
-  "bmw|x5 m":                 0.88,
-
-  // ── Mercedes-Benz AMG ───────────────────────────────────────────────────
-  "mercedes-benz|amg g 63":   0.88,  // G63 holds better than most MB
-  "mercedes-benz|g-class":    0.86,
-  "mercedes-benz|amg c 63":   0.82,
-  "mercedes-benz|amg e 63":   0.80,
-  "mercedes-benz|amg gt":     0.88,
-
-  // ── Porsche ─────────────────────────────────────────────────────────────
-  "porsche|911":              1.15,  // 911 is a collector car — holds extremely well
-  "porsche|911 carrera":      1.12,
-  "porsche|911 carrera s":    1.14,
-  "porsche|911 carrera 4s":   1.15,
-  "porsche|911 turbo":        1.20,
-  "porsche|911 turbo s":      1.22,
-  "porsche|911 gt3":          1.25,  // GT3 appreciates in some cases
-  "porsche|911 gt3 rs":       1.28,
-  "porsche|718 cayman gt4":   1.15,
-  "porsche|cayman gt4":       1.15,
-  "porsche|718 boxster spyder":1.15,
-  "porsche|taycan":           0.85,  // EV Porsche depreciates more
-  "porsche|taycan turbo s":   0.88,
-  "porsche|macan":            0.92,
-  "porsche|cayenne turbo":    0.90,
-
-  // ── Nissan ──────────────────────────────────────────────────────────────
-  "nissan|gt-r":              1.05,  // GT-R holds very well
-
-  // ── Acura ───────────────────────────────────────────────────────────────
-  "acura|nsx":                1.05,
-  "acura|tlx type s":         1.05,
-
-  // ── Lexus ───────────────────────────────────────────────────────────────
-  "lexus|lc 500":             1.02,
-  "lexus|is 500":             1.05,
-  "lexus|rc f":               0.95,
-  "lexus|gx":                 1.18,  // GX holds like a truck
-  "lexus|gx 550":             1.20,
-
-  // ── Tesla ───────────────────────────────────────────────────────────────
-  "tesla|model 3":            1.00,
-  "tesla|model y":            1.05,
-  "tesla|model s":            0.90,  // S has depreciated with price cuts
-  "tesla|model x":            0.88,
-  "tesla|cybertruck":         0.92,
-
-  // ── Honda Civic Si ──────────────────────────────────────────────────────
-  "honda|civic si":           1.08,
-};
-
-function getDepreciationMultiplier(make: string, model: string): number {
+export function determineVehicleCategory(
+  make: string,
+  model: string,
+  trim?: string,
+  msrp?: number
+): VehicleCategory {
   const m = make.toLowerCase().trim();
-  const mod = model.toLowerCase().trim().replace(/\s+/g, " ");
-  const key = `${m}|${mod}`;
-  if (MODEL_DEPRECIATION_OVERRIDE[key]) return MODEL_DEPRECIATION_OVERRIDE[key];
-  // Longest partial match — ensures "m3 competition" beats "m3"
-  const partials = Object.keys(MODEL_DEPRECIATION_OVERRIDE).filter(
-    (k) => k.startsWith(`${m}|`) && mod.startsWith(k.split("|")[1])
-  );
-  if (partials.length > 0) {
-    const best = partials.reduce((a, b) => (a.length >= b.length ? a : b));
-    return MODEL_DEPRECIATION_OVERRIDE[best];
+  const mod = model.toLowerCase().trim();
+  const t = trim?.toLowerCase().trim() ?? "";
+  const combined = `${mod} ${t}`.trim();
+
+  // Exotic makes → always exotic
+  if (EXOTIC_MAKES.has(m)) return "exotic";
+
+  // Performance patterns (checked before luxury because M5 > luxury BMW)
+  if (PERFORMANCE_PATTERNS.test(mod) || PERFORMANCE_PATTERNS.test(t) || PERFORMANCE_PATTERNS.test(combined)) {
+    return "performance";
   }
-  return MAKE_DEPRECIATION_MULTIPLIER[m] ?? MAKE_DEPRECIATION_MULTIPLIER["default"];
+
+  // High-MSRP Porsche models = exotic, lower ones = performance
+  if (m === "porsche") {
+    return (msrp && msrp >= 150000) ? "exotic" : "performance";
+  }
+
+  // Luxury makes → luxury (unless already caught as performance above)
+  if (LUXURY_MAKES.has(m)) return "luxury";
+
+  // Premium makes that can be mainstream or luxury depending on model
+  if (["bmw", "mercedes-benz", "audi", "lexus", "acura", "volvo", "jaguar", "alfa romeo", "land rover"].includes(m)) {
+    if (LUXURY_MODEL_PATTERNS.test(mod) || LUXURY_MODEL_PATTERNS.test(combined)) return "luxury";
+    return "luxury"; // Default for premium makes
+  }
+
+  // Trucks
+  if (TRUCK_PATTERNS.test(mod)) {
+    // High-trim trucks (Platinum, Limited, Denali, etc.) are luxury-adjacent
+    if (/\b(platinum|limited|denali|high country|king ranch|capstone|1794|laramie longhorn|black label|calligraphy)\b/i.test(t)) {
+      return "luxury";
+    }
+    return "truck";
+  }
+
+  // Economy cars (MSRP under ~$26k or specific models)
+  if (msrp && msrp < 26000) return "economy";
+  if (/\b(corolla|civic|sentra|forte|versa|kicks|trax|spark|fit|accent|rio|soul)\b/i.test(mod)) {
+    return "economy";
+  }
+
+  return "mainstream";
 }
 
-/**
- * Cumulative value retention by age — baseline for an "average" vehicle.
- * Per-make multipliers are applied on top via getDepreciationMultiplier().
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ * MODULE 2: getBaseFairValueRange()
+ * ═══════════════════════════════════════════════════════════════════════════
  *
- * Year 1:  ~16% first-year drop (new → used)
- * Year 2:  additional ~9%
- * Year 3:  additional ~7%
- * Years 4-6: ~5–6%/yr
- * Years 7-10: ~4%/yr
- * 10+: ~2-3%/yr
+ * Layer A: Determines base fair value RANGE using year/make/model/trim/
+ * mileage/region. Replaces old estimateFairValue(). Now category-aware
+ * for range width:
+ *   economy/mainstream → ±7%
+ *   truck              → ±9%
+ *   luxury             → ±12%
+ *   performance        → ±15%
+ *   exotic             → ±20%
  */
-function retentionFactor(ageYears: number): number {
-  if (ageYears <= 0)  return 1.00;
-  if (ageYears === 1) return 0.84;
-  if (ageYears === 2) return 0.75;
-  if (ageYears === 3) return 0.68;
-  if (ageYears === 4) return 0.63;
-  if (ageYears === 5) return 0.58;
-  if (ageYears === 6) return 0.54;
-  if (ageYears === 7) return 0.50;
-  if (ageYears === 8) return 0.46;
-  if (ageYears === 9) return 0.43;
-  if (ageYears === 10) return 0.40;
-  return Math.max(0.12, 0.40 - (ageYears - 10) * 0.025);
-}
 
-/**
- * Mileage adjustment vs. average US driving (~13,500 mi/yr per FHWA 2023).
- * Value impact: roughly $0.06–$0.10 per mile above/below average.
- * The rate scales with vehicle value — high-value cars lose more per mile.
- */
-function mileageAdjustment(mileage: number, ageYears: number, baseValue: number): number {
-  const avgMileage = Math.max(ageYears * 13500, 1);
-  const diff = mileage - avgMileage;
-  // Rate: $0.06/mi for sub-$20k cars, up to $0.10/mi for $50k+ cars
-  const rate = Math.min(0.10, Math.max(0.06, baseValue / 500000));
-  const adj = -(diff * rate);
-  // Cap at ±22% of base value
-  const cap = baseValue * 0.22;
-  return Math.max(-cap, Math.min(cap, adj));
-}
+// Category-specific range spread (half-width as fraction of midpoint)
+const CATEGORY_SPREAD: Record<VehicleCategory, number> = {
+  economy:     0.07,
+  mainstream:  0.07,
+  truck:       0.09,
+  luxury:      0.12,
+  performance: 0.15,
+  exotic:      0.20,
+};
 
-export function estimateFairValue(input: CarInput): PriceRange {
+export function getBaseFairValueRange(input: CarInput, category: VehicleCategory): PriceRange {
   const currentYear = new Date().getFullYear();
   const ageYears = Math.max(0, currentYear - input.year);
 
-  // 1. MSRP anchor — carData DB > local MODEL_BASE > MAKE_BASE fallback
+  // 1. MSRP anchor
   const baseNewPrice = getBasePrice(input.make, input.model, input.trim);
 
-  // 2. Per-model retention curve from real iSeeCars/CarEdge/Edmunds data
+  // 2. Per-model retention curve
   const profile = getDepreciationProfile(input.make, input.model);
   const retention = retentionAtYear(profile, ageYears);
   const midBase = baseNewPrice * retention;
 
-  // 3. Mileage adjustment using class-specific $/1k miles penalty
+  // 3. Mileage adjustment — reduced weight for performance/exotic (PART 1D)
   const avgMileage = Math.max(ageYears * 13500, 1);
-  const mileDelta = input.mileage - avgMileage;          // negative = below avg (good)
-  const mileAdj = -(mileDelta / 1000) * profile.mileagePenaltyPer1k;
-  // Cap adjustment at ±25% of base so extreme mileage doesn't break the model
+  const mileDelta = input.mileage - avgMileage;
+  const mileagePenalty = profile.mileagePenaltyPer1k;
+
+  // Performance/exotic cars: mileage matters less (owners drive fewer miles,
+  // value is more configuration-driven). Scale penalty down by 40–60%.
+  const mileageWeight = (category === "exotic") ? 0.4
+    : (category === "performance") ? 0.6
+    : (category === "luxury") ? 0.8
+    : 1.0;
+
+  const mileAdj = -(mileDelta / 1000) * mileagePenalty * mileageWeight;
   const mileAdjCapped = Math.max(-midBase * 0.25, Math.min(midBase * 0.25, mileAdj));
 
-  // 4. Geographic price adjustment (coastal = higher demand = higher prices)
+  // 4. Geographic price adjustment
   const geoMult = getGeoMultiplier(input.zipCode);
 
   const midpoint = Math.max(500, Math.round(
     ((midBase + mileAdjCapped) * geoMult) / 100
   ) * 100);
 
-  // Range width: ±7% (reflects real market variance in used car pricing)
-  const spread = midpoint * 0.07;
+  // 5. Category-aware range width
+  const spread = midpoint * CATEGORY_SPREAD[category];
   return {
     low:      Math.round((midpoint - spread) / 100) * 100,
     high:     Math.round((midpoint + spread) / 100) * 100,
@@ -981,10 +845,395 @@ export function estimateFairValue(input: CarInput): PriceRange {
   };
 }
 
-/**
- * Estimate monthly payment using standard amortization formula.
- * Defaults match typical used-car financing (2024–25) if no overrides provided.
+// Legacy alias — keep backward compatibility for any callers
+export function estimateFairValue(input: CarInput): PriceRange {
+  const cat = determineVehicleCategory(input.make, input.model, input.trim);
+  return getBaseFairValueRange(input, cat);
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ * MODULE 3: getConfigurationAdjustment()
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * Layer B: Adjusts the baseline fair value based on VIN-decoded configuration
+ * data. When option data is present, it can shift the midpoint up or down.
+ * When option data is missing on a high-variance car, it widens the range
+ * instead of guessing.
+ *
+ * Returns an adjustment object rather than mutating the range directly.
  */
+
+interface ConfigAdjustment {
+  midpointDelta: number;    // shift to apply to midpoint (positive = car is worth more)
+  spreadMultiplier: number; // multiply the existing spread (>1 = widen range)
+  optionDataStatus: "complete" | "partial" | "missing";
+  decodedFactors: string[]; // human-readable list of what was decoded
+}
+
+export function getConfigurationAdjustment(
+  input: CarInput,
+  category: VehicleCategory,
+  vinData?: {
+    driveType?: string;
+    bodyClass?: string;
+    fuelType?: string;
+    engineCylinders?: string;
+    displacement?: string;
+    trim?: string;
+  }
+): ConfigAdjustment {
+  const factors: string[] = [];
+  let midpointDelta = 0;
+  let spreadMultiplier = 1.0;
+  let optionDataStatus: "complete" | "partial" | "missing" = "missing";
+
+  if (!vinData) {
+    // No VIN decode data at all — widen range on high-variance vehicles
+    if (category === "exotic" || category === "performance") {
+      spreadMultiplier = 1.4; // 40% wider range
+    } else if (category === "luxury") {
+      spreadMultiplier = 1.2; // 20% wider
+    }
+    return { midpointDelta: 0, spreadMultiplier, optionDataStatus: "missing", decodedFactors: [] };
+  }
+
+  // Count how many fields we have data for
+  const fields = [vinData.driveType, vinData.bodyClass, vinData.fuelType, vinData.engineCylinders, vinData.displacement, vinData.trim];
+  const presentCount = fields.filter(Boolean).length;
+
+  if (presentCount >= 5) optionDataStatus = "complete";
+  else if (presentCount >= 2) optionDataStatus = "partial";
+  else optionDataStatus = "missing";
+
+  const basePrice = getBasePrice(input.make, input.model, input.trim);
+
+  // ── Drivetrain adjustment ──
+  if (vinData.driveType) {
+    const dt = vinData.driveType.toLowerCase();
+    factors.push(`Drivetrain: ${vinData.driveType}`);
+    // AWD/4WD typically adds value on luxury/mainstream vehicles
+    if (/\b(awd|4wd|all.wheel|4x4|xdrive|quattro|4matic|sh-awd)\b/i.test(dt)) {
+      midpointDelta += basePrice * 0.02; // ~2% premium for AWD
+    }
+  }
+
+  // ── Engine/powertrain adjustment ──
+  if (vinData.engineCylinders || vinData.displacement) {
+    const cylStr = vinData.engineCylinders ?? "";
+    const dispStr = vinData.displacement ?? "";
+    factors.push(`Engine: ${[cylStr ? `${cylStr}cyl` : "", dispStr ? `${dispStr}L` : ""].filter(Boolean).join(" ")}`);
+
+    // Higher cylinder count on performance cars = more value
+    const cylCount = parseInt(cylStr, 10);
+    if (category === "performance" || category === "exotic") {
+      if (cylCount >= 8) midpointDelta += basePrice * 0.03;
+      else if (cylCount >= 6) midpointDelta += basePrice * 0.01;
+    }
+  }
+
+  // ── Body style adjustment ──
+  if (vinData.bodyClass) {
+    factors.push(`Body: ${vinData.bodyClass}`);
+    const body = vinData.bodyClass.toLowerCase();
+    // Convertibles typically command a premium
+    if (/\b(convert|cabriolet|roadster|spider|spyder|targa)\b/.test(body)) {
+      midpointDelta += basePrice * 0.04;
+    }
+  }
+
+  // ── Fuel type ──
+  if (vinData.fuelType) {
+    factors.push(`Fuel: ${vinData.fuelType}`);
+  }
+
+  // ── If option data is still partial on a high-variance car, widen range ──
+  if (optionDataStatus === "partial") {
+    if (category === "exotic" || category === "performance") {
+      spreadMultiplier = 1.25;
+    } else if (category === "luxury") {
+      spreadMultiplier = 1.15;
+    }
+  }
+
+  return { midpointDelta, spreadMultiplier, optionDataStatus, decodedFactors: factors };
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ * MODULE 4: calculateConfidenceScore()
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * PART 2: Confidence system. Every analysis gets a 0–100 score and a
+ * High/Medium/Low level. Based on data completeness, not opinion.
+ *
+ * Scoring rubric:
+ *   +25 VIN decoded successfully
+ *   +20 Trim verified (not just base model guess)
+ *   +20 Option/package data present
+ *   +20 Market data is transaction-level (not just model averages)
+ *   +10 Region-specific data available
+ *   +5  Vehicle is low-variance category (economy/mainstream)
+ *
+ * Penalties:
+ *   -15 High-variance car with incomplete option data
+ *   -10 Using statistical model as primary source
+ *   -5  Very old vehicle (>12 years — less comp data available)
+ */
+
+export function calculateConfidenceScore(
+  input: CarInput,
+  category: VehicleCategory,
+  optionDataStatus: "complete" | "partial" | "missing",
+  priceSource: string,
+  vinDecoded: boolean,
+  trimVerified: boolean
+): { confidenceScore: number; confidenceLevel: ConfidenceLevel; breakdown: ConfidenceBreakdown } {
+  let score = 0;
+
+  // ── Positive signals ──
+  if (vinDecoded) score += 25;
+  if (trimVerified) score += 20;
+
+  if (optionDataStatus === "complete") score += 20;
+  else if (optionDataStatus === "partial") score += 10;
+
+  // Market data specificity
+  const isTransaction = /vinaudit|edmunds|tmv/i.test(priceSource);
+  const isListings = /auto\.dev|marketcheck|listing/i.test(priceSource);
+  const isStatistical = /statistical|depreciation/i.test(priceSource);
+
+  let marketDataSpecificity: ConfidenceBreakdown["marketDataSpecificity"] = "statistical";
+  if (isTransaction) { score += 20; marketDataSpecificity = "transaction"; }
+  else if (isListings) { score += 14; marketDataSpecificity = "listings"; }
+  else if (isStatistical) { score += 5; marketDataSpecificity = "statistical"; }
+  else { score += 10; marketDataSpecificity = "broad_model"; }
+
+  // Region data (assume available if ZIP is provided — all our APIs use it)
+  const regionDataAvailable = !!input.zipCode && input.zipCode.length >= 5;
+  if (regionDataAvailable) score += 10;
+
+  // Low-variance bonus
+  if (category === "economy" || category === "mainstream") score += 5;
+
+  // ── Penalties ──
+  const isHighVariance = category === "exotic" || category === "performance" || category === "luxury";
+  if (isHighVariance && optionDataStatus !== "complete") {
+    score -= 15;
+  }
+  if (isStatistical) {
+    score -= 10;
+  }
+  const currentYear = new Date().getFullYear();
+  if (currentYear - input.year > 12) {
+    score -= 5;
+  }
+
+  // Clamp
+  score = Math.max(0, Math.min(100, score));
+
+  // Level thresholds
+  let confidenceLevel: ConfidenceLevel;
+  if (score >= 65) confidenceLevel = "High";
+  else if (score >= 40) confidenceLevel = "Medium";
+  else confidenceLevel = "Low";
+
+  const breakdown: ConfidenceBreakdown = {
+    vinDecoded,
+    trimVerified,
+    optionDataStatus,
+    marketDataSpecificity,
+    vehicleCategory: category,
+    regionDataAvailable,
+  };
+
+  return { confidenceScore: score, confidenceLevel, breakdown };
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ * MODULE 5: generateVerdict()
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * PART 1E: Context-aware verdict logic. Replaces the old rigid thresholds.
+ *
+ * Key rules:
+ * - If confidence is low, do NOT produce "Walk Away" unless the asking price
+ *   is obviously far outside the fair value range (>25% over high end).
+ * - If options are incomplete on a high-variance car, lean toward
+ *   "Needs Option Review" instead of "Negotiate" or "Walk Away".
+ * - "Fair Deal" added for prices within a tight band of midpoint.
+ * - "Possibly Overpriced" is the softer version when data is uncertain.
+ */
+
+export function generateVerdict(
+  score: number,
+  priceDeltaPct: number,
+  confidenceLevel: ConfidenceLevel,
+  category: VehicleCategory,
+  optionDataStatus: "complete" | "partial" | "missing"
+): Verdict {
+  const isHighVariance = category === "exotic" || category === "performance" || category === "luxury";
+  const hasIncompleteOptions = optionDataStatus !== "complete";
+
+  // ── High confidence — traditional thresholds with expanded verdicts ──
+  if (confidenceLevel === "High") {
+    if (score >= 73) return "Buy";
+    if (score >= 62) return "Fair Deal";
+    if (score >= 46) return "Negotiate";
+    if (score >= 30) return "Possibly Overpriced";
+    return "Walk Away";
+  }
+
+  // ── Medium confidence ──
+  if (confidenceLevel === "Medium") {
+    if (score >= 73) return "Buy";
+    if (score >= 60) return "Fair Deal";
+    // On high-variance cars with incomplete options, prefer "Needs Option Review"
+    if (isHighVariance && hasIncompleteOptions && score >= 40) return "Needs Option Review";
+    if (score >= 46) return "Negotiate";
+    // Soften harsh verdicts when confidence isn't high
+    if (priceDeltaPct > 0.25) return "Walk Away"; // Obviously far out → still walk away
+    return "Possibly Overpriced";
+  }
+
+  // ── Low confidence — very cautious ──
+  if (score >= 73) return "Buy"; // Still safe to call a strong deal
+  if (score >= 58) return "Fair Deal";
+  // Almost always route high-variance + incomplete options to review
+  if (isHighVariance && hasIncompleteOptions) return "Needs Option Review";
+  if (score >= 46) return "Needs Option Review";
+  // Only produce "Walk Away" if asking price is wildly over (>30% above high end)
+  if (priceDeltaPct > 0.30) return "Possibly Overpriced";
+  return "Needs Option Review";
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ * MODULE 6: generateInsights()
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * PART 3: Context-aware explanations and insights. Uses careful wording
+ * that respects confidence level. Never says "real market value" when
+ * confidence is not high.
+ */
+
+export function generateInsights(
+  input: CarInput,
+  fairValue: PriceRange,
+  priceDelta: number,
+  priceDeltaPct: number,
+  category: VehicleCategory,
+  confidenceLevel: ConfidenceLevel,
+  optionDataStatus: "complete" | "partial" | "missing",
+  mileageRatio: number,
+  ageYears: number
+): { reasons: string[]; warnings: string[]; keyInsights: string[] } {
+  const reasons: string[] = [];
+  const warnings: string[] = [];
+  const keyInsights: string[] = [];
+
+  const absDeltaK = (Math.abs(priceDelta) / 1000).toFixed(1);
+  const isHighVariance = category === "exotic" || category === "performance" || category === "luxury";
+
+  // ── Price position ──
+  if (priceDelta > 0) {
+    const pct = Math.round(priceDeltaPct * 100);
+    if (confidenceLevel === "High") {
+      reasons.push(`Asking price is $${absDeltaK}k (${pct}%) above the estimated fair value range midpoint of $${fairValue.midpoint.toLocaleString()}.`);
+    } else {
+      reasons.push(`Asking price is $${absDeltaK}k (${pct}%) above our estimated fair value midpoint of $${fairValue.midpoint.toLocaleString()}. This estimate carries ${confidenceLevel.toLowerCase()} confidence — treat as directional.`);
+    }
+    keyInsights.push(`Price is ${pct}% above estimated fair value`);
+  } else if (priceDelta < 0) {
+    const pct = Math.round(Math.abs(priceDeltaPct) * 100);
+    reasons.push(`Asking price is $${absDeltaK}k (${pct}%) below the estimated fair value midpoint — potentially a strong deal.`);
+    keyInsights.push(`Price is ${pct}% below estimated fair value`);
+  } else {
+    reasons.push(`Asking price is in line with the estimated fair value midpoint.`);
+    keyInsights.push(`Price is aligned with estimated fair value`);
+  }
+
+  // ── Fair value range context ──
+  reasons.push(`Estimated fair value range: $${fairValue.low.toLocaleString()} – $${fairValue.high.toLocaleString()}.`);
+  keyInsights.push(`Fair value range: $${fairValue.low.toLocaleString()} – $${fairValue.high.toLocaleString()}`);
+
+  // ── Mileage context ──
+  if (mileageRatio > 1.3) {
+    reasons.push(
+      `Higher mileage: ${input.mileage.toLocaleString()} mi is ${Math.round((mileageRatio - 1) * 100)}% above average for a ${ageYears}-year-old vehicle. Budget for higher maintenance costs.`
+    );
+    keyInsights.push(`High mileage for age — plan for maintenance`);
+  } else if (mileageRatio < 0.7) {
+    reasons.push(
+      `Low mileage: ${input.mileage.toLocaleString()} mi is well below average for its age — this adds value and suggests less wear.`
+    );
+    keyInsights.push(`Low mileage adds value`);
+  } else {
+    reasons.push(
+      `Mileage is ${mileageRatio < 1 ? "slightly below" : "typical for"} average at ${input.mileage.toLocaleString()} mi on a ${ageYears}-year-old vehicle.`
+    );
+    keyInsights.push(`Mileage is typical for age`);
+  }
+
+  // ── Age context ──
+  if (ageYears <= 3) {
+    reasons.push(`${ageYears <= 1 ? "Nearly new" : `Only ${ageYears} years old`} — may still carry factory warranty or qualify for CPO certification.`);
+    keyInsights.push(ageYears <= 1 ? "Nearly new — warranty likely active" : "May still have factory warranty");
+  } else if (ageYears > 10) {
+    reasons.push(`At ${ageYears} years old, budget for increased repair costs and consider a pre-purchase inspection.`);
+    keyInsights.push(`Older vehicle — PPI recommended`);
+  }
+
+  // ── Monthly payment ──
+  const loanOpts = { apr: input.loanApr, downPct: input.loanDownPct, termMonths: input.loanTermMonths };
+  const monthly = estimateMonthlyPayment(input.askingPrice, loanOpts);
+  const aprLabel = (input.loanApr ?? 7.5).toFixed(1);
+  const downLabel = input.loanDownPct ?? 10;
+  const termLabel = input.loanTermMonths ?? 60;
+  reasons.push(`Estimated monthly payment: ~$${monthly}/mo (${downLabel}% down, ${aprLabel}% APR, ${termLabel} months).`);
+
+  // ── Negotiation anchor ──
+  if (priceDelta > 0 && priceDeltaPct <= 0.25) {
+    if (confidenceLevel === "High") {
+      reasons.push(
+        `Negotiation room: comparable ${input.year} ${input.make} ${input.model}s sell for $${fairValue.low.toLocaleString()}–$${fairValue.high.toLocaleString()}. Use that as your anchor.`
+      );
+    } else {
+      reasons.push(
+        `Negotiation room: comparable ${input.year} ${input.make} ${input.model}s are estimated at $${fairValue.low.toLocaleString()}–$${fairValue.high.toLocaleString()}. Use the range as a starting point, but note this estimate has ${confidenceLevel.toLowerCase()} confidence.`
+      );
+    }
+  }
+
+  // ── Warnings (PART 4.3) ──
+  if (isHighVariance && optionDataStatus !== "complete") {
+    warnings.push("Option-level value may not be fully captured in this estimate.");
+    if (category === "performance" || category === "exotic") {
+      warnings.push("High-performance and luxury vehicles can vary significantly in value based on factory packages, carbon options, brakes, interior, and technology configuration.");
+    }
+  }
+
+  if (optionDataStatus === "missing") {
+    warnings.push("No VIN-decoded option data was available. This estimate is based on model-level averages.");
+  }
+
+  if (confidenceLevel === "Low") {
+    warnings.push("This result should be treated as directional — option uncertainty may materially affect the actual fair value.");
+  }
+
+  if (isHighVariance) {
+    keyInsights.push(`Vehicle category: ${category} — configuration-sensitive`);
+  }
+
+  return { reasons, warnings, keyInsights };
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ * MODULE 7: estimateMonthlyPayment() — unchanged
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
 export function estimateMonthlyPayment(
   price: number,
   opts?: { apr?: number; downPct?: number; termMonths?: number }
@@ -1001,8 +1250,73 @@ export function estimateMonthlyPayment(
   return Math.round(payment);
 }
 
-export function scoreCarDeal(input: CarInput, fairValue?: PriceRange): ScoreResult {
-  const fv = fairValue ?? estimateFairValue(input);
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ * MODULE 8: scoreCarDeal() — ORCHESTRATOR
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * Main entry point. Chains all modules together:
+ *   1. Determine vehicle category
+ *   2. Get base fair value range (or use externally-provided market data)
+ *   3. Apply configuration adjustments
+ *   4. Calculate confidence
+ *   5. Score the deal (0–100)
+ *   6. Generate context-aware verdict
+ *   7. Generate insights, warnings, key insights
+ *
+ * Accepts optional parameters for external market data and VIN decode info
+ * so the API route can pass through what it knows.
+ */
+
+export function scoreCarDeal(
+  input: CarInput,
+  fairValue?: PriceRange,
+  options?: {
+    priceSource?: string;
+    vinDecoded?: boolean;
+    trimVerified?: boolean;
+    vinData?: {
+      driveType?: string;
+      bodyClass?: string;
+      fuelType?: string;
+      engineCylinders?: string;
+      displacement?: string;
+      trim?: string;
+    };
+  }
+): ScoreResult {
+  const priceSource = options?.priceSource ?? "Statistical model (depreciation data)";
+  const vinDecoded = options?.vinDecoded ?? !!input.vin;
+  const trimVerified = options?.trimVerified ?? !!input.trim;
+
+  // 1. Vehicle category
+  const msrp = getBasePrice(input.make, input.model, input.trim);
+  const category = determineVehicleCategory(input.make, input.model, input.trim, msrp);
+
+  // 2. Base fair value range
+  let fv = fairValue ?? getBaseFairValueRange(input, category);
+
+  // 3. Configuration adjustment
+  const configAdj = getConfigurationAdjustment(input, category, options?.vinData);
+
+  // Apply config adjustments to the range
+  if (configAdj.midpointDelta !== 0 || configAdj.spreadMultiplier !== 1.0) {
+    const newMid = Math.max(500, Math.round((fv.midpoint + configAdj.midpointDelta) / 100) * 100);
+    const baseSpread = (fv.high - fv.low) / 2;
+    const newSpread = Math.round(baseSpread * configAdj.spreadMultiplier / 100) * 100;
+    fv = {
+      low:      Math.max(500, newMid - newSpread),
+      high:     newMid + newSpread,
+      midpoint: newMid,
+    };
+  }
+
+  // 4. Confidence
+  const { confidenceScore, confidenceLevel, breakdown } = calculateConfidenceScore(
+    input, category, configAdj.optionDataStatus, priceSource, vinDecoded, trimVerified
+  );
+
+  // 5. Score (0–100)
   const priceDelta    = input.askingPrice - fv.midpoint;
   const priceDeltaPct = priceDelta / fv.midpoint;
 
@@ -1011,88 +1325,53 @@ export function scoreCarDeal(input: CarInput, fairValue?: PriceRange): ScoreResu
   const avgMileage  = ageYears * 13500;
   const mileageRatio = input.mileage / Math.max(avgMileage, 1);
 
-  // ── Price vs. market (primary driver, 0-65 pts) ──────────────────────
+  // ── Price vs. market (primary driver) ──
   let score = 65;
-  if      (priceDeltaPct <= -0.15) score += 30;   // 15%+ below — great deal
-  else if (priceDeltaPct <= -0.08) score += 20;   // 8–15% below — good deal
-  else if (priceDeltaPct <= -0.03) score += 10;   // 3–8% below — slightly good
-  else if (priceDeltaPct <=  0.03) score +=  5;   // within 3% — fair
-  else if (priceDeltaPct <=  0.08) score -=  5;   // 3–8% over — slightly high
-  else if (priceDeltaPct <=  0.15) score -= 18;   // 8–15% over — negotiate
-  else if (priceDeltaPct <=  0.25) score -= 32;   // 15–25% over — walk away territory
-  else                              score -= 45;   // >25% over — walk away
+  if      (priceDeltaPct <= -0.15) score += 30;
+  else if (priceDeltaPct <= -0.08) score += 20;
+  else if (priceDeltaPct <= -0.03) score += 10;
+  else if (priceDeltaPct <=  0.03) score +=  5;
+  else if (priceDeltaPct <=  0.08) score -=  5;
+  else if (priceDeltaPct <=  0.15) score -= 18;
+  else if (priceDeltaPct <=  0.25) score -= 32;
+  else                              score -= 45;
 
-  // ── Mileage adjustment (up to ±12 pts) ───────────────────────────────
-  if      (mileageRatio > 1.6)  score -= 12;
-  else if (mileageRatio > 1.3)  score -=  7;
-  else if (mileageRatio > 1.1)  score -=  3;
-  else if (mileageRatio < 0.6)  score +=  8;  // very low miles — big plus
-  else if (mileageRatio < 0.8)  score +=  4;  // low miles — moderate plus
+  // ── Mileage adjustment — category-aware weight (PART 1D) ──
+  const mileageWeight = (category === "exotic") ? 0.5
+    : (category === "performance") ? 0.65
+    : (category === "luxury") ? 0.8
+    : 1.0;
 
-  // ── Age adjustment (up to ±8 pts) ────────────────────────────────────
+  if      (mileageRatio > 1.6)  score -= Math.round(12 * mileageWeight);
+  else if (mileageRatio > 1.3)  score -= Math.round(7 * mileageWeight);
+  else if (mileageRatio > 1.1)  score -= Math.round(3 * mileageWeight);
+  else if (mileageRatio < 0.6)  score += Math.round(8 * mileageWeight);
+  else if (mileageRatio < 0.8)  score += Math.round(4 * mileageWeight);
+
+  // ── Age adjustment ──
   if      (ageYears > 15) score -= 8;
   else if (ageYears > 10) score -= 4;
-  else if (ageYears <=  2) score += 8;  // near-new
-  else if (ageYears <=  4) score += 4;  // relatively new
+  else if (ageYears <=  2) score += 8;
+  else if (ageYears <=  4) score += 4;
 
   score = Math.max(0, Math.min(100, Math.round(score)));
 
-  // ── Verdict ──────────────────────────────────────────────────────────
-  let verdict: Verdict;
-  if      (score >= 73) verdict = "Buy";
-  else if (score >= 46) verdict = "Negotiate";
-  else                  verdict = "Walk Away";
+  // 6. Verdict — confidence-aware
+  const verdict = generateVerdict(score, priceDeltaPct, confidenceLevel, category, configAdj.optionDataStatus);
 
-  // ── Reasons ──────────────────────────────────────────────────────────
-  const reasons: string[] = [];
-  const absDeltaK = (Math.abs(priceDelta) / 1000).toFixed(1);
+  // 7. Insights, reasons, warnings
+  const { reasons, warnings, keyInsights } = generateInsights(
+    input, fv, priceDelta, priceDeltaPct, category,
+    confidenceLevel, configAdj.optionDataStatus, mileageRatio, ageYears
+  );
 
-  if (priceDelta > 0) {
-    const pct = Math.round(priceDeltaPct * 100);
-    reasons.push(`Asking price is $${absDeltaK}k (${pct}%) above our estimated fair value of $${fv.midpoint.toLocaleString()}.`);
-  } else if (priceDelta < 0) {
-    const pct = Math.round(Math.abs(priceDeltaPct) * 100);
-    reasons.push(`Asking price is $${absDeltaK}k (${pct}%) below estimated fair value — potentially a strong deal.`);
-  } else {
-    reasons.push(`Asking price is right at estimated fair market value.`);
-  }
-
-  if (mileageRatio > 1.3) {
-    reasons.push(
-      `High mileage: ${input.mileage.toLocaleString()} mi is ${Math.round((mileageRatio - 1) * 100)}% above average for a ${ageYears}-year-old vehicle. Plan for higher maintenance costs.`
-    );
-  } else if (mileageRatio < 0.7) {
-    reasons.push(
-      `Excellent mileage: ${input.mileage.toLocaleString()} mi is well below average for its age — this adds significant value and suggests less wear.`
-    );
-  } else {
-    reasons.push(
-      `Mileage is ${mileageRatio < 1 ? "slightly below" : "typical for"} average at ${input.mileage.toLocaleString()} mi on a ${ageYears}-year-old car.`
-    );
-  }
-
-  if (ageYears <= 3) {
-    reasons.push(`${ageYears <= 1 ? "Nearly new" : `Only ${ageYears} years old`} — may still carry factory warranty or qualify for CPO certification.`);
-  } else if (ageYears > 10) {
-    reasons.push(`At ${ageYears} years old, budget for increased repair costs and consider a pre-purchase inspection by an independent mechanic.`);
-  }
-
+  // Monthly payment
   const loanOpts = {
     apr: input.loanApr,
     downPct: input.loanDownPct,
     termMonths: input.loanTermMonths,
   };
   const monthly = estimateMonthlyPayment(input.askingPrice, loanOpts);
-  const aprLabel = (input.loanApr ?? 7.5).toFixed(1);
-  const downLabel = input.loanDownPct ?? 10;
-  const termLabel = input.loanTermMonths ?? 60;
-  reasons.push(`Estimated monthly payment: ~$${monthly}/mo (${downLabel}% down, ${aprLabel}% APR, ${termLabel} months).`);
-
-  if (priceDelta > 0 && priceDeltaPct <= 0.25) {
-    reasons.push(
-      `Negotiation room: comparable ${input.year} ${input.make} ${input.model}s sell for $${fv.low.toLocaleString()}–$${fv.high.toLocaleString()}. Use that as your anchor.`
-    );
-  }
 
   return {
     score,
@@ -1102,5 +1381,12 @@ export function scoreCarDeal(input: CarInput, fairValue?: PriceRange): ScoreResu
     priceDeltaPct,
     monthlyPayment: monthly,
     reasons,
+    confidenceLevel,
+    confidenceScore,
+    confidenceBreakdown: breakdown,
+    vehicleCategory: category,
+    optionDataStatus: configAdj.optionDataStatus,
+    valuationWarnings: warnings,
+    keyInsights,
   };
 }

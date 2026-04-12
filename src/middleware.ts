@@ -32,10 +32,13 @@ export async function middleware(request: NextRequest) {
   const isAuthRoute = pathname.startsWith("/auth")
 
   // Routes that require authentication
+  // Note: /results/[id] is public (shareable links), only /results exactly is protected
   const isProtectedRoute =
     pathname.startsWith("/analyze") ||
-    pathname.startsWith("/results") ||
-    pathname.startsWith("/settings")
+    (pathname === "/results") ||
+    pathname.startsWith("/settings") ||
+    pathname.startsWith("/history") ||
+    pathname.startsWith("/admin")
 
   // Unauthenticated + protected route → send to /auth
   if (!user && !isAuthRoute && isProtectedRoute) {

@@ -3,88 +3,173 @@ import { NextRequest, NextResponse } from "next/server";
 /** Matches a 17-char VIN (excludes I, O, Q per NHTSA standard) */
 const VIN_RE = /\b([A-HJ-NPR-Z0-9]{17})\b/g;
 
+// ─── SSRF protection — only allow known car-listing domains ────────────────
+const ALLOWED_DOMAINS = [
+  "autotrader.com",
+  "cars.com",
+  "cargurus.com",
+  "carfax.com",
+  "truecar.com",
+  "edmunds.com",
+  "kbb.com",
+  "carmax.com",
+  "vroom.com",
+  "carvana.com",
+  "facebook.com",
+  "craigslist.org",
+  "autotempest.com",
+  "offerup.com",
+  "capitalone.com",
+  "iseecars.com",
+  "autoblog.com",
+  "hemmings.com",
+  "bring-a-trailer.com",
+  "bringatrailer.com",
+  "copart.com",
+  "iaai.com",
+  "manheim.com",
+  "dealer.com",
+  "dealerinspire.com",
+  "dealerclick.com",
+];
+
+function isAllowedHost(hostname: string): boolean {
+  const lower = hostname.toLowerCase();
+  return ALLOWED_DOMAINS.some((d) => lower === d || lower.endsWith(`.${d}`));
+}
+
 export async function POST(req: NextRequest) {
+  let body: { url?: unknown };
   try {
-    const { url } = await req.json();
-    if (!url || typeof url !== "string") {
-      return NextResponse.json({ vin: null, error: "No URL provided." });
-    }
+    body = await req.json();
+  } catch {
+    return NextResponse.json(
+      { vin: null, error: "Invalid request body." },
+      { status: 400 }
+    );
+  }
 
-    const trimmed = url.trim();
+  const { url } = body;
+  if (!url || typeof url !== "string") {
+    return NextResponse.json(
+      { vin: null, error: "No URL provided." },
+      { status: 400 }
+    );
+  }
 
-    // ── 1. VIN embedded directly in the URL ───────────────────────────────
-    const urlMatches = Array.from(trimmed.matchAll(VIN_RE));
-    if (urlMatches.length) {
-      return NextResponse.json({ vin: urlMatches[0][1].toUpperCase() });
-    }
+  const trimmed = url.trim();
 
-    // ── 2. Fetch the listing page and scan HTML ────────────────────────────
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 7000);
+  // ── 1. VIN embedded directly in the URL string ─────────────────────────
+  const urlMatches = Array.from(trimmed.matchAll(VIN_RE));
+  if (urlMatches.length) {
+    return NextResponse.json({ vin: urlMatches[0][1].toUpperCase() });
+  }
 
-    try {
-      const res = await fetch(trimmed, {
-        headers: {
-          "User-Agent":
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 " +
-            "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-          Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-        },
-        signal: controller.signal,
-      });
-      clearTimeout(timer);
+  // ── 2. Validate URL before fetching ────────────────────────────────────
+  let parsed: URL;
+  try {
+    parsed = new URL(trimmed);
+  } catch {
+    return NextResponse.json(
+      { vin: null, error: "Invalid URL format." },
+      { status: 400 }
+    );
+  }
 
-      if (!res.ok) {
-        return NextResponse.json({
+  if (parsed.protocol !== "https:") {
+    return NextResponse.json(
+      { vin: null, error: "Only HTTPS URLs are supported." },
+      { status: 400 }
+    );
+  }
+
+  if (!isAllowedHost(parsed.hostname)) {
+    return NextResponse.json(
+      {
+        vin: null,
+        error:
+          "Unsupported listing site. We support major car sites like AutoTrader, Cars.com, CarGurus, etc. Please enter the VIN manually.",
+      },
+      { status: 400 }
+    );
+  }
+
+  // ── 3. Fetch the listing page and scan HTML ────────────────────────────
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 7000);
+
+  try {
+    const res = await fetch(trimmed, {
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 " +
+          "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        Accept:
+          "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+      },
+      redirect: "follow",
+      signal: controller.signal,
+    });
+    clearTimeout(timer);
+
+    if (!res.ok) {
+      return NextResponse.json(
+        {
           vin: null,
-          error: "Couldn't load that listing. Please enter the VIN manually.",
-        });
+          error:
+            "Couldn't load that listing. Please enter the VIN manually.",
+        },
+        { status: 502 }
+      );
+    }
+
+    // Only read first 200 KB — VIN will be near the top of any listing page
+    const reader = res.body?.getReader();
+    let html = "";
+    if (reader) {
+      let bytes = 0;
+      while (bytes < 200_000) {
+        const { done, value } = await reader.read();
+        if (done || !value) break;
+        html += new TextDecoder().decode(value);
+        bytes += value.byteLength;
       }
+      reader.cancel();
+    } else {
+      html = await res.text();
+    }
 
-      // Only read first 200 KB — VIN will be near the top of any listing page
-      const reader = res.body?.getReader();
-      let html = "";
-      if (reader) {
-        let bytes = 0;
-        while (bytes < 200_000) {
-          const { done, value } = await reader.read();
-          if (done || !value) break;
-          html += new TextDecoder().decode(value);
-          bytes += value.byteLength;
-        }
-        reader.cancel();
-      } else {
-        html = await res.text();
+    // Ordered from most specific to most general
+    const patterns: RegExp[] = [
+      /["']vin["']\s*:\s*["']([A-HJ-NPR-Z0-9]{17})["']/i,
+      /data-vin=["']([A-HJ-NPR-Z0-9]{17})["']/i,
+      /vin=([A-HJ-NPR-Z0-9]{17})/i,
+      /\bvin\b[^A-Z0-9]{1,10}([A-HJ-NPR-Z0-9]{17})/i,
+      /vehicle.{1,30}identification.{1,30}([A-HJ-NPR-Z0-9]{17})/i,
+    ];
+
+    for (const re of patterns) {
+      const m = html.match(re);
+      if (m?.[1]) {
+        return NextResponse.json({ vin: m[1].toUpperCase() });
       }
+    }
 
-      // Ordered from most specific to most general
-      const patterns: RegExp[] = [
-        /["']vin["']\s*:\s*["']([A-HJ-NPR-Z0-9]{17})["']/i,
-        /data-vin=["']([A-HJ-NPR-Z0-9]{17})["']/i,
-        /vin=([A-HJ-NPR-Z0-9]{17})/i,
-        /\bvin\b[^A-Z0-9]{1,10}([A-HJ-NPR-Z0-9]{17})/i,
-        /vehicle.{1,30}identification.{1,30}([A-HJ-NPR-Z0-9]{17})/i,
-      ];
-
-      for (const re of patterns) {
-        const m = html.match(re);
-        if (m?.[1]) {
-          return NextResponse.json({ vin: m[1].toUpperCase() });
-        }
-      }
-
-      return NextResponse.json({
+    return NextResponse.json(
+      {
         vin: null,
         error: "VIN not found in that listing. Please enter it manually.",
-      });
-    } catch {
-      clearTimeout(timer);
-      return NextResponse.json({
+      },
+      { status: 404 }
+    );
+  } catch {
+    clearTimeout(timer);
+    return NextResponse.json(
+      {
         vin: null,
         error: "Couldn't reach that page. Please enter the VIN manually.",
-      });
-    }
-  } catch {
-    return NextResponse.json({ vin: null, error: "Invalid request." });
+      },
+      { status: 502 }
+    );
   }
 }

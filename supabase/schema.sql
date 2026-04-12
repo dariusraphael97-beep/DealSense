@@ -3,31 +3,53 @@
 
 -- Users are managed by Supabase Auth; this extends the profile.
 create table if not exists public.profiles (
-  id         uuid primary key references auth.users(id) on delete cascade,
-  email      text not null,
-  created_at timestamptz default now()
+  id              uuid primary key references auth.users(id) on delete cascade,
+  email           text not null,
+  credits         int not null default 5,
+  role            text not null default 'user' check (role in ('user', 'staff', 'admin')),
+  referral_code   text unique,
+  total_purchased int not null default 0,
+  created_at      timestamptz default now()
 );
 
 -- Every analysis run is stored here (user_id is nullable for anonymous analyses).
 create table if not exists public.analyses (
-  id                  uuid primary key default gen_random_uuid(),
-  user_id             uuid references public.profiles(id) on delete set null,
-  vin                 text,
-  year                int not null,
-  make                text not null,
-  model               text not null,
-  trim                text,
-  mileage             int not null,
-  asking_price        int not null,
-  zip_code            text not null,
-  estimated_value_low int not null,
+  id                   uuid primary key default gen_random_uuid(),
+  user_id              uuid references public.profiles(id) on delete set null,
+  vin                  text,
+  year                 int not null,
+  make                 text not null,
+  model                text not null,
+  trim                 text,
+  mileage              int not null,
+  asking_price         int not null,
+  zip_code             text not null,
+  estimated_value_low  int not null,
   estimated_value_high int not null,
-  price_delta         int not null,
-  deal_score          int not null check (deal_score between 0 and 100),
-  verdict             text not null check (verdict in ('Buy', 'Negotiate', 'Walk Away')),
-  ai_summary          text,
-  negotiation_script  text,
-  created_at          timestamptz default now()
+  price_delta          int not null,
+  deal_score           int not null check (deal_score between 0 and 100),
+  verdict              text not null check (verdict in ('Buy', 'Fair Deal', 'Negotiate', 'Needs Option Review', 'Possibly Overpriced', 'Walk Away')),
+  ai_summary           text,
+  negotiation_script   text,
+  price_source         text,
+  result_json          jsonb,
+  confidence_level     text,
+  vehicle_category     text,
+  created_at           timestamptz default now()
+);
+
+-- User feedback on analysis accuracy (helps improve the engine over time).
+create table if not exists public.feedback (
+  id               uuid primary key default gen_random_uuid(),
+  user_id          uuid references public.profiles(id) on delete set null,
+  analysis_id      uuid references public.analyses(id) on delete cascade,
+  vin              text,
+  deal_score       int,
+  verdict          text,
+  confidence_level text,
+  helpful          boolean not null,
+  comment          text,
+  created_at       timestamptz default now()
 );
 
 -- Cache pricing API responses to avoid redundant calls.
@@ -68,7 +90,7 @@ on conflict do nothing;
 -- RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
 -- BEGIN
 --   INSERT INTO public.profiles (id, email, credits)
---   VALUES (NEW.id, NEW.email, 1)
+--   VALUES (NEW.id, NEW.email, 5)
 --   ON CONFLICT (id) DO NOTHING;
 --   RETURN NEW;
 -- END; $$;
@@ -82,6 +104,7 @@ on conflict do nothing;
 alter table public.profiles enable row level security;
 alter table public.analyses enable row level security;
 alter table public.pricing_cache enable row level security;
+alter table public.feedback enable row level security;
 
 -- Policies: users can only see their own data
 create policy "Users see own profile"
@@ -97,3 +120,11 @@ create policy "Service role can insert analyses"
 
 create policy "Public read pricing cache"
   on public.pricing_cache for select using (true);
+
+create policy "Users can insert feedback"
+  on public.feedback for insert
+  with check (auth.uid() = user_id);
+
+create policy "Users see own feedback"
+  on public.feedback for select
+  using (auth.uid() = user_id);

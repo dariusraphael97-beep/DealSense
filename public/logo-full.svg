@@ -1,0 +1,40 @@
+<svg viewBox="0 0 320 80" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="icon-bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4f46e5"/>
+      <stop offset="50%" stop-color="#6366f1"/>
+      <stop offset="100%" stop-color="#7c3aed"/>
+    </linearGradient>
+    <linearGradient id="icon-shine" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="rgba(255,255,255,0.15)"/>
+      <stop offset="50%" stop-color="rgba(255,255,255,0)"/>
+    </linearGradient>
+    <linearGradient id="text-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#1e293b"/>
+      <stop offset="100%" stop-color="#475569"/>
+    </linearGradient>
+    <linearGradient id="text-grad-dark" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="rgba(255,255,255,0.75)"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Icon mark (scaled down from 512 to 64px) -->
+  <g transform="translate(8, 8) scale(0.125)">
+    <rect width="512" height="512" rx="112" fill="url(#icon-bg)"/>
+    <rect width="512" height="512" rx="112" fill="url(#icon-shine)"/>
+    <path d="M 135 370 A 140 140 0 1 1 377 370"
+          fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="28" stroke-linecap="round"/>
+    <path d="M 135 370 A 140 140 0 0 1 360 206"
+          fill="none" stroke="white" stroke-width="28" stroke-linecap="round"/>
+    <line x1="256" y1="300" x2="339" y2="225"
+          stroke="white" stroke-width="12" stroke-linecap="round"/>
+    <circle cx="256" cy="300" r="18" fill="white"/>
+    <circle cx="256" cy="300" r="8" fill="url(#icon-bg)"/>
+  </g>
+
+  <!-- "DealSense" text — Space Grotesk Bold -->
+  <text x="84" y="52" font-family="'Space Grotesk', system-ui, sans-serif" font-weight="700" font-size="32" letter-spacing="-0.5" fill="url(#text-grad)">
+    Deal<tspan fill="url(#icon-bg)">Sense</tspan>
+  </text>
+</svg>

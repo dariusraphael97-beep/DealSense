@@ -7,6 +7,7 @@ import type { CarInput, VinDecodeResult } from "@/lib/types";
 import { ALL_MAKES, getModels, getTrims } from "@/lib/carData";
 import Link from "next/link";
 import { UserNav } from "@/components/ui/user-nav";
+import { Logo } from "@/components/ui/logo";
 import { EtherealShadow } from "@/components/ui/etheral-shadow";
 import { useSettings } from "@/contexts/settings-context";
 import { useCredits } from "@/contexts/credits-context";
@@ -149,10 +150,10 @@ function Combobox({ value, onChange, options, placeholder, disabled = false, id 
   );
 }
 
-function Field({ label, required, hint, children }: { label: string; required?: boolean; hint?: string; children: React.ReactNode }) {
+function Field({ label, required, hint, htmlFor, children }: { label: string; required?: boolean; hint?: string; htmlFor?: string; children: React.ReactNode }) {
   return (
     <div>
-      <label className="block text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: "var(--ds-text-3)" }}>
+      <label htmlFor={htmlFor} className="block text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: "var(--ds-text-3)" }}>
         {label}{required && <span className="text-red-400/80 ml-0.5 normal-case font-normal">*</span>}
       </label>
       {children}
@@ -391,13 +392,34 @@ export default function AnalyzePage() {
   const [submitError, setSubmitError] = useState("");
   const [showPaywall, setShowPaywall] = useState(false);
   const [creditsBanner, setCreditsBanner] = useState(false);
+  const [showWelcome, setShowWelcome] = useState(false);
+  const bannerTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
+
+  // Show welcome banner for first-time visitors
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const seen = localStorage.getItem("ds_welcome_seen");
+    if (!seen) setShowWelcome(true);
+  }, []);
+
+  function dismissWelcome() {
+    setShowWelcome(false);
+    localStorage.setItem("ds_welcome_seen", "1");
+  }
 
   const handleCreditsAdded = useCallback(() => {
     setCreditsBanner(true);
     refreshCredits();
-    const t = setTimeout(() => setCreditsBanner(false), 5000);
-    return () => clearTimeout(t);
+    if (bannerTimeoutRef.current) clearTimeout(bannerTimeoutRef.current);
+    bannerTimeoutRef.current = setTimeout(() => setCreditsBanner(false), 5000);
   }, [refreshCredits]);
+
+  // Cleanup banner timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (bannerTimeoutRef.current) clearTimeout(bannerTimeoutRef.current);
+    };
+  }, []);
 
   function setField<K extends keyof CarInput>(k: K, v: CarInput[K]) {
     setForm((p) => ({ ...p, [k]: v }));
@@ -412,12 +434,13 @@ export default function AnalyzePage() {
   // Core decode logic — accepts an explicit VIN string so it can be called
   // after listing-link extraction without waiting for state to settle.
   const decodeVin = useCallback(async (vin: string) => {
-    if (vin.length < 11) { setVinError("VIN must be at least 11 characters."); return; }
+    if (!/^[A-HJ-NPR-Z0-9]{17}$/i.test(vin.trim())) { setVinError("VIN must be exactly 17 characters (letters A-H, J-N, P, R-Z and digits)."); return; }
     setVinError(""); setVinSuccess(false); setVinLoading(true);
     try {
       const res = await fetch(`/api/vin?vin=${encodeURIComponent(vin)}`);
       const data: VinDecodeResult = await res.json();
       if (data.error) { setVinError(data.error); return; }
+      if (!data.make && !data.model) { setVinError("We couldn't find vehicle data for this VIN. Double-check it or enter details manually below."); return; }
       setVinInput(vin);
       setForm((p) => ({
         ...p, vin,
@@ -466,8 +489,8 @@ export default function AnalyzePage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault(); setSubmitError("");
-    if (!form.vin || form.vin.length < 11) {
-      setSubmitError("Please enter and decode your VIN first — it's required for verified transaction data.");
+    if (!form.vin || !/^[A-HJ-NPR-Z0-9]{17}$/i.test(form.vin.trim())) {
+      setSubmitError("A valid 17-character VIN is required. Enter your VIN and click Decode before submitting.");
       return;
     }
     if (!form.make || !form.model) {
@@ -496,11 +519,13 @@ export default function AnalyzePage() {
       const data = await res.json();
       if (!res.ok) {
         if (res.status === 402) { setShowPaywall(true); return; }
-        setSubmitError(data.error ?? "Something went wrong."); return;
+        if (res.status === 401) { setSubmitError("Please sign in to analyze a vehicle."); return; }
+        if (res.status >= 500) { setSubmitError("Our servers are having trouble right now. Please try again in a moment."); return; }
+        setSubmitError(data.error ?? "Something went wrong. Please check your inputs and try again."); return;
       }
       refreshCredits();
       router.push(`/results?data=${encodeURIComponent(JSON.stringify(data))}`);
-    } catch { setSubmitError("Network error. Please try again."); }
+    } catch { setSubmitError("Network error — check your connection and try again."); }
     finally   { setSubmitting(false); }
   };
 
@@ -547,8 +572,8 @@ export default function AnalyzePage() {
       <nav className="sticky top-0 z-50" style={{ background: "var(--ds-nav-bg)", borderBottom: "1px solid var(--ds-nav-border)", backdropFilter: "blur(20px)" }}>
         <div className="mx-auto max-w-3xl px-4 py-3.5 flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <Link href="/" className="font-heading text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-slate-800 to-slate-600 dark:from-white dark:to-white/70 hover:opacity-80 transition-opacity">
-              DealSense
+            <Link href="/" className="hover:opacity-80 transition-opacity">
+              <Logo variant="full" size={26} />
             </Link>
             <span style={{ color: "var(--ds-text-4)" }}>/</span>
             <span className="text-sm" style={{ color: "var(--ds-text-3)" }}>Analyze</span>
@@ -562,7 +587,7 @@ export default function AnalyzePage() {
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3">
                 <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/>
               </svg>
-              {isStaff ? "∞ credits" : credits === null ? "—" : credits === 0 ? "Buy credits" : `${credits} credit${credits !== 1 ? "s" : ""} left`}
+              {isStaff ? "∞ credits" : credits === null ? "—" : credits === 0 ? "Get free credits" : `${credits} credit${credits !== 1 ? "s" : ""} left`}
             </button>
             <UserNav />
           </div>
@@ -572,18 +597,60 @@ export default function AnalyzePage() {
       {/* Page content */}
       <div className="relative z-10 mx-auto max-w-2xl px-4 py-10">
 
+        {/* Welcome banner for first-time users */}
+        <AnimatePresence>
+          {showWelcome && (
+            <motion.div
+              initial={{ opacity: 0, y: -12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, height: 0, marginBottom: 0 }}
+              transition={{ duration: 0.4, ease }}
+              className="mb-6 rounded-2xl p-5 relative overflow-hidden"
+              style={{
+                background: "linear-gradient(135deg, rgba(99,102,241,0.10), rgba(139,92,246,0.08))",
+                border: "1px solid rgba(99,102,241,0.20)",
+              }}
+            >
+              <button
+                onClick={dismissWelcome}
+                className="absolute top-3 right-3 w-6 h-6 flex items-center justify-center rounded-full transition-colors"
+                style={{ background: "rgba(255,255,255,0.05)", color: "var(--ds-text-4)" }}
+                aria-label="Dismiss welcome banner"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
+                  style={{ background: "rgba(99,102,241,0.15)", border: "1px solid rgba(99,102,241,0.25)" }}>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="#818cf8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4" aria-hidden="true">
+                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                  </svg>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold mb-1" style={{ color: "var(--ds-text-1)" }}>
+                    You&apos;re in — analyses are free
+                  </p>
+                  <p className="text-xs leading-relaxed" style={{ color: "var(--ds-text-3)" }}>
+                    As a founding member, your analyses are free during early access. Paste a VIN and get your Deal Score. Your feedback helps us build a better product.
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* Header */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease }} className="mb-8">
           <h1 className="font-heading text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-b from-slate-800 to-slate-600 dark:from-white dark:to-white/70">
-            Analyze a car
+            Check this deal
           </h1>
           <p className="mt-2 text-sm leading-relaxed" style={{ color: "var(--ds-text-3)" }}>
-            Enter the VIN from any listing — we pull real transaction data, score the deal, and write your negotiation script.
+            Paste the VIN from any listing. Get a Deal Score, fair value range, and a negotiation script you can actually use.
           </p>
           <div className="mt-3 flex items-center gap-1.5 text-xs" style={{ color: "var(--ds-text-4)" }}>
             <IconShield />
-            <span style={{ color: "#34d399" }}>Real transaction data</span>
-            <span>— not estimates or listing prices</span>
+            <span style={{ color: "#34d399" }}>One check can save you thousands</span>
+            <span>— backed by real market data</span>
           </div>
         </motion.div>
 
@@ -741,26 +808,26 @@ export default function AnalyzePage() {
 
               {/* Year + Make */}
               <div className="grid sm:grid-cols-2 gap-5">
-                <Field label="Year" required>
+                <Field label="Year" required htmlFor="field-year">
                   <div className="relative">
-                    <select value={form.year} onChange={(e) => setField("year", parseInt(e.target.value, 10))}
+                    <select id="field-year" value={form.year} onChange={(e) => setField("year", parseInt(e.target.value, 10))}
                       required className={inputCls + " cursor-pointer appearance-none pr-10"} style={iStyle}>
                       {YEARS.map((y) => <option key={y} value={y}>{y}</option>)}
                     </select>
                     <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none"><IconChevron /></div>
                   </div>
                 </Field>
-                <Field label="Make" required>
+                <Field label="Make" required htmlFor="make">
                   <Combobox id="make" value={form.make} onChange={handleMakeChange} options={ALL_MAKES} placeholder="e.g. Toyota" />
                 </Field>
               </div>
 
               {/* Model + Trim */}
               <div className="grid sm:grid-cols-2 gap-5">
-                <Field label="Model" required hint={form.make && modelOptions.length === 0 ? "Type any model name" : undefined}>
+                <Field label="Model" required htmlFor="model" hint={form.make && modelOptions.length === 0 ? "Type any model name" : undefined}>
                   <Combobox id="model" value={form.model} onChange={handleModelChange} options={modelOptions} placeholder="e.g. Camry" disabled={!form.make} />
                 </Field>
-                <Field label="Trim" hint={form.model && trimOptions.length === 0 ? "Type any trim name" : undefined}>
+                <Field label="Trim" htmlFor="trim" hint={form.model && trimOptions.length === 0 ? "Type any trim name" : undefined}>
                   <Combobox id="trim" value={form.trim ?? ""} onChange={(v) => setField("trim", v)} options={trimOptions} placeholder="e.g. XLE, Sport…" disabled={!form.model} />
                 </Field>
               </div>
@@ -769,32 +836,31 @@ export default function AnalyzePage() {
 
               {/* Mileage + Price + ZIP */}
               <div className="grid sm:grid-cols-3 gap-5">
-                <Field label="Mileage" required>
+                <Field label="Mileage" required htmlFor="field-mileage">
                   <div className="relative">
-                    <input type="number" value={form.mileage || ""} onChange={(e) => setField("mileage", parseInt(e.target.value, 10) || 0)}
+                    <input id="field-mileage" type="number" value={form.mileage || ""} onChange={(e) => setField("mileage", parseInt(e.target.value, 10) || 0)}
                       placeholder="45,000" min={1} required className={inputCls + " pr-9 placeholder:opacity-40"} style={iStyle}
                       onFocus={(e) => Object.assign(e.target.style, iFocus)}
                       onBlur={(e)  => Object.assign(e.target.style, iStyle)} />
                     <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs pointer-events-none" style={{ color: "var(--ds-text-4)" }}>mi</span>
                   </div>
                 </Field>
-                <Field label="Asking Price" required>
+                <Field label="Asking Price" required htmlFor="field-price">
                   <div className="relative">
                     <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm pointer-events-none" style={{ color: "var(--ds-text-3)" }}>$</span>
-                    <input type="number" value={form.askingPrice || ""} onChange={(e) => setField("askingPrice", parseInt(e.target.value, 10) || 0)}
+                    <input id="field-price" type="number" value={form.askingPrice || ""} onChange={(e) => setField("askingPrice", parseInt(e.target.value, 10) || 0)}
                       placeholder="18,500" min={1} required className={inputCls + " pl-7 placeholder:opacity-40"} style={iStyle}
                       onFocus={(e) => Object.assign(e.target.style, iFocus)}
                       onBlur={(e)  => Object.assign(e.target.style, iStyle)} />
                   </div>
                 </Field>
-                <Field label="ZIP Code" required>
-                  <input type="text" value={form.zipCode}
+                <Field label="ZIP Code" required htmlFor="field-zip">
+                  <input id="field-zip" type="text" value={form.zipCode}
                     onChange={(e) => setField("zipCode", e.target.value.replace(/\D/g, "").slice(0, 5))}
                     placeholder="90210" pattern="\d{5}" required
                     className={inputCls + " font-mono tracking-widest placeholder:opacity-40"} style={iStyle}
                     onFocus={(e) => Object.assign(e.target.style, iFocus)}
-                    onBlur={(e)  => Object.assign(e.target.style, iStyle)}
-                    aria-label="ZIP code" />
+                    onBlur={(e)  => Object.assign(e.target.style, iStyle)} />
                 </Field>
               </div>
 
@@ -810,15 +876,15 @@ export default function AnalyzePage() {
               <button type="submit" disabled={submitting}
                 className="w-full py-3.5 rounded-xl text-sm font-semibold text-white flex items-center justify-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:brightness-110 active:scale-[0.99]"
                 style={{ background: "linear-gradient(135deg, #4f46e5, #6366f1)", boxShadow: "0 0 24px rgba(99,102,241,0.35), 0 4px 16px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.12)" }}>
-                Score this deal <IconArrow />
+                Get my Deal Score <IconArrow />
               </button>
 
               <div className="flex items-center justify-center gap-4 text-xs" style={{ color: "var(--ds-text-4)" }}>
-                <span className="flex items-center gap-1"><IconShield />VIN-verified accuracy</span>
+                <span className="flex items-center gap-1"><IconShield />VIN-verified data</span>
                 <span>·</span>
-                <span>~3 seconds</span>
+                <span>Results in ~3 seconds</span>
                 <span>·</span>
-                <span>Uses 1 credit</span>
+                <span>Free during early access</span>
               </div>
             </div>
           </motion.div>

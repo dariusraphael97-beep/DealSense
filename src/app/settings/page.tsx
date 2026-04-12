@@ -4,6 +4,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { EtherealShadow } from "@/components/ui/etheral-shadow";
 import { UserNav } from "@/components/ui/user-nav";
+import { Logo } from "@/components/ui/logo";
 import { useSettings } from "@/contexts/settings-context";
 import type { Theme, LoanTerm, DistanceUnit } from "@/lib/settings";
 import { createClient } from "@/lib/supabase/client";
@@ -170,9 +171,8 @@ export default function SettingsPage() {
       <nav className="sticky top-0 z-50" style={{ background: "var(--ds-nav-bg)", borderBottom: "1px solid var(--ds-nav-border)", backdropFilter: "blur(20px)" }}>
         <div className="mx-auto max-w-2xl px-4 py-3.5 flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <Link href="/"
-              className="font-heading text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-slate-800 to-slate-600 dark:from-white dark:to-white/70 hover:opacity-80 transition-opacity">
-              DealSense
+            <Link href="/" className="hover:opacity-80 transition-opacity">
+              <Logo variant="full" size={26} />
             </Link>
             <span style={{ color: "var(--ds-text-4)" }}>/</span>
             <span className="text-sm" style={{ color: "var(--ds-text-3)" }}>Settings</span>
@@ -298,10 +298,10 @@ export default function SettingsPage() {
                 <SectionHeader
                   icon={<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>}
                   title="Referral"
-                  subtitle="Earn 1 free credit for every friend who signs up with your link."
+                  subtitle="Invite friends and you both get 3 free analyses as founding members."
                 />
 
-                <Row label="Your referral link" hint="Share this link — you both get a free credit when they sign up.">
+                <Row label="Your referral link" hint="Share this link — you both earn 3 free analyses when they join.">
                   <div className="flex items-center gap-2">
                     <span className="text-xs font-mono truncate max-w-[140px]" style={{ color: "var(--ds-text-3)" }}>
                       /ref/{referralCode}

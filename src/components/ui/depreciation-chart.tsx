@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import {
   AreaChart,
   Area,
@@ -161,13 +161,13 @@ function StatTile({
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay: delay ?? 0, ease: "easeOut" }}
-      className="flex flex-col gap-1 p-4 rounded-xl bg-slate-50 border border-slate-100"
+      className="flex flex-col gap-1 p-4 rounded-xl bg-slate-50 dark:bg-white/[0.04] border border-slate-100 dark:border-white/[0.06]"
     >
-      <p className="text-xs text-slate-400 font-medium">{label}</p>
-      <p className={`font-heading text-xl font-bold ${accent ?? "text-slate-900"}`}>
+      <p className="text-xs text-slate-400 dark:text-white/40 font-medium">{label}</p>
+      <p className={`font-heading text-xl font-bold ${accent ?? "text-slate-900 dark:text-white/90"}`}>
         {value}
       </p>
-      {sub && <p className="text-xs text-slate-400">{sub}</p>}
+      {sub && <p className="text-xs text-slate-400 dark:text-white/40">{sub}</p>}
     </motion.div>
   );
 }
@@ -184,6 +184,16 @@ export function DepreciationChart({
   vehicleType = "economy",
 }: DepreciationChartProps) {
   const [mode, setMode] = useState<ViewMode>("dollar");
+  const [isDark, setIsDark] = useState(false);
+
+  // Detect dark mode via the .dark class on <html>
+  useEffect(() => {
+    const root = document.documentElement;
+    setIsDark(root.classList.contains("dark"));
+    const obs = new MutationObserver(() => setIsDark(root.classList.contains("dark")));
+    obs.observe(root, { attributes: true, attributeFilter: ["class"] });
+    return () => obs.disconnect();
+  }, []);
 
   const data = useMemo(
     () => buildDepreciationData(currentMarketValue, vehicleType, mileage),
@@ -234,12 +244,12 @@ export function DepreciationChart({
       {/* ── Header ── */}
       <div className="flex items-start justify-between mb-1">
         <div>
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-white/40">
             Projected Depreciation
           </h2>
-          <p className="text-sm text-slate-500 mt-1">
+          <p className="text-sm text-slate-500 dark:text-white/50 mt-1">
             Estimated value of your{" "}
-            <span className="font-semibold text-slate-700">
+            <span className="font-semibold text-slate-700 dark:text-white/80">
               {year} {make} {model}
             </span>{" "}
             over the next 5 years
@@ -247,21 +257,21 @@ export function DepreciationChart({
         </div>
 
         {/* Toggle */}
-        <div className="flex items-center gap-1 bg-slate-100 rounded-lg p-1 flex-shrink-0 ml-4">
+        <div className="flex items-center gap-1 bg-slate-100 dark:bg-white/[0.06] rounded-lg p-1 flex-shrink-0 ml-4">
           {(["dollar", "percent"] as ViewMode[]).map((m) => (
             <button
               key={m}
               onClick={() => setMode(m)}
               className={`relative px-3 py-1.5 rounded-md text-xs font-semibold transition-all duration-200 ${
                 mode === m
-                  ? "text-slate-900"
-                  : "text-slate-400 hover:text-slate-600"
+                  ? "text-slate-900 dark:text-white"
+                  : "text-slate-400 dark:text-white/40 hover:text-slate-600 dark:hover:text-white/60"
               }`}
             >
               {mode === m && (
                 <motion.span
                   layoutId="toggle-pill"
-                  className="absolute inset-0 bg-white rounded-md shadow-sm"
+                  className="absolute inset-0 bg-white dark:bg-white/[0.10] rounded-md shadow-sm"
                   transition={{ type: "spring", bounce: 0.2, duration: 0.35 }}
                 />
               )}
@@ -296,19 +306,19 @@ export function DepreciationChart({
                 </defs>
                 <CartesianGrid
                   strokeDasharray="3 3"
-                  stroke="#F1F5F9"
+                  stroke={isDark ? "rgba(255,255,255,0.06)" : "#F1F5F9"}
                   vertical={false}
                 />
                 <XAxis
                   dataKey="label"
-                  tick={{ fontSize: 12, fill: "#94A3B8", fontWeight: 500 }}
+                  tick={{ fontSize: 12, fill: isDark ? "rgba(255,255,255,0.45)" : "#94A3B8", fontWeight: 500 }}
                   axisLine={false}
                   tickLine={false}
                 />
                 <YAxis
                   domain={[yMin, yMax]}
                   tickFormatter={formatY}
-                  tick={{ fontSize: 11, fill: "#CBD5E1" }}
+                  tick={{ fontSize: 11, fill: isDark ? "rgba(255,255,255,0.3)" : "#CBD5E1" }}
                   axisLine={false}
                   tickLine={false}
                   width={48}
@@ -321,7 +331,7 @@ export function DepreciationChart({
                     />
                   }
                   cursor={{
-                    stroke: "#E2E8F0",
+                    stroke: isDark ? "rgba(255,255,255,0.12)" : "#E2E8F0",
                     strokeWidth: 1,
                     strokeDasharray: "4 4",
                   }}
@@ -416,7 +426,7 @@ export function DepreciationChart({
       </div>
 
       {/* ── Disclaimer ── */}
-      <p className="text-xs text-slate-400 mt-5 pt-4 border-t border-slate-100 leading-relaxed">
+      <p className="text-xs text-slate-400 dark:text-white/35 mt-5 pt-4 border-t border-slate-100 dark:border-white/[0.06] leading-relaxed">
         Depreciation estimates are based on general market trends and vehicle
         type, and may vary based on condition, mileage, and future market demand.
         Not a guarantee of future value.

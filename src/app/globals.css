@@ -49,6 +49,9 @@
   --ds-fade:             #f8fafc;
   --ds-badge-bg:         rgba(15,23,42,0.05);
   --ds-badge-border:     rgba(15,23,42,0.10);
+  --ds-dropdown-bg:      #ffffff;
+  --ds-map-fill:         rgba(99,102,241,0.06);
+  --ds-map-stroke:       rgba(99,102,241,0.15);
   --ds-orb-indigo:       rgba(99,102,241,0.12);
   --ds-orb-blue:         rgba(59,130,246,0.08);
 }
@@ -75,6 +78,9 @@
   --ds-fade:             #030303;
   --ds-badge-bg:         rgba(255,255,255,0.04);
   --ds-badge-border:     rgba(255,255,255,0.10);
+  --ds-dropdown-bg:      #141418;
+  --ds-map-fill:         rgba(99,102,241,0.05);
+  --ds-map-stroke:       rgba(99,102,241,0.15);
   --ds-orb-indigo:       rgba(99,102,241,0.15);
   --ds-orb-blue:         rgba(59,130,246,0.10);
 }
@@ -82,7 +88,7 @@
 @layer base {
   html { scroll-behavior: smooth; -webkit-font-smoothing: antialiased; }
   body { background-color: var(--ds-bg); color: var(--ds-text-1); transition: background-color 0.25s, color 0.25s; }
-  h1, h2, h3, h4 { font-family: "Poppins", system-ui, sans-serif; }
+  h1, h2, h3, h4 { font-family: "Space Grotesk", system-ui, sans-serif; }
   @media (prefers-reduced-motion: reduce) {
     * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
   }

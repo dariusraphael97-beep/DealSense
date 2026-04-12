@@ -118,6 +118,15 @@ const PROFILES: Record<string, DepreciationProfile> = {
   "toyota|sienna":            { fiveYear: 0.60, tenYear: 0.35, mileagePenaltyPer1k: 46 },
   "toyota|venza":             { fiveYear: 0.60, tenYear: 0.35, mileagePenaltyPer1k: 48 },
   "toyota|chr":               { fiveYear: 0.55, tenYear: 0.30, mileagePenaltyPer1k: 48 },
+  "toyota|corolla cross":     { fiveYear: 0.62, tenYear: 0.37, mileagePenaltyPer1k: 50 },
+  "toyota|crown":             { fiveYear: 0.58, tenYear: 0.34, mileagePenaltyPer1k: 52 },
+  "toyota|bz4x":              { fiveYear: 0.50, tenYear: 0.26, mileagePenaltyPer1k: 44 },
+  "toyota|yaris":             { fiveYear: 0.55, tenYear: 0.30, mileagePenaltyPer1k: 42 },
+  "toyota|gr86":              { fiveYear: 0.72, tenYear: 0.50, mileagePenaltyPer1k: 55, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "toyota|86":                { fiveYear: 0.68, tenYear: 0.46, mileagePenaltyPer1k: 52, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "toyota|gr supra":          { fiveYear: 0.74, tenYear: 0.52, mileagePenaltyPer1k: 68, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "toyota|supra":             { fiveYear: 0.74, tenYear: 0.52, mileagePenaltyPer1k: 68, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "toyota|gr corolla":        { fiveYear: 0.80, tenYear: 0.60, mileagePenaltyPer1k: 58, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
   "honda|civic":              { fiveYear: 0.65, tenYear: 0.40, mileagePenaltyPer1k: 48 },
   "honda|accord":             { fiveYear: 0.62, tenYear: 0.38, mileagePenaltyPer1k: 50 },
   "honda|cr-v":               { fiveYear: 0.64, tenYear: 0.40, mileagePenaltyPer1k: 52 },
@@ -125,59 +134,168 @@ const PROFILES: Record<string, DepreciationProfile> = {
   "honda|pilot":              { fiveYear: 0.62, tenYear: 0.38, mileagePenaltyPer1k: 52 },
   "honda|odyssey":            { fiveYear: 0.58, tenYear: 0.34, mileagePenaltyPer1k: 46 },
   "honda|passport":           { fiveYear: 0.60, tenYear: 0.36, mileagePenaltyPer1k: 52 },
+  "honda|hr-v":               { fiveYear: 0.60, tenYear: 0.36, mileagePenaltyPer1k: 50 },
+  "honda|fit":                { fiveYear: 0.58, tenYear: 0.34, mileagePenaltyPer1k: 42 },
+  "honda|insight":            { fiveYear: 0.52, tenYear: 0.28, mileagePenaltyPer1k: 44 },
+  "honda|element":            { fiveYear: 0.68, tenYear: 0.46, mileagePenaltyPer1k: 48, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "honda|prologue":           { fiveYear: 0.48, tenYear: 0.24, mileagePenaltyPer1k: 44 },
+  "honda|civic type r":       { fiveYear: 0.78, tenYear: 0.58, mileagePenaltyPer1k: 60, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "honda|s2000":              { fiveYear: 0.85, tenYear: 0.72, mileagePenaltyPer1k: 65, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "acura|integra type s":     { fiveYear: 0.72, tenYear: 0.50, mileagePenaltyPer1k: 60, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "acura|integra":            { fiveYear: 0.58, tenYear: 0.34, mileagePenaltyPer1k: 58 },
+  "acura|nsx":                { fiveYear: 0.70, tenYear: 0.50, mileagePenaltyPer1k: 80, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
   "subaru|outback":           { fiveYear: 0.64, tenYear: 0.40, mileagePenaltyPer1k: 52 },
   "subaru|forester":          { fiveYear: 0.62, tenYear: 0.38, mileagePenaltyPer1k: 50 },
   "subaru|crosstrek":         { fiveYear: 0.62, tenYear: 0.38, mileagePenaltyPer1k: 50 },
   "subaru|ascent":            { fiveYear: 0.60, tenYear: 0.36, mileagePenaltyPer1k: 52 },
   "subaru|wrx":               { fiveYear: 0.63, tenYear: 0.38, mileagePenaltyPer1k: 55, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "subaru|brz":               { fiveYear: 0.72, tenYear: 0.50, mileagePenaltyPer1k: 55, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "subaru|sti":               { fiveYear: 0.72, tenYear: 0.50, mileagePenaltyPer1k: 60, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "subaru|impreza":           { fiveYear: 0.58, tenYear: 0.34, mileagePenaltyPer1k: 46 },
+  "subaru|solterra":          { fiveYear: 0.48, tenYear: 0.24, mileagePenaltyPer1k: 44 },
   "subaru|legacy":            { fiveYear: 0.57, tenYear: 0.32, mileagePenaltyPer1k: 48 },
   "mazda|cx-5":               { fiveYear: 0.65, tenYear: 0.42, mileagePenaltyPer1k: 52 },
   "mazda|cx-50":              { fiveYear: 0.63, tenYear: 0.40, mileagePenaltyPer1k: 52 },
   "mazda|cx-9":               { fiveYear: 0.60, tenYear: 0.36, mileagePenaltyPer1k: 52 },
   "mazda|mazda3":             { fiveYear: 0.60, tenYear: 0.36, mileagePenaltyPer1k: 48 },
+  "mazda|mx-5":               { fiveYear: 0.72, tenYear: 0.52, mileagePenaltyPer1k: 52, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "mazda|mx-5 miata":         { fiveYear: 0.72, tenYear: 0.52, mileagePenaltyPer1k: 52, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "mazda|miata":              { fiveYear: 0.72, tenYear: 0.52, mileagePenaltyPer1k: 52, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "mazda|cx-30":              { fiveYear: 0.62, tenYear: 0.38, mileagePenaltyPer1k: 50 },
+  "mazda|cx-90":              { fiveYear: 0.60, tenYear: 0.36, mileagePenaltyPer1k: 55 },
   "mazda|mazda6":             { fiveYear: 0.57, tenYear: 0.32, mileagePenaltyPer1k: 48 },
   "kia|telluride":            { fiveYear: 0.68, tenYear: 0.44, mileagePenaltyPer1k: 52 },
   "kia|sportage":             { fiveYear: 0.60, tenYear: 0.36, mileagePenaltyPer1k: 50 },
   "kia|sorento":              { fiveYear: 0.60, tenYear: 0.36, mileagePenaltyPer1k: 52 },
+  "kia|forte":                { fiveYear: 0.54, tenYear: 0.30, mileagePenaltyPer1k: 44 },
+  "kia|k5":                   { fiveYear: 0.56, tenYear: 0.32, mileagePenaltyPer1k: 48 },
+  "kia|carnival":             { fiveYear: 0.58, tenYear: 0.34, mileagePenaltyPer1k: 48 },
+  "kia|sedona":               { fiveYear: 0.50, tenYear: 0.26, mileagePenaltyPer1k: 46 },
+  "kia|seltos":               { fiveYear: 0.58, tenYear: 0.34, mileagePenaltyPer1k: 48 },
+  "kia|soul":                 { fiveYear: 0.54, tenYear: 0.30, mileagePenaltyPer1k: 44 },
+  "kia|niro":                 { fiveYear: 0.54, tenYear: 0.28, mileagePenaltyPer1k: 44 },
+  "kia|niro ev":              { fiveYear: 0.50, tenYear: 0.24, mileagePenaltyPer1k: 42 },
+  "kia|rio":                  { fiveYear: 0.48, tenYear: 0.24, mileagePenaltyPer1k: 40 },
+  "kia|stinger":              { fiveYear: 0.54, tenYear: 0.30, mileagePenaltyPer1k: 58, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "kia|ev9":                  { fiveYear: 0.54, tenYear: 0.28, mileagePenaltyPer1k: 46 },
   "kia|ev6":                  { fiveYear: 0.56, tenYear: 0.30, mileagePenaltyPer1k: 44 },
   "hyundai|tucson":           { fiveYear: 0.60, tenYear: 0.36, mileagePenaltyPer1k: 50 },
   "hyundai|santa fe":         { fiveYear: 0.58, tenYear: 0.34, mileagePenaltyPer1k: 50 },
   "hyundai|palisade":         { fiveYear: 0.62, tenYear: 0.38, mileagePenaltyPer1k: 52 },
   "hyundai|elantra":          { fiveYear: 0.56, tenYear: 0.32, mileagePenaltyPer1k: 46 },
+  "hyundai|sonata":           { fiveYear: 0.54, tenYear: 0.30, mileagePenaltyPer1k: 48 },
+  "hyundai|kona":             { fiveYear: 0.58, tenYear: 0.34, mileagePenaltyPer1k: 48 },
+  "hyundai|kona electric":    { fiveYear: 0.50, tenYear: 0.26, mileagePenaltyPer1k: 42 },
+  "hyundai|venue":            { fiveYear: 0.54, tenYear: 0.30, mileagePenaltyPer1k: 44 },
+  "hyundai|accent":           { fiveYear: 0.50, tenYear: 0.26, mileagePenaltyPer1k: 40 },
+  "hyundai|santa cruz":       { fiveYear: 0.60, tenYear: 0.36, mileagePenaltyPer1k: 50 },
+  "hyundai|ioniq 6":          { fiveYear: 0.52, tenYear: 0.26, mileagePenaltyPer1k: 44 },
   "hyundai|ioniq 5":          { fiveYear: 0.54, tenYear: 0.28, mileagePenaltyPer1k: 44 },
+  "hyundai|elantra n":        { fiveYear: 0.62, tenYear: 0.38, mileagePenaltyPer1k: 52, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "hyundai|veloster n":       { fiveYear: 0.62, tenYear: 0.38, mileagePenaltyPer1k: 52, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "hyundai|genesis coupe":    { fiveYear: 0.50, tenYear: 0.28, mileagePenaltyPer1k: 55, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
   "nissan|rogue":             { fiveYear: 0.56, tenYear: 0.30, mileagePenaltyPer1k: 50 },
   "nissan|altima":            { fiveYear: 0.52, tenYear: 0.28, mileagePenaltyPer1k: 46 },
   "nissan|murano":            { fiveYear: 0.50, tenYear: 0.26, mileagePenaltyPer1k: 50 },
   "nissan|pathfinder":        { fiveYear: 0.52, tenYear: 0.28, mileagePenaltyPer1k: 50 },
+  "nissan|gt-r":              { fiveYear: 0.72, tenYear: 0.52, mileagePenaltyPer1k: 80, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "nissan|z":                 { fiveYear: 0.68, tenYear: 0.44, mileagePenaltyPer1k: 62, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "nissan|370z":              { fiveYear: 0.65, tenYear: 0.42, mileagePenaltyPer1k: 58, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "nissan|sentra":            { fiveYear: 0.50, tenYear: 0.26, mileagePenaltyPer1k: 44 },
+  "nissan|versa":             { fiveYear: 0.46, tenYear: 0.22, mileagePenaltyPer1k: 40 },
+  "nissan|kicks":             { fiveYear: 0.52, tenYear: 0.28, mileagePenaltyPer1k: 46 },
+  "nissan|maxima":            { fiveYear: 0.48, tenYear: 0.24, mileagePenaltyPer1k: 50 },
+  "nissan|armada":            { fiveYear: 0.60, tenYear: 0.38, mileagePenaltyPer1k: 55 },
+  "nissan|leaf":              { fiveYear: 0.38, tenYear: 0.16, mileagePenaltyPer1k: 38 },
+  "nissan|ariya":             { fiveYear: 0.48, tenYear: 0.24, mileagePenaltyPer1k: 44 },
+  "nissan|xterra":            { fiveYear: 0.66, tenYear: 0.44, mileagePenaltyPer1k: 52, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+
+  // ── MITSUBISHI ─────────────────────────────────────────────────────────────
+  "mitsubishi|outlander":     { fiveYear: 0.52, tenYear: 0.28, mileagePenaltyPer1k: 48 },
+  "mitsubishi|outlander sport": { fiveYear: 0.46, tenYear: 0.22, mileagePenaltyPer1k: 44 },
+  "mitsubishi|eclipse cross":  { fiveYear: 0.48, tenYear: 0.24, mileagePenaltyPer1k: 46 },
+  "mitsubishi|mirage":        { fiveYear: 0.40, tenYear: 0.18, mileagePenaltyPer1k: 36 },
+  "mitsubishi|outlander phev": { fiveYear: 0.48, tenYear: 0.24, mileagePenaltyPer1k: 44 },
 
   // ── AMERICAN MAINSTREAM ────────────────────────────────────────────────────
   "ford|escape":              { fiveYear: 0.55, tenYear: 0.30, mileagePenaltyPer1k: 50 },
   "ford|explorer":            { fiveYear: 0.60, tenYear: 0.35, mileagePenaltyPer1k: 52 },
   "ford|edge":                { fiveYear: 0.54, tenYear: 0.28, mileagePenaltyPer1k: 50 },
-  "ford|mustang":             { fiveYear: 0.62, tenYear: 0.38, mileagePenaltyPer1k: 58 },
+  "ford|mustang":             { fiveYear: 0.62, tenYear: 0.38, mileagePenaltyPer1k: 58, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "ford|mustang gt":          { fiveYear: 0.66, tenYear: 0.42, mileagePenaltyPer1k: 62, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "ford|mustang gt500":       { fiveYear: 0.76, tenYear: 0.56, mileagePenaltyPer1k: 75, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "ford|mustang shelby gt500": { fiveYear: 0.78, tenYear: 0.58, mileagePenaltyPer1k: 78, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "ford|mustang shelby gt350": { fiveYear: 0.74, tenYear: 0.54, mileagePenaltyPer1k: 72, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "ford|mustang dark horse":  { fiveYear: 0.70, tenYear: 0.48, mileagePenaltyPer1k: 68, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
   "ford|mustang mach-e":      { fiveYear: 0.48, tenYear: 0.24, mileagePenaltyPer1k: 44 },
   "ford|bronco sport":        { fiveYear: 0.68, tenYear: 0.44, mileagePenaltyPer1k: 50 },
+  "ford|fusion":              { fiveYear: 0.52, tenYear: 0.28, mileagePenaltyPer1k: 46 },
+  "ford|focus":               { fiveYear: 0.46, tenYear: 0.22, mileagePenaltyPer1k: 42 },
+  "ford|taurus":              { fiveYear: 0.40, tenYear: 0.18, mileagePenaltyPer1k: 46 },
+  "ford|ecosport":            { fiveYear: 0.44, tenYear: 0.20, mileagePenaltyPer1k: 44 },
+  "ford|flex":                { fiveYear: 0.48, tenYear: 0.24, mileagePenaltyPer1k: 48 },
+  "ford|f-150 lightning":     { fiveYear: 0.50, tenYear: 0.26, mileagePenaltyPer1k: 46 },
+  "ford|transit":             { fiveYear: 0.58, tenYear: 0.34, mileagePenaltyPer1k: 48 },
+  "ford|transit connect":     { fiveYear: 0.50, tenYear: 0.26, mileagePenaltyPer1k: 44 },
   "chevrolet|equinox":        { fiveYear: 0.54, tenYear: 0.29, mileagePenaltyPer1k: 50 },
   "chevrolet|traverse":       { fiveYear: 0.57, tenYear: 0.32, mileagePenaltyPer1k: 52 },
   "chevrolet|trax":           { fiveYear: 0.48, tenYear: 0.24, mileagePenaltyPer1k: 46 },
   "chevrolet|blazer":         { fiveYear: 0.54, tenYear: 0.28, mileagePenaltyPer1k: 50 },
   "chevrolet|malibu":         { fiveYear: 0.46, tenYear: 0.22, mileagePenaltyPer1k: 46 },
   "chevrolet|bolt ev":        { fiveYear: 0.40, tenYear: 0.18, mileagePenaltyPer1k: 40 },
-  "chevrolet|camaro":         { fiveYear: 0.58, tenYear: 0.32, mileagePenaltyPer1k: 58 },
-  "dodge|challenger":         { fiveYear: 0.58, tenYear: 0.32, mileagePenaltyPer1k: 58 },
-  "dodge|charger":            { fiveYear: 0.52, tenYear: 0.27, mileagePenaltyPer1k: 55 },
+  "chevrolet|bolt euv":       { fiveYear: 0.42, tenYear: 0.20, mileagePenaltyPer1k: 40 },
+  "chevrolet|trailblazer":    { fiveYear: 0.52, tenYear: 0.28, mileagePenaltyPer1k: 48 },
+  "chevrolet|spark":          { fiveYear: 0.38, tenYear: 0.16, mileagePenaltyPer1k: 36 },
+  "chevrolet|impala":         { fiveYear: 0.44, tenYear: 0.20, mileagePenaltyPer1k: 46 },
+  "chevrolet|cruze":          { fiveYear: 0.42, tenYear: 0.20, mileagePenaltyPer1k: 42 },
+  "chevrolet|sonic":          { fiveYear: 0.38, tenYear: 0.16, mileagePenaltyPer1k: 38 },
+  "chevrolet|camaro":         { fiveYear: 0.58, tenYear: 0.32, mileagePenaltyPer1k: 58, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "chevrolet|camaro ss":      { fiveYear: 0.64, tenYear: 0.38, mileagePenaltyPer1k: 62, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "chevrolet|camaro zl1":     { fiveYear: 0.70, tenYear: 0.44, mileagePenaltyPer1k: 68, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "chevrolet|corvette":       { fiveYear: 0.75, tenYear: 0.55, mileagePenaltyPer1k: 72, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "chevrolet|corvette stingray": { fiveYear: 0.75, tenYear: 0.55, mileagePenaltyPer1k: 72, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "chevrolet|corvette z06":   { fiveYear: 0.80, tenYear: 0.60, mileagePenaltyPer1k: 78, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "chevrolet|corvette zr1":   { fiveYear: 0.82, tenYear: 0.64, mileagePenaltyPer1k: 82, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "chevrolet|corvette e-ray": { fiveYear: 0.78, tenYear: 0.58, mileagePenaltyPer1k: 75, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "dodge|challenger":         { fiveYear: 0.62, tenYear: 0.38, mileagePenaltyPer1k: 58, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "dodge|challenger srt":     { fiveYear: 0.68, tenYear: 0.44, mileagePenaltyPer1k: 65, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "dodge|challenger hellcat":  { fiveYear: 0.72, tenYear: 0.48, mileagePenaltyPer1k: 70, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "dodge|challenger scat pack": { fiveYear: 0.66, tenYear: 0.42, mileagePenaltyPer1k: 62, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "dodge|charger":            { fiveYear: 0.56, tenYear: 0.30, mileagePenaltyPer1k: 55, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "dodge|charger srt":        { fiveYear: 0.64, tenYear: 0.40, mileagePenaltyPer1k: 62, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "dodge|charger hellcat":    { fiveYear: 0.70, tenYear: 0.46, mileagePenaltyPer1k: 68, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
   "dodge|durango":            { fiveYear: 0.54, tenYear: 0.28, mileagePenaltyPer1k: 52 },
+  "dodge|durango srt":        { fiveYear: 0.62, tenYear: 0.38, mileagePenaltyPer1k: 60, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "dodge|hornet":             { fiveYear: 0.50, tenYear: 0.26, mileagePenaltyPer1k: 48 },
+  "dodge|journey":            { fiveYear: 0.38, tenYear: 0.16, mileagePenaltyPer1k: 42 },
+  "dodge|grand caravan":      { fiveYear: 0.42, tenYear: 0.20, mileagePenaltyPer1k: 42 },
   "jeep|grand cherokee":      { fiveYear: 0.52, tenYear: 0.28, mileagePenaltyPer1k: 52 },
   "jeep|cherokee":            { fiveYear: 0.46, tenYear: 0.22, mileagePenaltyPer1k: 48 },
   "jeep|compass":             { fiveYear: 0.44, tenYear: 0.20, mileagePenaltyPer1k: 46 },
   "jeep|renegade":            { fiveYear: 0.40, tenYear: 0.18, mileagePenaltyPer1k: 44 },
+  "jeep|grand cherokee l":    { fiveYear: 0.54, tenYear: 0.30, mileagePenaltyPer1k: 55 },
+  "jeep|wagoneer":            { fiveYear: 0.56, tenYear: 0.32, mileagePenaltyPer1k: 60 },
+  "jeep|grand wagoneer":      { fiveYear: 0.52, tenYear: 0.28, mileagePenaltyPer1k: 65 },
   "buick|enclave":            { fiveYear: 0.52, tenYear: 0.26, mileagePenaltyPer1k: 50 },
   "buick|envision":           { fiveYear: 0.48, tenYear: 0.22, mileagePenaltyPer1k: 48 },
+  "buick|encore":             { fiveYear: 0.44, tenYear: 0.20, mileagePenaltyPer1k: 44 },
+  "buick|encore gx":          { fiveYear: 0.48, tenYear: 0.22, mileagePenaltyPer1k: 46 },
+  "buick|lacrosse":           { fiveYear: 0.42, tenYear: 0.18, mileagePenaltyPer1k: 48 },
   "chrysler|pacifica":        { fiveYear: 0.46, tenYear: 0.22, mileagePenaltyPer1k: 44 },
+  "chrysler|300":             { fiveYear: 0.44, tenYear: 0.20, mileagePenaltyPer1k: 50 },
+  "chrysler|voyager":         { fiveYear: 0.40, tenYear: 0.18, mileagePenaltyPer1k: 40 },
   "volkswagen|tiguan":        { fiveYear: 0.52, tenYear: 0.26, mileagePenaltyPer1k: 50 },
   "volkswagen|atlas":         { fiveYear: 0.50, tenYear: 0.24, mileagePenaltyPer1k: 52 },
   "volkswagen|jetta":         { fiveYear: 0.48, tenYear: 0.22, mileagePenaltyPer1k: 46 },
+  "volkswagen|golf":          { fiveYear: 0.52, tenYear: 0.28, mileagePenaltyPer1k: 48 },
+  "volkswagen|golf gti":      { fiveYear: 0.58, tenYear: 0.34, mileagePenaltyPer1k: 52, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "volkswagen|golf r":        { fiveYear: 0.64, tenYear: 0.40, mileagePenaltyPer1k: 58, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "volkswagen|gti":           { fiveYear: 0.58, tenYear: 0.34, mileagePenaltyPer1k: 52, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "volkswagen|taos":          { fiveYear: 0.52, tenYear: 0.26, mileagePenaltyPer1k: 48 },
+  "volkswagen|passat":        { fiveYear: 0.46, tenYear: 0.22, mileagePenaltyPer1k: 48 },
+  "volkswagen|arteon":        { fiveYear: 0.42, tenYear: 0.18, mileagePenaltyPer1k: 55 },
   "volkswagen|id.4":          { fiveYear: 0.46, tenYear: 0.20, mileagePenaltyPer1k: 42 },
+  "volkswagen|id. buzz":      { fiveYear: 0.50, tenYear: 0.26, mileagePenaltyPer1k: 44 },
 
   // ── GERMAN LUXURY — fastest depreciation in the industry ──────────────────
   "bmw|2 series":             { fiveYear: 0.50, tenYear: 0.24, mileagePenaltyPer1k: 72 },
@@ -191,7 +309,17 @@ const PROFILES: Record<string, DepreciationProfile> = {
   "bmw|x7":                   { fiveYear: 0.48, tenYear: 0.22, mileagePenaltyPer1k: 82 },
   "bmw|m3":                   { fiveYear: 0.65, tenYear: 0.40, mileagePenaltyPer1k: 80, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
   "bmw|m4":                   { fiveYear: 0.64, tenYear: 0.39, mileagePenaltyPer1k: 80, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "bmw|m2":                   { fiveYear: 0.66, tenYear: 0.42, mileagePenaltyPer1k: 78, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
   "bmw|m5":                   { fiveYear: 0.60, tenYear: 0.35, mileagePenaltyPer1k: 85, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "bmw|m8":                   { fiveYear: 0.55, tenYear: 0.30, mileagePenaltyPer1k: 88, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "bmw|z4":                   { fiveYear: 0.55, tenYear: 0.30, mileagePenaltyPer1k: 75, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "bmw|x2":                   { fiveYear: 0.48, tenYear: 0.22, mileagePenaltyPer1k: 68 },
+  "bmw|x4":                   { fiveYear: 0.46, tenYear: 0.20, mileagePenaltyPer1k: 74 },
+  "bmw|x6":                   { fiveYear: 0.46, tenYear: 0.20, mileagePenaltyPer1k: 78 },
+  "bmw|8 series":             { fiveYear: 0.42, tenYear: 0.18, mileagePenaltyPer1k: 88 },
+  "bmw|i4":                   { fiveYear: 0.48, tenYear: 0.22, mileagePenaltyPer1k: 68 },
+  "bmw|ix":                   { fiveYear: 0.46, tenYear: 0.20, mileagePenaltyPer1k: 72 },
+  "bmw|i7":                   { fiveYear: 0.40, tenYear: 0.18, mileagePenaltyPer1k: 85 },
   "mercedes-benz|a-class":    { fiveYear: 0.48, tenYear: 0.22, mileagePenaltyPer1k: 72 },
   "mercedes-benz|c-class":    { fiveYear: 0.46, tenYear: 0.20, mileagePenaltyPer1k: 75 },
   "mercedes-benz|e-class":    { fiveYear: 0.44, tenYear: 0.18, mileagePenaltyPer1k: 80 },
@@ -201,6 +329,17 @@ const PROFILES: Record<string, DepreciationProfile> = {
   "mercedes-benz|glc":        { fiveYear: 0.47, tenYear: 0.21, mileagePenaltyPer1k: 75 },
   "mercedes-benz|gle":        { fiveYear: 0.46, tenYear: 0.20, mileagePenaltyPer1k: 80 },
   "mercedes-benz|gls":        { fiveYear: 0.44, tenYear: 0.18, mileagePenaltyPer1k: 85 },
+  "mercedes-benz|amg gt":     { fiveYear: 0.60, tenYear: 0.36, mileagePenaltyPer1k: 90, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "mercedes-benz|c63 amg":    { fiveYear: 0.58, tenYear: 0.34, mileagePenaltyPer1k: 82, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "mercedes-benz|e63 amg":    { fiveYear: 0.55, tenYear: 0.30, mileagePenaltyPer1k: 85, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "mercedes-benz|g-class":    { fiveYear: 0.76, tenYear: 0.58, mileagePenaltyPer1k: 85, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "mercedes-benz|g63 amg":    { fiveYear: 0.78, tenYear: 0.60, mileagePenaltyPer1k: 90, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "mercedes-benz|gla":        { fiveYear: 0.48, tenYear: 0.22, mileagePenaltyPer1k: 70 },
+  "mercedes-benz|eqs":        { fiveYear: 0.38, tenYear: 0.16, mileagePenaltyPer1k: 80 },
+  "mercedes-benz|eqe":        { fiveYear: 0.40, tenYear: 0.18, mileagePenaltyPer1k: 75 },
+  "mercedes-benz|eqb":        { fiveYear: 0.42, tenYear: 0.20, mileagePenaltyPer1k: 70 },
+  "mercedes-benz|cle":        { fiveYear: 0.46, tenYear: 0.20, mileagePenaltyPer1k: 75 },
+  "mercedes-benz|sprinter":   { fiveYear: 0.55, tenYear: 0.32, mileagePenaltyPer1k: 52 },
   "audi|a3":                  { fiveYear: 0.50, tenYear: 0.24, mileagePenaltyPer1k: 72 },
   "audi|a4":                  { fiveYear: 0.50, tenYear: 0.24, mileagePenaltyPer1k: 75 },
   "audi|a6":                  { fiveYear: 0.47, tenYear: 0.21, mileagePenaltyPer1k: 80 },
@@ -209,6 +348,24 @@ const PROFILES: Record<string, DepreciationProfile> = {
   "audi|q7":                  { fiveYear: 0.50, tenYear: 0.24, mileagePenaltyPer1k: 80 },
   "audi|q8":                  { fiveYear: 0.48, tenYear: 0.22, mileagePenaltyPer1k: 82 },
   "audi|e-tron":              { fiveYear: 0.44, tenYear: 0.20, mileagePenaltyPer1k: 72 },
+  "audi|rs3":                 { fiveYear: 0.62, tenYear: 0.38, mileagePenaltyPer1k: 78, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "audi|rs5":                 { fiveYear: 0.60, tenYear: 0.36, mileagePenaltyPer1k: 80, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "audi|rs6":                 { fiveYear: 0.64, tenYear: 0.40, mileagePenaltyPer1k: 85, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "audi|rs7":                 { fiveYear: 0.62, tenYear: 0.38, mileagePenaltyPer1k: 85, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "audi|r8":                  { fiveYear: 0.68, tenYear: 0.46, mileagePenaltyPer1k: 90, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "audi|tt rs":               { fiveYear: 0.58, tenYear: 0.34, mileagePenaltyPer1k: 75, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "audi|tt":                  { fiveYear: 0.48, tenYear: 0.22, mileagePenaltyPer1k: 68 },
+  "audi|a5":                  { fiveYear: 0.48, tenYear: 0.22, mileagePenaltyPer1k: 75 },
+  "audi|a7":                  { fiveYear: 0.46, tenYear: 0.20, mileagePenaltyPer1k: 80 },
+  "audi|a8":                  { fiveYear: 0.40, tenYear: 0.16, mileagePenaltyPer1k: 88 },
+  "audi|s3":                  { fiveYear: 0.54, tenYear: 0.28, mileagePenaltyPer1k: 72, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "audi|s4":                  { fiveYear: 0.52, tenYear: 0.26, mileagePenaltyPer1k: 76, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "audi|s5":                  { fiveYear: 0.52, tenYear: 0.26, mileagePenaltyPer1k: 76, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "audi|sq5":                 { fiveYear: 0.54, tenYear: 0.28, mileagePenaltyPer1k: 76, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "audi|sq7":                 { fiveYear: 0.52, tenYear: 0.26, mileagePenaltyPer1k: 82, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "audi|e-tron gt":           { fiveYear: 0.48, tenYear: 0.22, mileagePenaltyPer1k: 80 },
+  "audi|q4 e-tron":           { fiveYear: 0.46, tenYear: 0.22, mileagePenaltyPer1k: 68 },
+  "audi|q8 e-tron":           { fiveYear: 0.44, tenYear: 0.20, mileagePenaltyPer1k: 72 },
 
   // ── JAPANESE LUXURY ────────────────────────────────────────────────────────
   "lexus|es":                 { fiveYear: 0.57, tenYear: 0.32, mileagePenaltyPer1k: 62 },
@@ -218,6 +375,11 @@ const PROFILES: Record<string, DepreciationProfile> = {
   "lexus|gx":                 { fiveYear: 0.60, tenYear: 0.38, mileagePenaltyPer1k: 65 },
   "lexus|lx":                 { fiveYear: 0.68, tenYear: 0.46, mileagePenaltyPer1k: 70 },
   "lexus|ux":                 { fiveYear: 0.54, tenYear: 0.30, mileagePenaltyPer1k: 60 },
+  "lexus|lc":                 { fiveYear: 0.62, tenYear: 0.40, mileagePenaltyPer1k: 75, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "lexus|rc":                 { fiveYear: 0.52, tenYear: 0.28, mileagePenaltyPer1k: 65 },
+  "lexus|rc f":               { fiveYear: 0.58, tenYear: 0.34, mileagePenaltyPer1k: 70, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "lexus|is 500":             { fiveYear: 0.60, tenYear: 0.36, mileagePenaltyPer1k: 68, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "lexus|rz":                 { fiveYear: 0.48, tenYear: 0.24, mileagePenaltyPer1k: 62 },
   "acura|mdx":                { fiveYear: 0.55, tenYear: 0.30, mileagePenaltyPer1k: 62 },
   "acura|rdx":                { fiveYear: 0.54, tenYear: 0.29, mileagePenaltyPer1k: 62 },
   "acura|tlx":                { fiveYear: 0.52, tenYear: 0.27, mileagePenaltyPer1k: 62 },
@@ -229,24 +391,90 @@ const PROFILES: Record<string, DepreciationProfile> = {
   "genesis|g80":              { fiveYear: 0.50, tenYear: 0.24, mileagePenaltyPer1k: 70 },
   "genesis|gv70":             { fiveYear: 0.52, tenYear: 0.27, mileagePenaltyPer1k: 68 },
   "genesis|gv80":             { fiveYear: 0.52, tenYear: 0.27, mileagePenaltyPer1k: 70 },
+  "genesis|gv60":             { fiveYear: 0.48, tenYear: 0.22, mileagePenaltyPer1k: 65 },
+  "genesis|electrified gv70": { fiveYear: 0.48, tenYear: 0.22, mileagePenaltyPer1k: 65 },
+  "genesis|g90":              { fiveYear: 0.46, tenYear: 0.20, mileagePenaltyPer1k: 75 },
 
   // ── EUROPEAN LUXURY / SPORTS ───────────────────────────────────────────────
   "volvo|xc40":               { fiveYear: 0.48, tenYear: 0.22, mileagePenaltyPer1k: 68 },
   "volvo|xc60":               { fiveYear: 0.45, tenYear: 0.20, mileagePenaltyPer1k: 70 },
   "volvo|xc90":               { fiveYear: 0.44, tenYear: 0.18, mileagePenaltyPer1k: 72 },
+  "volvo|s60":                { fiveYear: 0.44, tenYear: 0.18, mileagePenaltyPer1k: 68 },
+  "volvo|s90":                { fiveYear: 0.42, tenYear: 0.16, mileagePenaltyPer1k: 72 },
+  "volvo|v60":                { fiveYear: 0.46, tenYear: 0.20, mileagePenaltyPer1k: 68 },
+  "volvo|v90":                { fiveYear: 0.44, tenYear: 0.18, mileagePenaltyPer1k: 72 },
+  "volvo|c40":                { fiveYear: 0.44, tenYear: 0.20, mileagePenaltyPer1k: 65 },
   "land rover|defender":      { fiveYear: 0.68, tenYear: 0.42, mileagePenaltyPer1k: 75 },
   "land rover|range rover":   { fiveYear: 0.37, tenYear: 0.14, mileagePenaltyPer1k: 90 },
+  "land rover|range rover sport": { fiveYear: 0.42, tenYear: 0.18, mileagePenaltyPer1k: 85 },
+  "land rover|range rover evoque": { fiveYear: 0.38, tenYear: 0.16, mileagePenaltyPer1k: 72 },
+  "land rover|discovery":     { fiveYear: 0.40, tenYear: 0.18, mileagePenaltyPer1k: 78 },
+  "land rover|discovery sport": { fiveYear: 0.38, tenYear: 0.16, mileagePenaltyPer1k: 70 },
   "porsche|911":              { fiveYear: 0.78, tenYear: 0.60, mileagePenaltyPer1k: 85, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "porsche|718":              { fiveYear: 0.74, tenYear: 0.55, mileagePenaltyPer1k: 80, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "porsche|718 cayman":       { fiveYear: 0.74, tenYear: 0.55, mileagePenaltyPer1k: 80, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "porsche|718 boxster":      { fiveYear: 0.72, tenYear: 0.52, mileagePenaltyPer1k: 78, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "porsche|cayman":           { fiveYear: 0.74, tenYear: 0.55, mileagePenaltyPer1k: 80, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "porsche|boxster":          { fiveYear: 0.72, tenYear: 0.52, mileagePenaltyPer1k: 78, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "porsche|911 turbo":        { fiveYear: 0.82, tenYear: 0.65, mileagePenaltyPer1k: 90, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "porsche|911 gt3":          { fiveYear: 0.90, tenYear: 0.75, mileagePenaltyPer1k: 95, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "porsche|gt4":              { fiveYear: 0.85, tenYear: 0.68, mileagePenaltyPer1k: 88, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "porsche|panamera":         { fiveYear: 0.50, tenYear: 0.26, mileagePenaltyPer1k: 80 },
   "porsche|cayenne":          { fiveYear: 0.55, tenYear: 0.30, mileagePenaltyPer1k: 80 },
   "porsche|macan":            { fiveYear: 0.54, tenYear: 0.29, mileagePenaltyPer1k: 78 },
   "porsche|taycan":           { fiveYear: 0.50, tenYear: 0.25, mileagePenaltyPer1k: 75 },
   "lincoln|navigator":        { fiveYear: 0.56, tenYear: 0.30, mileagePenaltyPer1k: 72 },
   "lincoln|aviator":          { fiveYear: 0.50, tenYear: 0.24, mileagePenaltyPer1k: 68 },
   "lincoln|nautilus":         { fiveYear: 0.48, tenYear: 0.22, mileagePenaltyPer1k: 65 },
+  "lincoln|corsair":          { fiveYear: 0.46, tenYear: 0.20, mileagePenaltyPer1k: 62 },
   "cadillac|escalade":        { fiveYear: 0.58, tenYear: 0.33, mileagePenaltyPer1k: 72 },
   "cadillac|ct5":             { fiveYear: 0.46, tenYear: 0.20, mileagePenaltyPer1k: 65 },
   "cadillac|xt5":             { fiveYear: 0.48, tenYear: 0.22, mileagePenaltyPer1k: 65 },
   "cadillac|xt6":             { fiveYear: 0.48, tenYear: 0.22, mileagePenaltyPer1k: 67 },
+  "cadillac|ct4":             { fiveYear: 0.46, tenYear: 0.20, mileagePenaltyPer1k: 62 },
+  "cadillac|xt4":             { fiveYear: 0.46, tenYear: 0.20, mileagePenaltyPer1k: 62 },
+  "cadillac|lyriq":           { fiveYear: 0.46, tenYear: 0.22, mileagePenaltyPer1k: 65 },
+  "cadillac|ct4-v blackwing": { fiveYear: 0.68, tenYear: 0.44, mileagePenaltyPer1k: 72, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "cadillac|ct5-v blackwing": { fiveYear: 0.70, tenYear: 0.46, mileagePenaltyPer1k: 78, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "cadillac|escalade-v":      { fiveYear: 0.62, tenYear: 0.38, mileagePenaltyPer1k: 78, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+
+  // ── JAGUAR ─────────────────────────────────────────────────────────────────
+  "jaguar|f-type":            { fiveYear: 0.52, tenYear: 0.28, mileagePenaltyPer1k: 78, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "jaguar|f-pace":            { fiveYear: 0.42, tenYear: 0.18, mileagePenaltyPer1k: 72 },
+  "jaguar|xe":                { fiveYear: 0.38, tenYear: 0.16, mileagePenaltyPer1k: 68 },
+  "jaguar|xf":                { fiveYear: 0.36, tenYear: 0.14, mileagePenaltyPer1k: 72 },
+  "jaguar|e-pace":            { fiveYear: 0.38, tenYear: 0.16, mileagePenaltyPer1k: 68 },
+  "jaguar|i-pace":            { fiveYear: 0.36, tenYear: 0.14, mileagePenaltyPer1k: 65 },
+
+  // ── ALFA ROMEO ────────────────────────────────────────────────────────────
+  "alfa romeo|giulia":        { fiveYear: 0.40, tenYear: 0.18, mileagePenaltyPer1k: 68 },
+  "alfa romeo|giulia quadrifoglio": { fiveYear: 0.52, tenYear: 0.30, mileagePenaltyPer1k: 75, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "alfa romeo|stelvio":       { fiveYear: 0.40, tenYear: 0.18, mileagePenaltyPer1k: 68 },
+  "alfa romeo|tonale":        { fiveYear: 0.42, tenYear: 0.20, mileagePenaltyPer1k: 65 },
+  "alfa romeo|4c":            { fiveYear: 0.62, tenYear: 0.42, mileagePenaltyPer1k: 72, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+
+  // ── MINI ──────────────────────────────────────────────────────────────────
+  "mini|cooper":              { fiveYear: 0.48, tenYear: 0.24, mileagePenaltyPer1k: 55 },
+  "mini|countryman":          { fiveYear: 0.46, tenYear: 0.22, mileagePenaltyPer1k: 55 },
+  "mini|clubman":             { fiveYear: 0.44, tenYear: 0.20, mileagePenaltyPer1k: 55 },
+  "mini|john cooper works":   { fiveYear: 0.52, tenYear: 0.28, mileagePenaltyPer1k: 58, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+
+  // ── MASERATI ──────────────────────────────────────────────────────────────
+  "maserati|ghibli":          { fiveYear: 0.32, tenYear: 0.14, mileagePenaltyPer1k: 85 },
+  "maserati|levante":         { fiveYear: 0.34, tenYear: 0.16, mileagePenaltyPer1k: 82 },
+  "maserati|grecale":         { fiveYear: 0.40, tenYear: 0.20, mileagePenaltyPer1k: 78 },
+  "maserati|quattroporte":    { fiveYear: 0.28, tenYear: 0.12, mileagePenaltyPer1k: 90 },
+  "maserati|mc20":            { fiveYear: 0.55, tenYear: 0.35, mileagePenaltyPer1k: 95, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+
+  // ── FIAT ──────────────────────────────────────────────────────────────────
+  "fiat|500":                 { fiveYear: 0.38, tenYear: 0.16, mileagePenaltyPer1k: 40 },
+  "fiat|500x":                { fiveYear: 0.36, tenYear: 0.14, mileagePenaltyPer1k: 42 },
+  "fiat|500e":                { fiveYear: 0.36, tenYear: 0.14, mileagePenaltyPer1k: 38 },
+
+  // ── GMC additional ────────────────────────────────────────────────────────
+  "gmc|terrain":              { fiveYear: 0.52, tenYear: 0.28, mileagePenaltyPer1k: 48 },
+  "gmc|acadia":               { fiveYear: 0.54, tenYear: 0.30, mileagePenaltyPer1k: 52 },
+  "gmc|hummer ev":            { fiveYear: 0.52, tenYear: 0.28, mileagePenaltyPer1k: 55 },
 
   // ── ELECTRIC VEHICLES ─────────────────────────────────────────────────────
   "tesla|model 3":            { fiveYear: 0.54, tenYear: 0.28, mileagePenaltyPer1k: 42 },
@@ -255,6 +483,9 @@ const PROFILES: Record<string, DepreciationProfile> = {
   "tesla|model x":            { fiveYear: 0.46, tenYear: 0.22, mileagePenaltyPer1k: 50 },
   "rivian|r1t":               { fiveYear: 0.55, tenYear: 0.28, mileagePenaltyPer1k: 46 },
   "rivian|r1s":               { fiveYear: 0.55, tenYear: 0.28, mileagePenaltyPer1k: 48 },
+  "lucid|air":                { fiveYear: 0.38, tenYear: 0.16, mileagePenaltyPer1k: 60 },
+  "polestar|2":               { fiveYear: 0.44, tenYear: 0.20, mileagePenaltyPer1k: 50 },
+  "polestar|3":               { fiveYear: 0.46, tenYear: 0.22, mileagePenaltyPer1k: 55 },
 };
 
 /** Default profiles by vehicle class when model not found */
@@ -264,26 +495,43 @@ const CLASS_DEFAULTS: Record<string, DepreciationProfile> = {
   truck:         { fiveYear: 0.68, tenYear: 0.44, mileagePenaltyPer1k: 52 },
   suv:           { fiveYear: 0.60, tenYear: 0.36, mileagePenaltyPer1k: 52 },
   japanese:      { fiveYear: 0.62, tenYear: 0.38, mileagePenaltyPer1k: 50 },
+  korean:        { fiveYear: 0.56, tenYear: 0.32, mileagePenaltyPer1k: 48 },
+  american:      { fiveYear: 0.52, tenYear: 0.28, mileagePenaltyPer1k: 50 },
   ev:            { fiveYear: 0.46, tenYear: 0.22, mileagePenaltyPer1k: 42 },
+  exotic:        { fiveYear: 0.36, tenYear: 0.16, mileagePenaltyPer1k: 85 },
   default:       { fiveYear: 0.56, tenYear: 0.30, mileagePenaltyPer1k: 52 },
 };
 
 const LUXURY_GERMAN = new Set(["bmw", "mercedes-benz", "audi"]);
-const LUXURY_OTHER  = new Set(["lexus", "acura", "infiniti", "genesis", "cadillac", "lincoln", "volvo", "porsche", "land rover", "jaguar", "alfa romeo"]);
-const JAPANESE      = new Set(["toyota", "honda", "subaru", "mazda"]);
-const TRUCK_MAKES   = new Set(["ford", "chevrolet", "gmc", "ram", "nissan"]);
-const EV_MAKES      = new Set(["tesla", "rivian", "lucid"]);
+const LUXURY_OTHER  = new Set(["lexus", "acura", "infiniti", "cadillac", "lincoln", "volvo", "porsche", "land rover", "jaguar", "alfa romeo", "maserati", "mini"]);
+const JAPANESE      = new Set(["toyota", "honda", "subaru", "mazda", "mitsubishi", "nissan"]);
+const KOREAN        = new Set(["hyundai", "kia", "genesis"]);
+const AMERICAN      = new Set(["ford", "chevrolet", "gmc", "ram", "dodge", "jeep", "chrysler", "buick"]);
+const EV_MAKES      = new Set(["tesla", "rivian", "lucid", "polestar"]);
+const EXOTIC        = new Set(["ferrari", "lamborghini", "mclaren", "bentley", "rolls-royce", "aston martin", "bugatti", "lotus", "koenigsegg", "pagani"]);
 
 export function getDepreciationProfile(make: string, model: string): DepreciationProfile {
   const m  = make.toLowerCase().trim();
   const mod = model.toLowerCase().trim().replace(/\s+/g, " ");
   const key = `${m}|${mod}`;
   if (PROFILES[key]) return PROFILES[key];
+
+  // Progressive partial match: try removing trailing words from model
+  // e.g. "corvette z06 3lz" → "corvette z06" → "corvette"
+  const words = mod.split(" ");
+  for (let i = words.length - 1; i >= 1; i--) {
+    const partial = `${m}|${words.slice(0, i).join(" ")}`;
+    if (PROFILES[partial]) return PROFILES[partial];
+  }
+
   // Fallback by make class
   if (LUXURY_GERMAN.has(m)) return CLASS_DEFAULTS.luxury_german;
+  if (EXOTIC.has(m))        return CLASS_DEFAULTS.exotic;
   if (LUXURY_OTHER.has(m))  return CLASS_DEFAULTS.luxury_other;
   if (EV_MAKES.has(m))      return CLASS_DEFAULTS.ev;
   if (JAPANESE.has(m))      return CLASS_DEFAULTS.japanese;
+  if (KOREAN.has(m))        return CLASS_DEFAULTS.korean;
+  if (AMERICAN.has(m))      return CLASS_DEFAULTS.american;
   return CLASS_DEFAULTS.default;
 }
 
@@ -293,6 +541,7 @@ export function getDepreciationProfile(make: string, model: string): Depreciatio
 // Coastal metros: higher demand, lower supply. Rust belt: higher supply, lower demand.
 const STATE_MULTIPLIERS: Record<string, number> = {
   HI: 1.15, AK: 1.10,                                   // Island/remote premium
+  DC: 1.06,                                              // High-cost metro
   CA: 1.08, NY: 1.06, WA: 1.05, NJ: 1.05,              // High-cost coasts
   MA: 1.04, CT: 1.04, CO: 1.04, OR: 1.03,              // Affluent urban markets
   UT: 1.02, FL: 1.01, AZ: 1.00, NV: 0.99, VA: 0.98,   // Average markets
