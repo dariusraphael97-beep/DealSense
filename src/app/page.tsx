@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
-import { FloatingPaths } from "@/components/ui/background-paths";
+import { EtherealShadow } from "@/components/ui/etheral-shadow";
 import { UserNav } from "@/components/ui/user-nav";
 import { Logo } from "@/components/ui/logo";
 
@@ -212,9 +212,15 @@ export default function HomePage() {
       {/* ── Hero ── */}
       <section className="relative min-h-[92vh] flex flex-col items-center justify-center overflow-hidden transition-colors"
         style={{ background: "var(--ds-bg)" }}>
-        {/* Flowing path backgrounds */}
-        <FloatingPaths position={1} />
-        <FloatingPaths position={-1} />
+        {/* Ethereal shadow background — single SVG filter, no per-path rasterization */}
+        <div className="absolute inset-0 pointer-events-none opacity-30 dark:opacity-50">
+          <EtherealShadow
+            color="rgba(99, 102, 241, 1)"
+            animation={{ scale: 60, speed: 50 }}
+            noise={{ opacity: 0.25, scale: 1 }}
+            sizing="fill"
+          />
+        </div>
 
         {/* Content */}
         <div className="relative z-10 mx-auto max-w-6xl px-4 w-full py-16 flex flex-col items-center text-center">
