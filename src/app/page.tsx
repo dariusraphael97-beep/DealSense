@@ -114,7 +114,7 @@ function MiniScoreCard({ score, verdict, car, delta }: { score: number; verdict:
           <circle cx="24" cy="24" r="22" fill="none" stroke="var(--ds-divider)" strokeWidth="4"/>
           <circle cx="24" cy="24" r="22" fill="none" stroke={c.stroke} strokeWidth="4"
             strokeDasharray={circum} strokeDashoffset={offset} strokeLinecap="round"
-            style={{ filter: `drop-shadow(0 0 3px ${c.stroke}60)` }}/>
+            style={{ filter: `drop-shadow(0 0 6px ${c.stroke}80)` }}/>
         </svg>
         <div className="absolute inset-0 flex items-center justify-center">
           <span className="text-xs font-bold" style={{ color: "var(--ds-text-1)" }}>{score}</span>
@@ -175,7 +175,6 @@ export default function HomePage() {
     <div className="min-h-screen transition-colors duration-300" style={{ background: "var(--ds-bg)" }}>
 
       {/* ── Nav ── */}
-      {/* Nav — reduced blur (20→12px) and added containment for Windows stability */}
       <motion.nav
         initial={{ opacity: 0, y: -12 }}
         animate={{ opacity: 1, y: 0 }}
@@ -184,9 +183,7 @@ export default function HomePage() {
         style={{
           background: "var(--ds-nav-bg)",
           borderBottom: "1px solid var(--ds-nav-border)",
-          backdropFilter: "blur(12px)",
-          WebkitBackdropFilter: "blur(12px)",
-          contain: "layout style",
+          backdropFilter: "blur(20px)",
         }}
       >
         <div className="mx-auto max-w-6xl px-4 py-3.5 flex items-center justify-between">
@@ -245,12 +242,13 @@ export default function HomePage() {
                   {phrase.split(" ").map((word, wordIdx) => (
                     <motion.span
                       key={`${lineIdx}-${wordIdx}`}
-                      initial={{ y: 48, opacity: 0 }}
+                      initial={{ y: 80, opacity: 0 }}
                       animate={{ y: 0, opacity: 1 }}
                       transition={{
                         delay: lineIdx * 0.22 + wordIdx * 0.08,
-                        duration: 0.6,
-                        ease: [0.22, 1, 0.36, 1],
+                        type: "spring",
+                        stiffness: 160,
+                        damping: 22,
                       }}
                       className={`inline-block mr-[0.25em] last:mr-0 bg-clip-text text-transparent ${
                         lineIdx === 0
@@ -284,7 +282,7 @@ export default function HomePage() {
             <div className="inline-block group relative rounded-2xl p-px"
               style={{
                 background: "linear-gradient(135deg, rgba(99,102,241,0.6), rgba(139,92,246,0.4))",
-                boxShadow: "0 0 18px rgba(99,102,241,0.20)",
+                boxShadow: "0 0 28px rgba(99,102,241,0.25)",
               }}>
               <Link href="/analyze"
                 className="inline-flex items-center gap-2 px-7 py-3.5 rounded-[0.9rem] text-white text-sm font-semibold transition-all group-hover:-translate-y-0.5 duration-200"
@@ -295,7 +293,7 @@ export default function HomePage() {
               </Link>
             </div>
             <a href="#how-it-works"
-              className="inline-flex items-center justify-center px-7 py-3.5 rounded-2xl text-sm font-semibold transition-all hover:brightness-95 active:scale-[0.98]"
+              className="inline-flex items-center justify-center px-7 py-3.5 rounded-2xl text-sm font-semibold transition-all hover:brightness-95 active:scale-[0.98] backdrop-blur-sm"
               style={{
                 background: "var(--ds-badge-bg)",
                 border: "1px solid var(--ds-badge-border)",
@@ -405,7 +403,7 @@ export default function HomePage() {
               style={{
                 background: "var(--ds-card-bg)",
                 border: "1px solid var(--ds-card-border)",
-                boxShadow: "0 0 0 1px var(--ds-card-border), 0 0 24px rgba(99,102,241,0.10), 0 4px 16px rgba(0,0,0,0.12)",
+                boxShadow: "0 0 0 1px var(--ds-card-border), 0 0 48px rgba(99,102,241,0.12), 0 8px 32px rgba(0,0,0,0.18)",
               }}
             >
               {/* Vehicle label */}
@@ -425,7 +423,7 @@ export default function HomePage() {
                       strokeDasharray={`${2 * Math.PI * 34}`}
                       strokeDashoffset={`${2 * Math.PI * 34 * (1 - 74/100)}`}
                       strokeLinecap="round"
-                      style={{ filter: "drop-shadow(0 0 4px rgba(52,211,153,0.4))" }}
+                      style={{ filter: "drop-shadow(0 0 8px rgba(52,211,153,0.6))" }}
                     />
                   </svg>
                   <div className="absolute inset-0 flex flex-col items-center justify-center">
@@ -627,7 +625,7 @@ export default function HomePage() {
           {/* ── Founders Deal card ── */}
           <ScrollSection className="max-w-lg mx-auto mt-10 mb-10">
             <motion.div variants={cardVariant} className="relative rounded-2xl p-7 flex flex-col items-center text-center overflow-hidden"
-              style={{ background: "rgba(99,102,241,0.06)", border: "1px solid rgba(99,102,241,0.22)", boxShadow: "0 0 32px rgba(99,102,241,0.10)" }}>
+              style={{ background: "rgba(99,102,241,0.06)", border: "1px solid rgba(99,102,241,0.22)", boxShadow: "0 0 60px rgba(99,102,241,0.12)" }}>
               <div className="absolute -top-px left-0 right-0 h-[2px]" style={{ background: "linear-gradient(90deg, transparent, #6366f1, transparent)" }} />
               <div className="inline-flex items-center gap-1.5 rounded-full px-3.5 py-1 text-xs font-semibold mb-5"
                 style={{ background: "linear-gradient(135deg,#4f46e5,#6366f1)", color: "white", boxShadow: "0 0 20px rgba(99,102,241,0.5)" }}>
@@ -829,7 +827,7 @@ export default function HomePage() {
               className="inline-flex items-center gap-2 rounded-xl px-8 py-4 text-base font-semibold text-white transition-all hover:brightness-110 active:scale-[0.98]"
               style={{
                 background: "linear-gradient(135deg, #4f46e5, #6366f1)",
-                boxShadow: "0 0 20px rgba(99,102,241,0.3), 0 4px 12px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.12)",
+                boxShadow: "0 0 32px rgba(99,102,241,0.4), 0 4px 20px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.12)",
               }}>
               Get my Deal Score <IconArrow />
             </Link>
