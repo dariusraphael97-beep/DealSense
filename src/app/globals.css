@@ -171,14 +171,3 @@ html.no-transitions * {
   transition: none !important;
 }
 
-/*
- * Windows rendering stability for backdrop-filter layers.
- *
- * The previous fix (translateZ + will-change: transform) was actually making
- * flicker worse by forcing extra composite layers and preventing dirty-rect
- * culling. Replaced with contain: paint which isolates repaint regions
- * without creating unnecessary GPU layers.
- */
-[style*="backdrop-filter"] {
-  contain: paint;
-}
