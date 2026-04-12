@@ -45,7 +45,7 @@ export default function AuthLandingPage() {
         {/* Headline */}
         <motion.h1
           custom={1} variants={fadeUp} initial="hidden" animate="visible"
-          className="text-5xl sm:text-7xl md:text-8xl font-bold tracking-tight leading-[1.05] mb-6"
+          className="text-5xl sm:text-7xl md:text-8xl font-bold tracking-tight leading-[1.15] mb-6"
         >
           <span className="bg-clip-text text-transparent bg-gradient-to-b from-white to-white/75">
             Know the deal
