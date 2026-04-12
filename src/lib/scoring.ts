@@ -295,8 +295,8 @@ const MODEL_BASE: Record<string, number> = {
   "bmw|m4 competition":         82000,
   "bmw|m4 cs":                  100000,
   "bmw|m4 csl":                 140000,
-  "bmw|m5":                     108000,
-  "bmw|m5 competition":         116000,
+  "bmw|m5":                     120000,
+  "bmw|m5 competition":         128000,
   "bmw|m5 cs":                  142000,
   "bmw|m6":                     105000,
   "bmw|m8":                     130000,
@@ -844,8 +844,8 @@ export function getBaseFairValueRange(input: CarInput, category: VehicleCategory
   if (trimValidation && trimValidation.trimConfidence === "low") {
     const isHighVariance = category === "exotic" || category === "performance" || category === "luxury";
     if (isHighVariance) {
-      // Widen by an extra 8% on each side
-      const trimSpread = midpoint * 0.08;
+      // Widen by an extra 5% on each side (reduced from 8% — stacked with 15% perf spread)
+      const trimSpread = midpoint * 0.05;
       return {
         low:      Math.round((midpoint - spread - trimSpread) / 100) * 100,
         high:     Math.round((midpoint + spread + trimSpread) / 100) * 100,
@@ -1043,14 +1043,19 @@ export function calculateConfidenceScore(
   // ── Penalties ──
   const isHighVariance = category === "exotic" || category === "performance" || category === "luxury";
   if (isHighVariance && optionDataStatus !== "complete") {
-    score -= 15;
+    score -= 10; // Reduced from 15 — stacked too harshly with statistical penalty
   }
   if (isStatistical) {
-    score -= 10;
+    score -= 8; // Reduced from 10 — was double-penalizing (only +5 added, then -10)
   }
   const currentYear = new Date().getFullYear();
   if (currentYear - input.year > 12) {
     score -= 5;
+  }
+
+  // Floor: VIN-decoded vehicles with basic identity confirmed shouldn't go below 30
+  if (vinDecoded && score < 30) {
+    score = 30;
   }
 
   // Clamp

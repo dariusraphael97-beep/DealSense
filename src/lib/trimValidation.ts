@@ -69,18 +69,18 @@ const YEAR_SPECIFIC_TRIMS: Record<string, Record<number, string[]>> = {
 
   "bmw|m2": buildYearMap({
     "2016-2021": ["Base", "Competition", "CS"],
-    "2023-2025": ["Base"],
+    "2023-2026": ["Base"],
   }),
 
   "bmw|m3": buildYearMap({
     "2015-2018": ["Base", "Competition"],
     "2021-2024": ["Base", "Competition", "Competition xDrive"],
-    "2025": ["Base", "Competition xDrive", "CS"],
+    "2025-2026": ["Base", "Competition xDrive", "CS"],
   }),
 
   "bmw|m4": buildYearMap({
     "2015-2020": ["Coupe", "Competition", "CS", "GTS"],
-    "2021-2025": [
+    "2021-2026": [
       "Coupe",
       "Competition Coupe",
       "Competition xDrive Coupe",
@@ -93,11 +93,11 @@ const YEAR_SPECIFIC_TRIMS: Record<string, Record<number, string[]>> = {
 
   "bmw|m5": buildYearMap({
     "2018-2024": ["Base", "Competition", "CS"],
-    "2025": ["Base"],
+    "2025-2026": ["Base"],
   }),
 
   "bmw|m8": buildYearMap({
-    "2020-2025": [
+    "2020-2026": [
       "Coupe",
       "Competition Coupe",
       "Gran Coupe",
@@ -111,27 +111,27 @@ const YEAR_SPECIFIC_TRIMS: Record<string, Record<number, string[]>> = {
 
   "mercedes-benz|c 63 amg": buildYearMap({
     "2015-2022": ["Base", "S"],
-    "2023-2025": ["S E Performance"],
+    "2023-2026": ["S E Performance"],
   }),
 
   "mercedes-benz|amg c 63": buildYearMap({
     "2015-2022": ["Base", "S"],
-    "2023-2025": ["S E Performance"],
+    "2023-2026": ["S E Performance"],
   }),
 
   "mercedes-benz|e 63 amg": buildYearMap({
     "2018-2021": ["Base", "S"],
-    "2022-2025": [],
+    "2022-2026": [],
   }),
 
   "mercedes-benz|amg e 63": buildYearMap({
     "2018-2021": ["Base", "S"],
-    "2022-2025": [],
+    "2022-2026": [],
   }),
 
   "mercedes-benz|amg gt": buildYearMap({
     "2016-2021": ["Base", "S", "R", "R Pro", "Black Series"],
-    "2024-2025": ["43 Coupe", "55 S Coupe", "63 S E Performance"],
+    "2024-2026": ["43 Coupe", "55 S Coupe", "63 S E Performance"],
   }),
 
   // ── Porsche 911 ─────────────────────────────────────────────────────────
@@ -153,7 +153,7 @@ const YEAR_SPECIFIC_TRIMS: Record<string, Record<number, string[]>> = {
       "S/T",
       "Dakar",
     ],
-    "2025": [
+    "2025-2026": [
       "Carrera",
       "Carrera S",
       "Carrera 4S",
@@ -171,19 +171,19 @@ const YEAR_SPECIFIC_TRIMS: Record<string, Record<number, string[]>> = {
 
   "audi|rs 5": buildYearMap({
     "2018-2024": ["Sportback", "Coupe"],
-    "2025": [],
+    "2025-2026": [],
   }),
 
   "audi|rs 6": buildYearMap({
-    "2021-2025": ["Avant", "Avant Performance"],
+    "2021-2026": ["Avant", "Avant Performance"],
   }),
 
   "audi|rs 7": buildYearMap({
-    "2021-2025": ["Sportback", "Sportback Performance"],
+    "2021-2026": ["Sportback", "Sportback Performance"],
   }),
 
   "audi|rs e-tron gt": buildYearMap({
-    "2022-2025": ["Base", "Performance"],
+    "2022-2026": ["Base", "Performance"],
   }),
 
   // ── Dodge / Performance Trucks ──────────────────────────────────────────
@@ -200,7 +200,7 @@ const YEAR_SPECIFIC_TRIMS: Record<string, Record<number, string[]>> = {
       "SRT Demon",
       "SRT Demon 170",
     ],
-    "2024-2025": [],
+    "2024-2026": [],
   }),
 
   "dodge|charger": buildYearMap({
@@ -212,12 +212,12 @@ const YEAR_SPECIFIC_TRIMS: Record<string, Record<number, string[]>> = {
       "SRT Hellcat",
       "SRT Hellcat Redeye",
     ],
-    "2024-2025": ["Daytona R/T", "Daytona Scat Pack"],
+    "2024-2026": ["Daytona R/T", "Daytona Scat Pack"],
   }),
 
   "ram|1500 trx": buildYearMap({
     "2021-2024": ["Base", "Level 2"],
-    "2025": [],
+    "2025-2026": [],
   }),
 
   // ── Ford ────────────────────────────────────────────────────────────────
@@ -231,14 +231,14 @@ const YEAR_SPECIFIC_TRIMS: Record<string, Record<number, string[]>> = {
       "Shelby GT500",
       "Dark Horse",
     ],
-    "2024-2025": ["EcoBoost", "GT", "Dark Horse", "GTD"],
+    "2024-2026": ["EcoBoost", "GT", "Dark Horse", "GTD"],
   }),
 
   // ── Chevrolet Corvette ──────────────────────────────────────────────────
 
   "chevrolet|corvette": buildYearMap({
     "2020-2024": ["Stingray", "Z06", "E-Ray", "ZR1"],
-    "2025": ["Stingray", "Z06", "E-Ray", "ZR1"],
+    "2025-2026": ["Stingray", "Z06", "E-Ray", "ZR1"],
   }),
 };
 
