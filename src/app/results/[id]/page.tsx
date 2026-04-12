@@ -525,7 +525,7 @@ export default function PersistedResultPage() {
         <motion.div
           initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, ease }}
-          className="rounded-3xl overflow-hidden"
+          className="rounded-3xl"
           style={{
             background: "var(--ds-card-bg)",
             border: "1px solid var(--ds-card-border)",
@@ -533,7 +533,7 @@ export default function PersistedResultPage() {
           }}
         >
           {/* Score accent stripe */}
-          <div style={{ height: 3, background: `linear-gradient(90deg, ${scoreColor}, ${scoreColorEnd})` }} />
+          <div className="rounded-t-3xl" style={{ height: 3, background: `linear-gradient(90deg, ${scoreColor}, ${scoreColorEnd})` }} />
 
           {/* Vehicle header */}
           <div className="px-6 sm:px-8 pt-6">
