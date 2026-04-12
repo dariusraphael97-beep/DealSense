@@ -60,11 +60,10 @@ export async function POST(req: NextRequest) {
 
   const trimmed = url.trim();
 
-  // ── 1. VIN embedded directly in the URL string ─────────────────────────
+  // ── 1. VIN embedded directly in the URL string (save as fallback) ──────
+  // Don't return early — we still want to fetch the page for price/mileage/zip.
   const urlMatches = Array.from(trimmed.matchAll(URL_VIN_RE));
-  if (urlMatches.length) {
-    return NextResponse.json({ vin: urlMatches[0][1].toUpperCase() });
-  }
+  const urlVin = urlMatches.length ? urlMatches[0][1].toUpperCase() : null;
 
   // ── 2. Validate URL before fetching ────────────────────────────────────
   let parsed: URL;
@@ -145,12 +144,12 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Only read first 200 KB — VIN will be near the top of any listing page
+    // Read up to 500 KB — Next.js __NEXT_DATA__ can be large on SPA sites
     const reader = res.body?.getReader();
     let html = "";
     if (reader) {
       let bytes = 0;
-      while (bytes < 200_000) {
+      while (bytes < 500_000) {
         const { done, value } = await reader.read();
         if (done || !value) break;
         html += new TextDecoder().decode(value);
@@ -162,11 +161,15 @@ export async function POST(req: NextRequest) {
     }
 
     const extraction = extractFromHtml(html, parsed.hostname);
-    cacheListing(trimmed, extraction);
 
-    if (extraction.vin) {
+    // Use URL VIN as fallback if HTML extraction didn't find one
+    const finalVin = extraction.vin ?? urlVin;
+    const finalExtraction = { ...extraction, vin: finalVin };
+    cacheListing(trimmed, finalExtraction);
+
+    if (finalVin) {
       return NextResponse.json({
-        vin: extraction.vin,
+        vin: finalVin,
         price: extraction.price,
         mileage: extraction.mileage,
         zipCode: extraction.zipCode,
