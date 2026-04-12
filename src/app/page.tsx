@@ -256,7 +256,7 @@ export default function HomePage() {
                         stiffness: 160,
                         damping: 22,
                       }}
-                      className={`inline-block mr-[0.25em] last:mr-0 bg-clip-text text-transparent ${
+                      className={`inline-block mr-[0.25em] last:mr-0 pb-[0.15em] bg-clip-text text-transparent ${
                         lineIdx === 0
                           ? "bg-gradient-to-b from-slate-900 to-slate-600 dark:from-white dark:to-white/75"
                           : "bg-gradient-to-r from-blue-500 via-indigo-500 to-violet-500 dark:from-blue-400 dark:via-indigo-300 dark:to-violet-400"

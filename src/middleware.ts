@@ -47,6 +47,17 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
+  // Admin route — server-side role check (blocks page load entirely for non-admins)
+  if (user && pathname.startsWith("/admin")) {
+    const { data: profile } = await supabase
+      .from("profiles").select("role").eq("id", user.id).single()
+    if (profile?.role !== "admin") {
+      const url = request.nextUrl.clone()
+      url.pathname = "/analyze"
+      return NextResponse.redirect(url)
+    }
+  }
+
   // Authenticated + visiting /auth → send to analyze
   if (user && isAuthRoute && !pathname.startsWith("/auth/callback")) {
     const url = request.nextUrl.clone()
