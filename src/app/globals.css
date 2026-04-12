@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -41,8 +41,8 @@
   --ds-input-ring:       rgba(99,102,241,0.12);
   --ds-text-1:           rgba(15,23,42,0.92);
   --ds-text-2:           rgba(15,23,42,0.65);
-  --ds-text-3:           rgba(15,23,42,0.45);
-  --ds-text-4:           rgba(15,23,42,0.30);
+  --ds-text-3:           rgba(15,23,42,0.58);
+  --ds-text-4:           rgba(15,23,42,0.45);
   --ds-divider:          rgba(15,23,42,0.07);
   --ds-grid-dim:         rgba(99,102,241,0.12);
   --ds-grid-bright:      rgba(99,102,241,0.45);
@@ -88,7 +88,7 @@
 @layer base {
   html { scroll-behavior: smooth; -webkit-font-smoothing: antialiased; }
   body { background-color: var(--ds-bg); color: var(--ds-text-1); transition: background-color 0.25s, color 0.25s; }
-  h1, h2, h3, h4 { font-family: "Space Grotesk", system-ui, sans-serif; }
+  h1, h2, h3, h4 { font-family: "Plus Jakarta Sans", system-ui, sans-serif; }
   @media (prefers-reduced-motion: reduce) {
     * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
   }

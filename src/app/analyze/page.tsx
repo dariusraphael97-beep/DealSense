@@ -111,7 +111,7 @@ function Combobox({ value, onChange, options, placeholder, disabled = false, id 
           onKeyDown={handleKey}
           placeholder={disabled ? "Select make first" : placeholder}
           disabled={disabled} autoComplete="off"
-          className={inputCls + " pr-16 placeholder:opacity-40"}
+          className={inputCls + " pr-16 placeholder:opacity-50"}
           style={focused ? iFocus : iStyle}
           aria-expanded={open} aria-haspopup="listbox" role="combobox"
         />
@@ -721,7 +721,7 @@ export default function AnalyzePage() {
                       setVinInput(v); setVinSuccess(false); setVinError("");
                     }}
                     maxLength={17}
-                    className={inputCls + " font-mono tracking-widest placeholder:opacity-30 placeholder:tracking-normal pr-14"}
+                    className={inputCls + " font-mono tracking-widest placeholder:opacity-50 placeholder:tracking-normal pr-14"}
                     style={iStyle}
                     onFocus={(e) => Object.assign(e.target.style, iFocus)}
                     onBlur={(e)  => Object.assign(e.target.style, iStyle)}
@@ -784,7 +784,7 @@ export default function AnalyzePage() {
                   value={listingUrl}
                   onChange={(e) => { setListingUrl(e.target.value); setLinkError(""); setLinkSuccess(false); }}
                   onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleListingLink(); } }}
-                  className={inputCls + " flex-1 placeholder:opacity-30 text-xs"}
+                  className={inputCls + " flex-1 placeholder:opacity-50 text-xs"}
                   style={iStyle}
                   onFocus={(e) => Object.assign(e.target.style, iFocus)}
                   onBlur={(e)  => Object.assign(e.target.style, iStyle)}
@@ -865,7 +865,7 @@ export default function AnalyzePage() {
                 <Field label="Mileage" required htmlFor="field-mileage">
                   <div className="relative">
                     <input id="field-mileage" type="number" value={form.mileage || ""} onChange={(e) => setField("mileage", parseInt(e.target.value, 10) || 0)}
-                      placeholder="45,000" min={1} required className={inputCls + " pr-9 placeholder:opacity-40"} style={iStyle}
+                      placeholder="45,000" min={1} required className={inputCls + " pr-9 placeholder:opacity-50"} style={iStyle}
                       onFocus={(e) => Object.assign(e.target.style, iFocus)}
                       onBlur={(e)  => Object.assign(e.target.style, iStyle)} />
                     <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs pointer-events-none" style={{ color: "var(--ds-text-4)" }}>mi</span>
@@ -875,7 +875,7 @@ export default function AnalyzePage() {
                   <div className="relative">
                     <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm pointer-events-none" style={{ color: "var(--ds-text-3)" }}>$</span>
                     <input id="field-price" type="number" value={form.askingPrice || ""} onChange={(e) => setField("askingPrice", parseInt(e.target.value, 10) || 0)}
-                      placeholder="18,500" min={1} required className={inputCls + " pl-7 placeholder:opacity-40"} style={iStyle}
+                      placeholder="18,500" min={1} required className={inputCls + " pl-7 placeholder:opacity-50"} style={iStyle}
                       onFocus={(e) => Object.assign(e.target.style, iFocus)}
                       onBlur={(e)  => Object.assign(e.target.style, iStyle)} />
                   </div>
@@ -884,7 +884,7 @@ export default function AnalyzePage() {
                   <input id="field-zip" type="text" value={form.zipCode}
                     onChange={(e) => setField("zipCode", e.target.value.replace(/\D/g, "").slice(0, 5))}
                     placeholder="90210" pattern="\d{5}" required
-                    className={inputCls + " font-mono tracking-widest placeholder:opacity-40"} style={iStyle}
+                    className={inputCls + " font-mono tracking-widest placeholder:opacity-50"} style={iStyle}
                     onFocus={(e) => Object.assign(e.target.style, iFocus)}
                     onBlur={(e)  => Object.assign(e.target.style, iStyle)} />
                 </Field>
