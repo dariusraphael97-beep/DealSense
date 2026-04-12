@@ -540,9 +540,10 @@ export default function PersistedResultPage() {
             <div className="flex items-start justify-between gap-4 flex-wrap">
               <div>
                 <p className="font-heading text-xl font-bold" style={{ color: "var(--ds-text-1)" }}>{vehicleLabel}</p>
-                <p className="text-sm font-mono mt-1" style={{ color: "var(--ds-text-3)" }}>
+                <p className="text-sm font-mono mt-1 flex items-center gap-1.5" style={{ color: "var(--ds-text-3)" }}>
                   {input.mileage.toLocaleString()} mi · ZIP {input.zipCode || "—"}
                   {input.vin ? ` · VIN …${input.vin.slice(-6)}` : ""}
+                  {input.zipCode && <USMapPin zipCode={input.zipCode} />}
                 </p>
               </div>
               <DeltaPill delta={priceDelta} pct={priceDeltaPct} />
@@ -640,18 +641,6 @@ export default function PersistedResultPage() {
           </div>
         </motion.div>
 
-        {/* ── Vehicle Location ── */}
-        {input.zipCode && (
-          <FadeSection>
-            <motion.div variants={fadeUp} className="rounded-2xl overflow-hidden"
-              style={{ background: "var(--ds-card-bg)", border: "1px solid var(--ds-card-border)", boxShadow: "var(--ds-card-shadow)" }}>
-              <div className="px-6 pt-5 pb-1">
-                <SectionLabel>Vehicle Location</SectionLabel>
-              </div>
-              <USMapPin zipCode={input.zipCode} />
-            </motion.div>
-          </FadeSection>
-        )}
 
         {/* ── Two-column: Price + Loan ── */}
         <FadeSection className="grid sm:grid-cols-2 gap-5">

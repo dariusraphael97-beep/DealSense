@@ -8,42 +8,34 @@
 ══════════════════════════════════════════════════════════════════════ */
 
 // ── Simplified continental US outline ───────────────────────────────
-// Equirectangular projection: x = (lng + 125) * 15.5,  y = (50 - lat) * 21
-// ViewBox 0 0 920 560
+// Mapped to a 200×130 viewBox for compact rendering.
+// Uses a simple equirectangular projection tuned to continental US:
+//   x = (lng - (-125)) / ((-66) - (-125)) * 200 = (lng + 125) * 3.39
+//   y = (49 - lat) / (49 - 24) * 130 = (49 - lat) * 5.2
 const US_OUTLINE =
-  "M 42 33 L 39 54 L 36 78 L 26 120 L 15 168 L 10 210 L 40 256 L 60 290 " +
-  "L 75 315 L 101 336 L 120 365 L 100 378 L 104 387 " +
-  // Mexico border
-  "L 160 381 L 216 393 L 256 387 L 288 387 L 325 430 L 394 473 L 431 504 " +
-  // TX coast
-  "L 428 462 L 465 441 L 488 426 " +
-  // Gulf coast
-  "L 508 435 L 537 441 L 558 425 L 574 423 " +
-  // FL panhandle
-  "L 600 435 L 620 420 " +
-  // FL peninsula (simplified loop)
-  "L 645 408 L 660 430 L 678 480 L 685 510 L 680 518 " +
-  "L 665 500 L 650 460 L 635 430 L 625 412 " +
-  // Atlantic coast
-  "L 658 395 L 668 378 L 685 360 L 710 335 L 728 300 " +
-  "L 742 265 L 752 240 L 758 213 L 770 198 " +
-  // NE coast
-  "L 793 186 L 812 175 L 818 160 L 830 150 " +
-  "L 868 110 L 880 75 L 862 58 " +
-  // Northern border (going west)
-  "L 830 80 L 810 96 L 790 108 L 768 120 " +
-  // Great Lakes region
-  "L 745 135 L 735 155 L 700 162 L 685 150 " +
-  "L 670 115 L 655 95 L 620 80 L 595 60 " +
-  "L 570 55 L 540 58 " +
-  // MN/ND/MT border (49th parallel)
-  "L 490 15 L 430 15 L 340 15 L 200 15 L 90 15 L 42 15 Z";
+  "M 8 6 L 7 11 L 6 18 L 4 28 L 3 40 L 2 48 L 8 58 L 12 66 " +
+  "L 15 72 L 20 77 L 24 83 L 20 86 L 21 88 " +
+  "L 32 87 L 43 90 L 51 88 L 58 88 L 65 98 L 79 108 L 87 115 " +
+  "L 86 105 L 93 100 L 98 97 " +
+  "L 102 99 L 108 100 L 112 97 L 115 96 " +
+  "L 121 99 L 125 96 " +
+  "L 130 93 L 133 98 L 137 109 L 138 116 L 137 117 " +
+  "L 134 112 L 131 105 L 128 98 L 126 94 " +
+  "L 133 90 L 135 86 L 138 82 L 143 77 L 147 68 " +
+  "L 150 60 L 152 55 L 153 48 L 155 44 " +
+  "L 160 42 L 164 40 L 165 36 L 168 34 " +
+  "L 175 25 L 178 17 L 174 13 " +
+  "L 168 18 L 164 22 L 159 25 L 155 28 " +
+  "L 150 31 L 148 35 L 141 37 L 138 34 " +
+  "L 135 26 L 132 22 L 125 18 L 120 14 " +
+  "L 115 12 L 109 13 " +
+  "L 99 3 L 87 3 L 68 3 L 40 3 L 18 3 L 8 3 Z";
 
-// ── Albers-style projection for pin placement ──────────────────────
-// Matches the outline projection parameters above
+// ── Projection for pin placement ──────────────────────────────────
+// Must match the outline projection above: viewBox 200×130
 function project(lat: number, lng: number): [number, number] {
-  const x = (lng + 125) * 15.5;
-  const y = (50 - lat) * 21;
+  const x = (lng + 125) * (200 / 59);   // 59 = 125 - 66 (lng range)
+  const y = (49 - lat) * (130 / 25);    // 25 = 49 - 24 (lat range)
   return [x, y];
 }
 
@@ -344,70 +336,33 @@ export function USMapPin({ zipCode, className = "" }: USMapPinProps) {
   const [px, py] = project(lat, lng);
 
   // Clamp to viewBox
-  const cx = Math.max(10, Math.min(910, px));
-  const cy = Math.max(10, Math.min(550, py));
+  const cx = Math.max(4, Math.min(196, px));
+  const cy = Math.max(4, Math.min(126, py));
 
   return (
-    <div className={`relative ${className}`}>
+    <div className={`inline-flex items-center ${className}`} title={`ZIP ${zipCode}`}>
       <svg
-        viewBox="0 0 920 560"
-        className="w-full h-auto"
+        viewBox="0 0 200 130"
+        className="w-12 h-8"
         role="img"
-        aria-label={`Map showing vehicle location at ZIP ${zipCode}`}
+        aria-label={`ZIP ${zipCode}`}
       >
-        <defs>
-          <radialGradient id="pin-glow" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="rgba(239,68,68,0.45)" />
-            <stop offset="100%" stopColor="rgba(239,68,68,0)" />
-          </radialGradient>
-          <radialGradient id="map-bg-grad" cx="50%" cy="40%" r="60%">
-            <stop offset="0%" stopColor="rgba(99,102,241,0.04)" />
-            <stop offset="100%" stopColor="transparent" />
-          </radialGradient>
-        </defs>
-
-        {/* Background */}
-        <rect width="920" height="560" fill="url(#map-bg-grad)" rx="16" />
-
         {/* US outline */}
         <path
           d={US_OUTLINE}
-          fill="var(--ds-map-fill, rgba(99,102,241,0.06))"
-          stroke="var(--ds-map-stroke, rgba(99,102,241,0.18))"
-          strokeWidth="1.5"
+          fill="var(--ds-map-fill, rgba(99,102,241,0.08))"
+          stroke="var(--ds-map-stroke, rgba(99,102,241,0.22))"
+          strokeWidth="1"
           strokeLinejoin="round"
         />
 
         {/* Pin glow */}
-        <circle cx={cx} cy={cy} r="40" fill="url(#pin-glow)" />
-
-        {/* Pin ring */}
-        <circle
-          cx={cx} cy={cy} r="10"
-          fill="none"
-          stroke="rgba(239,68,68,0.3)"
-          strokeWidth="2"
-        />
+        <circle cx={cx} cy={cy} r="8" fill="rgba(99,102,241,0.20)" />
 
         {/* Pin dot */}
-        <circle cx={cx} cy={cy} r="5" fill="#ef4444" />
-        <circle cx={cx} cy={cy} r="2" fill="white" opacity="0.9" />
+        <circle cx={cx} cy={cy} r="3" fill="#6366f1" />
+        <circle cx={cx} cy={cy} r="1.2" fill="white" opacity="0.85" />
       </svg>
-
-      {/* Label */}
-      <div
-        className="absolute bottom-2 right-3 flex items-center gap-1.5 px-2 py-1 rounded-lg text-[10px] font-semibold"
-        style={{
-          background: "var(--ds-badge-bg, rgba(0,0,0,0.05))",
-          border: "1px solid var(--ds-badge-border, rgba(0,0,0,0.08))",
-          color: "var(--ds-text-4, rgba(0,0,0,0.35))",
-        }}
-      >
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-2.5 h-2.5" aria-hidden="true">
-          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" />
-        </svg>
-        ZIP {zipCode}
-      </div>
     </div>
   );
 }
