@@ -37,6 +37,7 @@ export interface ConfidenceBreakdown {
   marketDataSpecificity: "transaction" | "listings" | "broad_model" | "statistical";
   vehicleCategory: VehicleCategory;
   regionDataAvailable: boolean;
+  trimConfidence?: "high" | "medium" | "low";
 }
 
 /* ── Option / equipment data decoded from VIN ────────────────────────── */
@@ -93,6 +94,7 @@ export interface ScoreResult {
   optionDataStatus: "complete" | "partial" | "missing";
   valuationWarnings: string[];
   keyInsights: string[];
+  trimValidation?: TrimValidation;
 }
 
 export interface AnalysisResult extends ScoreResult {
@@ -164,4 +166,14 @@ export interface ProviderError {
   provider: string;
   message: string;
   code: "network" | "auth" | "not_found" | "rate_limit" | "parse" | "unknown";
+}
+
+/** Trim validation result — distinguishes decoded vs validated trim */
+export interface TrimValidation {
+  decodedTrim: string | null;
+  userTrim: string | null;
+  validatedTrim: string | null;
+  trimConfidence: "high" | "medium" | "low";
+  trimValidationNotes: string[];
+  isHighRiskModel: boolean;
 }

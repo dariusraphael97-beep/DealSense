@@ -415,7 +415,7 @@ function ResultsContent() {
   const { input, score, verdict, fairValueRange, priceDelta, priceDeltaPct,
           monthlyPayment, reasons, aiSummary, negotiationScript, priceSource,
           confidenceLevel, confidenceScore, confidenceBreakdown, vehicleCategory,
-          optionDataStatus, valuationWarnings, keyInsights } = result;
+          optionDataStatus, valuationWarnings, keyInsights, trimValidation } = result;
   const isVinVerified = typeof priceSource === "string" && priceSource.toLowerCase().includes("vinaudit");
 
   // Confidence badge styling
@@ -513,6 +513,28 @@ function ResultsContent() {
                   {input.vin ? ` · VIN …${input.vin.slice(-6)}` : ""}
                   {input.zipCode && <USMapPin zipCode={input.zipCode} />}
                 </p>
+                {/* Trim confidence indicator */}
+                {trimValidation && (
+                  <div className="mt-1.5 flex items-center gap-2 flex-wrap">
+                    {trimValidation.validatedTrim && (
+                      <span className="text-xs" style={{ color: "var(--ds-text-3)" }}>
+                        Trim: {trimValidation.validatedTrim}
+                      </span>
+                    )}
+                    <span className="text-[10px] px-2 py-0.5 rounded-md font-medium" style={{
+                      background: trimValidation.trimConfidence === "high" ? "rgba(52,211,153,0.08)" : trimValidation.trimConfidence === "medium" ? "rgba(251,191,36,0.08)" : "rgba(248,113,113,0.08)",
+                      border: `1px solid ${trimValidation.trimConfidence === "high" ? "rgba(52,211,153,0.2)" : trimValidation.trimConfidence === "medium" ? "rgba(251,191,36,0.2)" : "rgba(248,113,113,0.2)"}`,
+                      color: trimValidation.trimConfidence === "high" ? "#34d399" : trimValidation.trimConfidence === "medium" ? "#fbbf24" : "#f87171",
+                    }}>
+                      Trim: {trimValidation.trimConfidence} confidence
+                    </span>
+                    {trimValidation.trimConfidence === "low" && (
+                      <span className="text-[10px]" style={{ color: "var(--ds-text-4)" }}>
+                        Trim/config may not be fully verified for this model year
+                      </span>
+                    )}
+                  </div>
+                )}
               </div>
               <DeltaPill delta={priceDelta} pct={priceDeltaPct} />
             </div>

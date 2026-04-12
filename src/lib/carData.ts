@@ -1,3 +1,5 @@
+import { getYearSpecificTrims } from "./trimValidation";
+
 /**
  * Comprehensive US market vehicle database.
  * Covers model years ~2010–2025 across 35+ makes.
@@ -558,8 +560,14 @@ export function getModels(make: string): ModelEntry[] {
   return CAR_DATABASE[make] ?? [];
 }
 
-/** Get trim names for a make+model */
-export function getTrims(make: string, model: string): string[] {
+/** Get trim names for a make+model, optionally filtered by year */
+export function getTrims(make: string, model: string, year?: number): string[] {
+  // If year provided, check for year-specific trim data first
+  if (year) {
+    const yearSpecific = getYearSpecificTrims(year, make, model);
+    if (yearSpecific !== null) return yearSpecific;
+  }
+  // Fall back to generic trim list
   return getModels(make).find((m) => m.name === model)?.trims ?? [];
 }
 

@@ -435,7 +435,7 @@ export default function AnalyzePage() {
   }
 
   const modelOptions = form.make ? getModels(form.make).map((m) => m.name) : [];
-  const trimOptions  = form.make && form.model ? getTrims(form.make, form.model) : [];
+  const trimOptions  = form.make && form.model ? getTrims(form.make, form.model, form.year) : [];
 
   function handleMakeChange(make: string)  { setForm((p) => ({ ...p, make, model: "", trim: "" })); }
   function handleModelChange(model: string) { setForm((p) => ({ ...p, model, trim: "" })); }
@@ -833,7 +833,10 @@ export default function AnalyzePage() {
               <div className="grid sm:grid-cols-2 gap-5">
                 <Field label="Year" required htmlFor="field-year">
                   <div className="relative">
-                    <select id="field-year" value={form.year} onChange={(e) => setField("year", parseInt(e.target.value, 10))}
+                    <select id="field-year" value={form.year} onChange={(e) => {
+                      const newYear = parseInt(e.target.value, 10);
+                      setForm((p) => ({ ...p, year: newYear, trim: "" }));
+                    }}
                       required className={inputCls + " cursor-pointer appearance-none pr-10"} style={iStyle}>
                       {YEARS.map((y) => <option key={y} value={y}>{y}</option>)}
                     </select>

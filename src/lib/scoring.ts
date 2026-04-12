@@ -39,6 +39,7 @@ import type {
 } from "./types";
 import { getModelMSRP, getTrimMultiplier } from "./carData";
 import { getDepreciationProfile, retentionAtYear, getGeoMultiplier } from "./depreciation";
+import { validateTrim, type TrimValidation } from "./trimValidation";
 
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -802,7 +803,7 @@ const CATEGORY_SPREAD: Record<VehicleCategory, number> = {
   exotic:      0.20,
 };
 
-export function getBaseFairValueRange(input: CarInput, category: VehicleCategory): PriceRange {
+export function getBaseFairValueRange(input: CarInput, category: VehicleCategory, trimValidation?: TrimValidation): PriceRange {
   const currentYear = new Date().getFullYear();
   const ageYears = Math.max(0, currentYear - input.year);
 
@@ -838,6 +839,21 @@ export function getBaseFairValueRange(input: CarInput, category: VehicleCategory
 
   // 5. Category-aware range width
   const spread = midpoint * CATEGORY_SPREAD[category];
+
+  // Widen range when trim confidence is weak on high-variance vehicles
+  if (trimValidation && trimValidation.trimConfidence === "low") {
+    const isHighVariance = category === "exotic" || category === "performance" || category === "luxury";
+    if (isHighVariance) {
+      // Widen by an extra 8% on each side
+      const trimSpread = midpoint * 0.08;
+      return {
+        low:      Math.round((midpoint - spread - trimSpread) / 100) * 100,
+        high:     Math.round((midpoint + spread + trimSpread) / 100) * 100,
+        midpoint,
+      };
+    }
+  }
+
   return {
     low:      Math.round((midpoint - spread) / 100) * 100,
     high:     Math.round((midpoint + spread) / 100) * 100,
@@ -987,13 +1003,21 @@ export function calculateConfidenceScore(
   optionDataStatus: "complete" | "partial" | "missing",
   priceSource: string,
   vinDecoded: boolean,
-  trimVerified: boolean
+  trimVerified: boolean,
+  trimValidation?: TrimValidation
 ): { confidenceScore: number; confidenceLevel: ConfidenceLevel; breakdown: ConfidenceBreakdown } {
   let score = 0;
 
   // ── Positive signals ──
   if (vinDecoded) score += 25;
-  if (trimVerified) score += 20;
+  // Trim confidence (replaces simple trimVerified boolean)
+  if (trimValidation) {
+    if (trimValidation.trimConfidence === "high") score += 20;
+    else if (trimValidation.trimConfidence === "medium") score += 10;
+    else score += 0; // low confidence = no trim bonus
+  } else if (trimVerified) {
+    score += 15; // Legacy path: trim provided but not validated
+  }
 
   if (optionDataStatus === "complete") score += 20;
   else if (optionDataStatus === "partial") score += 10;
@@ -1045,6 +1069,7 @@ export function calculateConfidenceScore(
     marketDataSpecificity,
     vehicleCategory: category,
     regionDataAvailable,
+    trimConfidence: trimValidation?.trimConfidence,
   };
 
   return { confidenceScore: score, confidenceLevel, breakdown };
@@ -1127,7 +1152,8 @@ export function generateInsights(
   confidenceLevel: ConfidenceLevel,
   optionDataStatus: "complete" | "partial" | "missing",
   mileageRatio: number,
-  ageYears: number
+  ageYears: number,
+  trimValidation?: TrimValidation
 ): { reasons: string[]; warnings: string[]; keyInsights: string[] } {
   const reasons: string[] = [];
   const warnings: string[] = [];
@@ -1222,6 +1248,25 @@ export function generateInsights(
     warnings.push("This result should be treated as directional — option uncertainty may materially affect the actual fair value.");
   }
 
+  // ── Trim validation warnings ──
+  if (trimValidation) {
+    if (trimValidation.trimConfidence === "low") {
+      warnings.push("Trim/configuration for this model year may not be fully verified, which can affect valuation accuracy.");
+      if (trimValidation.isHighRiskModel) {
+        warnings.push(`${input.make} ${input.model} is a model where trims vary significantly across years — verify the exact configuration.`);
+      }
+    } else if (trimValidation.trimConfidence === "medium" && trimValidation.isHighRiskModel) {
+      warnings.push("Trim partially verified. On this model, factory configuration can significantly affect value.");
+    }
+
+    // Add notes as key insights when relevant
+    for (const note of trimValidation.trimValidationNotes) {
+      if (note.includes("does not match") || note.includes("discontinued") || note.includes("may not exist")) {
+        keyInsights.push(note);
+      }
+    }
+  }
+
   if (isHighVariance) {
     keyInsights.push(`Vehicle category: ${category} — configuration-sensitive`);
   }
@@ -1289,12 +1334,21 @@ export function scoreCarDeal(
   const vinDecoded = options?.vinDecoded ?? !!input.vin;
   const trimVerified = options?.trimVerified ?? !!input.trim;
 
+  // Trim validation
+  const trimVal = validateTrim(
+    input.year,
+    input.make,
+    input.model,
+    options?.vinData?.trim ?? null,
+    input.trim ?? null
+  );
+
   // 1. Vehicle category
   const msrp = getBasePrice(input.make, input.model, input.trim);
   const category = determineVehicleCategory(input.make, input.model, input.trim, msrp);
 
   // 2. Base fair value range
-  let fv = fairValue ?? getBaseFairValueRange(input, category);
+  let fv = fairValue ?? getBaseFairValueRange(input, category, trimVal);
 
   // 3. Configuration adjustment
   const configAdj = getConfigurationAdjustment(input, category, options?.vinData);
@@ -1313,7 +1367,7 @@ export function scoreCarDeal(
 
   // 4. Confidence
   const { confidenceScore, confidenceLevel, breakdown } = calculateConfidenceScore(
-    input, category, configAdj.optionDataStatus, priceSource, vinDecoded, trimVerified
+    input, category, configAdj.optionDataStatus, priceSource, vinDecoded, trimVerified, trimVal
   );
 
   // 5. Score (0–100)
@@ -1362,7 +1416,7 @@ export function scoreCarDeal(
   // 7. Insights, reasons, warnings
   const { reasons, warnings, keyInsights } = generateInsights(
     input, fv, priceDelta, priceDeltaPct, category,
-    confidenceLevel, configAdj.optionDataStatus, mileageRatio, ageYears
+    confidenceLevel, configAdj.optionDataStatus, mileageRatio, ageYears, trimVal
   );
 
   // Monthly payment
@@ -1388,5 +1442,6 @@ export function scoreCarDeal(
     optionDataStatus: configAdj.optionDataStatus,
     valuationWarnings: warnings,
     keyInsights,
+    trimValidation: trimVal,
   };
 }
