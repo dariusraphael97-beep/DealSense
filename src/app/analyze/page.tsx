@@ -269,7 +269,21 @@ function LoadingOverlay() {
       >
         {/* Progress ring */}
         <div className="relative w-20 h-20 mx-auto mb-6">
-          <svg className="w-20 h-20 -rotate-90" viewBox="0 0 64 64">
+          <svg className="w-20 h-20 -rotate-90" viewBox="0 0 64 64" overflow="visible">
+            <defs>
+              <linearGradient id="progressGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#818cf8"/>
+                <stop offset="50%" stopColor="#6366f1"/>
+                <stop offset="100%" stopColor="#4f46e5"/>
+              </linearGradient>
+              <filter id="arcGlow" x="-50%" y="-50%" width="200%" height="200%">
+                <feGaussianBlur in="SourceGraphic" stdDeviation="3" result="blur"/>
+                <feMerge>
+                  <feMergeNode in="blur"/>
+                  <feMergeNode in="SourceGraphic"/>
+                </feMerge>
+              </filter>
+            </defs>
             {/* Track */}
             <circle cx="32" cy="32" r="26" fill="none" stroke="rgba(99,102,241,0.1)" strokeWidth="4"/>
             {/* Progress arc — smoothly sweeps around */}
@@ -278,15 +292,9 @@ function LoadingOverlay() {
               stroke="url(#progressGrad)" strokeWidth="4.5" strokeLinecap="round"
               strokeDasharray={CIRCUMFERENCE}
               strokeDashoffset={strokeOffset}
-              style={{ transition: "stroke-dashoffset 0.08s linear", filter: "drop-shadow(0 0 6px rgba(99,102,241,0.5))" }}
+              filter="url(#arcGlow)"
+              style={{ transition: "stroke-dashoffset 0.08s linear" }}
             />
-            <defs>
-              <linearGradient id="progressGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#818cf8"/>
-                <stop offset="50%" stopColor="#6366f1"/>
-                <stop offset="100%" stopColor="#4f46e5"/>
-              </linearGradient>
-            </defs>
           </svg>
           {/* Center percentage */}
           <div className="absolute inset-0 flex items-center justify-center">
