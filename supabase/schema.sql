@@ -83,6 +83,23 @@ insert into public.plans (name, analysis_limit)
 values ('Free', 3), ('Pro', null)
 on conflict do nothing;
 
+-- Purchases: records every Stripe payment for idempotency and audit trail
+create table if not exists public.purchases (
+  id                  uuid primary key default gen_random_uuid(),
+  user_id             uuid references public.profiles(id) on delete set null,
+  stripe_session_id   text unique not null,
+  stripe_payment_link text,
+  stripe_price_id     text,
+  plan_name           text,
+  credits_granted     int not null,
+  amount_cents        int not null,
+  customer_email      text,
+  created_at          timestamptz default now()
+);
+
+create index if not exists purchases_session_idx on public.purchases (stripe_session_id);
+create index if not exists purchases_user_idx on public.purchases (user_id);
+
 -- Trigger: give new users 1 free credit on signup
 -- Run this in Supabase SQL editor if not already applied:
 --

@@ -2,10 +2,30 @@
 
 import Link from "next/link";
 import { motion, useInView } from "framer-motion";
-import { useRef } from "react";
+import { useRef, useState, useEffect } from "react";
 import { EtherealShadow } from "@/components/ui/etheral-shadow";
 import { UserNav } from "@/components/ui/user-nav";
 import { Logo } from "@/components/ui/logo";
+import { createClient } from "@/lib/supabase/client";
+
+/**
+ * Stripe Payment Link URLs (test mode).
+ * Each link includes a `client_reference_id` query param with the user's
+ * Supabase ID so the webhook can identify who purchased.
+ * When switching to LIVE mode, replace these with live payment link URLs.
+ */
+const STRIPE_LINKS = {
+  starter:  "https://buy.stripe.com/test_8x2cN64QnbvVbEWfjsaAw00",
+  standard: "https://buy.stripe.com/test_14A28s4Qn8jJ4cu1sCaAw01",
+  pro:      "https://buy.stripe.com/test_eVq4gA82z9nN38q2wGaAw02",
+};
+
+/** Append client_reference_id to a Stripe Payment Link URL */
+function buildStripeLink(baseUrl: string, userId: string | null): string {
+  if (!userId) return baseUrl;
+  const separator = baseUrl.includes("?") ? "&" : "?";
+  return `${baseUrl}${separator}client_reference_id=${userId}`;
+}
 
 /* ── Easing ── */
 const ease = [0.22, 1, 0.36, 1] as const;
@@ -275,6 +295,14 @@ const faqs = [
 ];
 
 export default function HomePage() {
+  // Get the current user's ID to pass to Stripe Payment Links
+  const [userId, setUserId] = useState<string | null>(null);
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data }) => {
+      setUserId(data.user?.id ?? null);
+    });
+  }, []);
 
   return (
     <div className="min-h-screen transition-colors duration-300" style={{ background: "var(--ds-bg)" }}>
@@ -788,7 +816,7 @@ export default function HomePage() {
                 ))}
               </ul>
               <p className="text-xs italic mb-4" style={{ color: "var(--ds-text-4)" }}>Best for: checking one car</p>
-              <a href="https://buy.stripe.com/test_8x2cN64QnbvVbEWfjsaAw00"
+              <a href={buildStripeLink(STRIPE_LINKS.starter, userId)}
                 className="w-full py-2.5 rounded-xl text-sm font-semibold text-center transition-all hover:brightness-110 active:scale-[0.98] text-white block"
                 style={{ background:"linear-gradient(135deg, #4f46e5, #6366f1)", boxShadow:"0 0 20px var(--ds-accent-glow)" }}>
                 Buy Starter
@@ -820,7 +848,7 @@ export default function HomePage() {
                 ))}
               </ul>
               <p className="text-xs italic mb-4" style={{ color: "var(--ds-text-4)" }}>Best for: comparing multiple options</p>
-              <a href="https://buy.stripe.com/test_14A28s4Qn8jJ4cu1sCaAw01"
+              <a href={buildStripeLink(STRIPE_LINKS.standard, userId)}
                 className="w-full py-2.5 rounded-xl text-sm font-semibold text-center transition-all hover:brightness-110 active:scale-[0.98] text-white block"
                 style={{ background:"linear-gradient(135deg, #4f46e5, #6366f1)", boxShadow:"0 0 20px var(--ds-accent-glow)" }}>
                 Buy Standard
@@ -852,7 +880,7 @@ export default function HomePage() {
                 ))}
               </ul>
               <p className="text-xs italic mb-4" style={{ color: "var(--ds-text-4)" }}>Best for: serious shoppers &amp; flippers</p>
-              <a href="https://buy.stripe.com/test_eVq4gA82z9nN38q2wGaAw02"
+              <a href={buildStripeLink(STRIPE_LINKS.pro, userId)}
                 className="w-full py-2.5 rounded-xl text-sm font-semibold text-center transition-all hover:brightness-110 active:scale-[0.98] text-white block"
                 style={{ background:"linear-gradient(135deg, #4f46e5, #6366f1)", boxShadow:"0 0 20px var(--ds-accent-glow)" }}>
                 Buy Pro
