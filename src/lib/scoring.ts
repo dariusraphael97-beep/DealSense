@@ -66,7 +66,7 @@ const MODEL_BASE: Record<string, number> = {
   "toyota|tacoma":             34000,
   "toyota|tacoma trd pro":     52000,
   "toyota|tacoma trailhunter": 60000,
-  "toyota|tundra":             42000,
+  "toyota|tundra":             48000,  // median trim (Limited range) — was 42k (base SR)
   "toyota|tundra sr":          40000,
   "toyota|tundra sr5":         42000,
   "toyota|tundra limited":     52000,
@@ -106,7 +106,7 @@ const MODEL_BASE: Record<string, number> = {
   "honda|integra type s":      51000,
 
   // ── Ford ────────────────────────────────────────────────────────────────
-  "ford|f-150":                42000,
+  "ford|f-150":                50000,  // median trim (Lariat range) — was 42k (base XL)
   "ford|f-150 xl":             38000,
   "ford|f-150 xlt":            44000,
   "ford|f-150 stx":            42000,
@@ -139,8 +139,8 @@ const MODEL_BASE: Record<string, number> = {
   "ford|expedition":           55000,
 
   // ── Chevrolet ───────────────────────────────────────────────────────────
-  "chevrolet|silverado 1500":             42000,
-  "chevrolet|silverado":                 42000,
+  "chevrolet|silverado 1500":             48000,  // median trim (RST/LT range) — was 42k (base WT)
+  "chevrolet|silverado":                 48000,
   "chevrolet|silverado 1500 wt":         38000,
   "chevrolet|silverado 1500 custom":     40000,
   "chevrolet|silverado 1500 lt":         44000,
@@ -174,8 +174,8 @@ const MODEL_BASE: Record<string, number> = {
   "chevrolet|corvette e-ray":  104000,
 
   // ── GMC ─────────────────────────────────────────────────────────────────
-  "gmc|sierra 1500":                44000,
-  "gmc|sierra":                     44000,
+  "gmc|sierra 1500":                55000,  // median trim (SLT/AT4 range) — was 44k (base Pro)
+  "gmc|sierra":                     55000,
   "gmc|sierra 1500 pro":            40000,
   "gmc|sierra 1500 sle":            46000,
   "gmc|sierra 1500 elevation":      49000,
@@ -197,7 +197,7 @@ const MODEL_BASE: Record<string, number> = {
   "gmc|canyon at4x":  50000,
 
   // ── RAM ─────────────────────────────────────────────────────────────────
-  "ram|1500":                      46000,
+  "ram|1500":                      52000,  // median trim (Laramie range) — was 46k (base Tradesman)
   "ram|1500 tradesman":            38000,
   "ram|1500 big horn":             42000,
   "ram|1500 lone star":            42000,
@@ -1433,6 +1433,47 @@ export function scoreCarDeal(
 
   // 2. Base fair value range
   let fv = fairValue ?? getBaseFairValueRange(input, category, trimVal);
+
+  // 2b. Asking-price sanity check — trim inference for statistical model
+  //
+  // When using the internal statistical model (no external market data) and no
+  // trim is known, the MSRP defaults to the model's median trim. But trucks/SUVs
+  // have $40k+ trim ranges. If the asking price is far above the estimated fair
+  // value, it almost certainly means the vehicle is a higher trim than we guessed.
+  //
+  // Rather than calling it "massively overpriced," we adjust the fair value
+  // upward (capped) and widen the range to reflect uncertainty. This prevents
+  // false Walk Away verdicts on Denali Ultimates priced at $80k when the model
+  // base is $55k.
+  //
+  // This ONLY fires when:
+  //   - No external market data was provided (statistical model)
+  //   - No trim is known (or trim confidence is low)
+  //   - Asking price is >35% above fair value midpoint
+  //   - Vehicle is a truck/mainstream/luxury category (not exotic — those have
+  //     legitimately wild pricing)
+  const isStatisticalOnly = !fairValue;
+  const noTrimKnown = !input.trim || trimVal?.trimConfidence === "low";
+  const askingVsFvPct = (input.askingPrice - fv.midpoint) / fv.midpoint;
+
+  if (isStatisticalOnly && noTrimKnown && askingVsFvPct > 0.35 && category !== "exotic") {
+    // Blend the fair value toward the asking price — the asking price itself is
+    // market data (it's what real dealers/sellers are listing at).
+    // Cap the upward adjustment at 45% above original estimate to prevent
+    // blindly trusting absurd asking prices.
+    const maxLift = fv.midpoint * 0.45;
+    const rawLift = (input.askingPrice - fv.midpoint) * 0.55; // trust asking price 55%
+    const lift = Math.min(rawLift, maxLift);
+
+    const newMid = Math.round((fv.midpoint + lift) / 100) * 100;
+    // Widen the range significantly — we're uncertain about the true trim
+    const extraSpread = Math.round(newMid * 0.12 / 100) * 100;
+    fv = {
+      low: Math.max(fv.low, newMid - Math.round((newMid - fv.low) * 0.8 / 100) * 100 - extraSpread),
+      high: newMid + Math.round((fv.high - fv.midpoint) / 100) * 100 + extraSpread,
+      midpoint: newMid,
+    };
+  }
 
   // 3. Configuration adjustment
   const configAdj = getConfigurationAdjustment(input, category, options?.vinData);
