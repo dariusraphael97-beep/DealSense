@@ -36,6 +36,7 @@ import type {
   VehicleCategory,
   ConfidenceLevel,
   ConfidenceBreakdown,
+  CompMetadata,
 } from "./types";
 import { getModelMSRP, getTrimMultiplier } from "./carData";
 import { getDepreciationProfile, retentionAtYear, getGeoMultiplier } from "./depreciation";
@@ -1004,7 +1005,8 @@ export function calculateConfidenceScore(
   priceSource: string,
   vinDecoded: boolean,
   trimVerified: boolean,
-  trimValidation?: TrimValidation
+  trimValidation?: TrimValidation,
+  compMetadata?: CompMetadata
 ): { confidenceScore: number; confidenceLevel: ConfidenceLevel; breakdown: ConfidenceBreakdown } {
   let score = 0;
 
@@ -1032,6 +1034,23 @@ export function calculateConfidenceScore(
   else if (isListings) { score += 14; marketDataSpecificity = "listings"; }
   else if (isStatistical) { score += 5; marketDataSpecificity = "statistical"; }
   else { score += 10; marketDataSpecificity = "broad_model"; }
+
+  // ── Comp quality adjustment (when available) ──
+  // This adjusts confidence based on HOW GOOD the comps were, not just whether
+  // they exist. Strong comps with tight pricing = more trustworthy estimate.
+  if (compMetadata) {
+    if (compMetadata.compQuality === "strong") {
+      score += 6;  // Many comps, tight spread — estimate is reliable
+    } else if (compMetadata.compQuality === "moderate") {
+      score += 2;  // Decent data — slight boost
+    } else {
+      // Weak comps — don't add, and penalize if this is the primary source
+      if (isListings) score -= 3; // Primary source has weak comps
+    }
+  } else if (isStatistical) {
+    // No comps available AND using statistical model — lower confidence
+    score -= 2;
+  }
 
   // Region data (assume available if ZIP is provided — all our APIs use it)
   const regionDataAvailable = !!input.zipCode && input.zipCode.length >= 5;
@@ -1158,7 +1177,8 @@ export function generateInsights(
   optionDataStatus: "complete" | "partial" | "missing",
   mileageRatio: number,
   ageYears: number,
-  trimValidation?: TrimValidation
+  trimValidation?: TrimValidation,
+  compMetadata?: CompMetadata
 ): { reasons: string[]; warnings: string[]; keyInsights: string[] } {
   const reasons: string[] = [];
   const warnings: string[] = [];
@@ -1276,6 +1296,20 @@ export function generateInsights(
     keyInsights.push(`Vehicle category: ${category} — configuration-sensitive`);
   }
 
+  // ── Comp-based insights (when listing data is available) ──
+  if (compMetadata) {
+    if (compMetadata.compQuality === "strong") {
+      keyInsights.push(`Based on ${compMetadata.compCount} comparable listings`);
+    } else if (compMetadata.compQuality === "moderate") {
+      keyInsights.push(`Based on ${compMetadata.compCount} comparable listings (moderate match)`);
+    } else {
+      keyInsights.push(`Limited comparable listings found (${compMetadata.compCount})`);
+      if (compMetadata.compSpreadPct > 0.40) {
+        warnings.push("Comparable listing prices vary widely — treat the estimated fair value as a rough guide.");
+      }
+    }
+  }
+
   return { reasons, warnings, keyInsights };
 }
 
@@ -1333,6 +1367,7 @@ export function scoreCarDeal(
       displacement?: string;
       trim?: string;
     };
+    compMetadata?: CompMetadata;
   }
 ): ScoreResult {
   const priceSource = options?.priceSource ?? "Statistical model (depreciation data)";
@@ -1370,9 +1405,10 @@ export function scoreCarDeal(
     };
   }
 
-  // 4. Confidence
+  // 4. Confidence — now includes comp quality when available
   const { confidenceScore, confidenceLevel, breakdown } = calculateConfidenceScore(
-    input, category, configAdj.optionDataStatus, priceSource, vinDecoded, trimVerified, trimVal
+    input, category, configAdj.optionDataStatus, priceSource, vinDecoded, trimVerified, trimVal,
+    options?.compMetadata
   );
 
   // 5. Score (0–100)
@@ -1418,10 +1454,11 @@ export function scoreCarDeal(
   // 6. Verdict — confidence-aware
   const verdict = generateVerdict(score, priceDeltaPct, confidenceLevel, category, configAdj.optionDataStatus);
 
-  // 7. Insights, reasons, warnings
+  // 7. Insights, reasons, warnings — now includes comp quality context
   const { reasons, warnings, keyInsights } = generateInsights(
     input, fv, priceDelta, priceDeltaPct, category,
-    confidenceLevel, configAdj.optionDataStatus, mileageRatio, ageYears, trimVal
+    confidenceLevel, configAdj.optionDataStatus, mileageRatio, ageYears, trimVal,
+    options?.compMetadata
   );
 
   // Monthly payment
@@ -1448,5 +1485,6 @@ export function scoreCarDeal(
     valuationWarnings: warnings,
     keyInsights,
     trimValidation: trimVal,
+    compMetadata: options?.compMetadata,
   };
 }

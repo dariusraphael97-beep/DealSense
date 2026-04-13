@@ -117,13 +117,25 @@ export function extractScoreBreakdown(result: ScoreResult): ScoreBreakdown {
 
   // ── 4. Market Data Quality ──
   const mds = result.confidenceBreakdown?.marketDataSpecificity ?? "statistical";
+  const comp = result.compMetadata;
   const marketMap: Record<string, { bar: number; s: FactorSentiment; desc: string }> = {
     transaction:  { bar: 95, s: "positive", desc: "Fair value backed by real transaction data — highest reliability." },
     listings:     { bar: 72, s: "positive", desc: "Based on active dealer listings near your area." },
     broad_model:  { bar: 45, s: "neutral",  desc: "Using broad model-level data. Less specific to your exact configuration." },
     statistical:  { bar: 22, s: "negative", desc: "Using statistical depreciation models only. No live market comps available." },
   };
-  const md = marketMap[mds] ?? marketMap.statistical;
+  let md = marketMap[mds] ?? marketMap.statistical;
+
+  // Refine description with comp metadata when available
+  if (comp) {
+    if (comp.compQuality === "strong") {
+      md = { bar: 85, s: "positive", desc: `Based on ${comp.compCount} comparable listings with consistent pricing.` };
+    } else if (comp.compQuality === "moderate") {
+      md = { bar: 65, s: "positive", desc: `Based on ${comp.compCount} comparable listings. Pricing varies moderately.` };
+    } else {
+      md = { bar: 38, s: "neutral", desc: `Only ${comp.compCount} comparable listings found with wide price variation. Estimate is less precise.` };
+    }
+  }
 
   factors.push({
     id: "market_confidence",

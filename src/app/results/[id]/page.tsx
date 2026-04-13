@@ -461,7 +461,8 @@ export default function PersistedResultPage() {
   const { input, score, verdict, fairValueRange, priceDelta, priceDeltaPct,
           monthlyPayment, reasons, aiSummary, negotiationScript, priceSource, createdAt,
           confidenceLevel, confidenceScore, confidenceBreakdown, vehicleCategory,
-          optionDataStatus, valuationWarnings, keyInsights, trimValidation } = result;
+          optionDataStatus, valuationWarnings, keyInsights, trimValidation,
+          compMetadata } = result;
 
   const isVinVerified = typeof priceSource === "string" && priceSource.toLowerCase().includes("vinaudit");
 
@@ -813,6 +814,11 @@ export default function PersistedResultPage() {
                     ok: confidenceBreakdown.regionDataAvailable },
                   { label: "Vehicle category", value: vehicleCategory ?? "mainstream",
                     ok: true },
+                  ...(compMetadata ? [{
+                    label: "Comps found",
+                    value: `${compMetadata.compCount} (${compMetadata.compQuality})`,
+                    ok: compMetadata.compQuality === "strong" || compMetadata.compQuality === "moderate",
+                  }] : []),
                 ].map((item) => (
                   <div key={item.label} className="rounded-xl px-3 py-2.5"
                     style={{ background: "var(--ds-badge-bg)", border: "1px solid var(--ds-badge-border)" }}>

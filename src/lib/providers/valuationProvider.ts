@@ -1,4 +1,4 @@
-import type { CarInput, PriceRange, NormalizedValuation, ProviderError } from "@/lib/types";
+import type { CarInput, PriceRange, NormalizedValuation, ProviderError, CompMetadata } from "@/lib/types";
 import { valuationCache, VALUATION_CACHE_TTL } from "@/lib/cache";
 import { AutoDev } from "@auto.dev/sdk";
 
@@ -206,8 +206,16 @@ export async function fetchEdmundsTMV(input: CarInput): Promise<PriceRange | nul
  * Auto.dev Listings API — searches real dealer listings to derive fair value.
  * Free tier: 1,000 calls/mo. Uses median of comparable listings as anchor.
  * Set AUTODEV_API_KEY in env (get one at auto.dev/pricing).
+ *
+ * Returns both a PriceRange and CompMetadata so the confidence system can
+ * adjust based on how many comps were found and how tight the spread is.
  */
-export async function fetchAutoDevValue(input: CarInput): Promise<PriceRange | null> {
+export interface AutoDevResult {
+  range: PriceRange;
+  compMetadata: CompMetadata;
+}
+
+export async function fetchAutoDevValue(input: CarInput): Promise<AutoDevResult | null> {
   const apiKey = process.env.AUTODEV_API_KEY;
   if (!apiKey) return null;
 
@@ -244,12 +252,36 @@ export async function fetchAutoDevValue(input: CarInput): Promise<PriceRange | n
     // Trim outliers (10% from each end) and take median
     const trimCount = Math.floor(prices.length * 0.1);
     const trimmed = prices.slice(trimCount, prices.length - trimCount);
-    const mid = trimmed[Math.floor(trimmed.length / 2)];
+    const median = trimmed[Math.floor(trimmed.length / 2)];
+    const average = Math.round(trimmed.reduce((a, b) => a + b, 0) / trimmed.length);
+    const low = trimmed[0];
+    const high = trimmed[trimmed.length - 1];
+    const spread = high - low;
+    const spreadPct = median > 0 ? spread / median : 1;
+
+    // Evaluate comp quality based on count and price consistency
+    let compQuality: CompMetadata["compQuality"] = "weak";
+    if (trimmed.length >= 10 && spreadPct < 0.25) {
+      compQuality = "strong";  // Many comps, tight pricing
+    } else if (trimmed.length >= 5 && spreadPct < 0.40) {
+      compQuality = "moderate"; // Decent sample, reasonable spread
+    }
+    // else: weak (few comps or wide spread)
+
+    const compMetadata: CompMetadata = {
+      compCount: trimmed.length,
+      compMedianPrice: median,
+      compAveragePrice: average,
+      compLowPrice: low,
+      compHighPrice: high,
+      compSpreadPct: Math.round(spreadPct * 1000) / 1000, // 3 decimal places
+      compQuality,
+      source: "Auto.dev dealer listings",
+    };
 
     return {
-      low: trimmed[0],
-      high: trimmed[trimmed.length - 1],
-      midpoint: mid,
+      range: { low, high, midpoint: median },
+      compMetadata,
     };
   } catch (err) {
     console.error("[Auto.dev] error:", err);
@@ -261,6 +293,10 @@ export async function fetchAutoDevValue(input: CarInput): Promise<PriceRange | n
 
 interface ValuationResult {
   valuation: NormalizedValuation | null;
+  /** Comp metadata from listing-based providers (auto.dev, MarketCheck).
+   *  Available even when VinAudit is the primary source — useful for
+   *  cross-validation and confidence scoring. */
+  compMetadata: CompMetadata | null;
   errors: ProviderError[];
 }
 
@@ -271,6 +307,9 @@ interface ValuationResult {
  *   2. Auto.dev (dealer listings)
  *   3. Edmunds TMV (transaction-based fallback)
  *   4. MarketCheck (live listings)
+ *
+ * Comp metadata is always collected from auto.dev (when available)
+ * regardless of which provider wins — this feeds confidence scoring.
  *
  * Results are cached for 1 hour to avoid redundant API calls.
  */
@@ -284,7 +323,7 @@ export async function fetchValuation(input: CarInput): Promise<ValuationResult> 
   const errors: ProviderError[] = [];
 
   // Run all providers in parallel
-  const [vinAuditValue, autoDevValue, edmundsValue, marketCheckValue] = await Promise.all([
+  const [vinAuditValue, autoDevResult, edmundsValue, marketCheckValue] = await Promise.all([
     fetchVinAuditValue(input).catch((err) => {
       errors.push({ provider: "VinAudit", message: String(err), code: "unknown" });
       return null;
@@ -303,7 +342,10 @@ export async function fetchValuation(input: CarInput): Promise<ValuationResult> 
     }),
   ]);
 
-  // Pick the first hit in priority order
+  // Always capture comp metadata from auto.dev (even if it's not the primary source)
+  const compMetadata: CompMetadata | null = autoDevResult?.compMetadata ?? null;
+
+  // Pick the first hit in priority order for the primary valuation
   let valuation: NormalizedValuation | null = null;
 
   if (vinAuditValue) {
@@ -312,13 +354,15 @@ export async function fetchValuation(input: CarInput): Promise<ValuationResult> 
       source: "VinAudit transaction data",
       sourceType: "transaction",
       timestamp: Date.now(),
+      compMetadata: compMetadata ?? undefined,
     };
-  } else if (autoDevValue) {
+  } else if (autoDevResult) {
     valuation = {
-      range: autoDevValue,
+      range: autoDevResult.range,
       source: "Auto.dev dealer listings",
       sourceType: "listings",
       timestamp: Date.now(),
+      compMetadata: compMetadata ?? undefined,
     };
   } else if (edmundsValue) {
     valuation = {
@@ -336,7 +380,7 @@ export async function fetchValuation(input: CarInput): Promise<ValuationResult> 
     };
   }
 
-  const result: ValuationResult = { valuation, errors };
+  const result: ValuationResult = { valuation, compMetadata, errors };
   valuationCache.set(key, result, VALUATION_CACHE_TTL);
   return result;
 }

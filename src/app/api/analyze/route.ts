@@ -268,7 +268,7 @@ export async function POST(req: NextRequest) {
   // we can reliably distinguish real API responses from model output.
   // ─────────────────────────────────────────────────────────────────────────
 
-  const { valuation } = await fetchValuation(input);
+  const { valuation, compMetadata } = await fetchValuation(input);
   let marketValue: PriceRange | undefined;
   let priceSource: string;
 
@@ -310,6 +310,7 @@ export async function POST(req: NextRequest) {
     vinDecoded: !!input.vin,
     trimVerified: !!input.trim && input.trim.length > 0,
     vinData,
+    compMetadata: compMetadata ?? undefined,
   });
 
   // AI summary (gracefully degrades if no API key)

@@ -95,6 +95,7 @@ export interface ScoreResult {
   valuationWarnings: string[];
   keyInsights: string[];
   trimValidation?: TrimValidation;
+  compMetadata?: CompMetadata;
 }
 
 export interface AnalysisResult extends ScoreResult {
@@ -146,12 +147,26 @@ export interface ListingExtraction {
   source: string;
 }
 
+/* ── Comp metadata — tracks quality of comparable listings ────────────── */
+export interface CompMetadata {
+  compCount: number;
+  compMedianPrice: number;
+  compAveragePrice: number;
+  compLowPrice: number;
+  compHighPrice: number;
+  /** (high - low) / median — lower = tighter comps = more reliable */
+  compSpreadPct: number;
+  compQuality: "strong" | "moderate" | "weak";
+  source: string;
+}
+
 /** Normalized valuation from any pricing provider */
 export interface NormalizedValuation {
   range: PriceRange;
   source: string;
   sourceType: "transaction" | "listings" | "broad_model" | "statistical";
   timestamp: number;
+  compMetadata?: CompMetadata;
 }
 
 /** Window sticker availability */

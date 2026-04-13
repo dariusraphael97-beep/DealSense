@@ -126,6 +126,20 @@ export function generateRiskFlags(result: AnalysisResult): RiskFlag[] {
     }
   }
 
+  // ── 8. Weak comps ──
+  const comp = (result as any).compMetadata;
+  if (comp && comp.compQuality === "weak" && comp.compCount < 5) {
+    const alreadyHasCompFlag = flags.some(f => f.id === "low_confidence");
+    if (!alreadyHasCompFlag) {
+      flags.push({
+        id: "weak_comps",
+        label: "Few comparable listings available",
+        description: `Only ${comp.compCount} comparable listings were found, which limits pricing accuracy. The estimate is less reliable for this vehicle.`,
+        severity: "medium",
+      });
+    }
+  }
+
   // Cap at 4 flags, prioritizing high severity first
   flags.sort((a, b) => {
     const order = { high: 0, medium: 1, low: 2 };

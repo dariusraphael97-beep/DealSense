@@ -49,6 +49,8 @@ export function generateRecommendedOffer(result: AnalysisResult): RecommendedOff
   const fvMid = fairValueRange.midpoint;
   const fvHigh = fairValueRange.high;
   const askingPrice = input.askingPrice;
+  const comp = (result as any).compMetadata as { compCount?: number; compQuality?: string } | undefined;
+  const hasStrongComps = comp?.compQuality === "strong";
 
   // Round to nearest $100
   const round100 = (n: number) => Math.round(n / 100) * 100;
@@ -94,7 +96,9 @@ export function generateRecommendedOffer(result: AnalysisResult): RecommendedOff
       targetHigh,
       payUpTo: round100(fvMid),
       headline: `Target offer: $${targetLow.toLocaleString()} – $${targetHigh.toLocaleString()}`,
-      description: `Based on market data, aim for this range. Avoid paying above $${round100(fvMid).toLocaleString()} — the estimated fair value midpoint.`,
+      description: hasStrongComps
+        ? `Based on ${comp!.compCount} comparable listings, aim for this range. Avoid paying above $${round100(fvMid).toLocaleString()}.`
+        : `Based on market data, aim for this range. Avoid paying above $${round100(fvMid).toLocaleString()} — the estimated fair value midpoint.`,
       alreadyGoodDeal: false,
     };
   }
