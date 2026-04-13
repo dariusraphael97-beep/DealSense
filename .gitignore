@@ -25,6 +25,9 @@ Thumbs.db
 .idea/
 *.swp
 
+# Claude Code local settings (contains permission history with secrets)
+.claude/settings.local.json
+
 # Misc
 *.log
 npm-debug.log*
