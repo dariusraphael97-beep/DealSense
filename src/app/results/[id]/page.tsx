@@ -765,7 +765,7 @@ export default function PersistedResultPage() {
                     <p className="text-[10px] font-semibold uppercase tracking-wide mb-0.5" style={{ color: "var(--ds-text-4)" }}>{item.label}</p>
                     <p className="text-xs font-semibold capitalize flex items-center gap-1.5"
                       style={{ color: item.ok ? "var(--ds-text-2)" : "var(--ds-text-3)" }}>
-                      <span style={{ fontSize: 7, color: item.ok ? "#34d399" : "#f87171" }}>●</span>
+                      <span style={{ fontSize: 7, color: item.ok ? "var(--ds-success)" : "var(--ds-danger)" }}>●</span>
                       {item.value}
                     </p>
                   </div>
@@ -780,8 +780,8 @@ export default function PersistedResultPage() {
           <FadeSection>
             <motion.div variants={fadeUp} className="rounded-2xl px-6 py-5"
               style={{
-                background: "rgba(251,191,36,0.05)",
-                border: "1px solid rgba(251,191,36,0.18)",
+                background: "var(--ds-warn-bg)",
+                border: "1px solid var(--ds-warn-border)",
               }}>
               <div className="flex items-start gap-3">
                 <span className="text-base flex-shrink-0 mt-0.5">⚠️</span>
@@ -838,9 +838,9 @@ export default function PersistedResultPage() {
                   onClick={() => handleCopyScript(negotiationScript)}
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
                   style={{
-                    background: scriptCopied ? "rgba(52,211,153,0.12)" : "rgba(99,102,241,0.10)",
-                    border: scriptCopied ? "1px solid rgba(52,211,153,0.30)" : "1px solid rgba(99,102,241,0.22)",
-                    color: scriptCopied ? "#34d399" : "#818cf8",
+                    background: scriptCopied ? "var(--ds-success-bg)" : "rgba(99,102,241,0.10)",
+                    border: scriptCopied ? "1px solid var(--ds-success-border)" : "1px solid rgba(99,102,241,0.22)",
+                    color: scriptCopied ? "var(--ds-success)" : "var(--ds-accent-text)",
                   }}>
                   {scriptCopied ? <><IconCheckLg />Copied!</> : <><IconCopy />Copy script</>}
                 </button>
@@ -872,7 +872,7 @@ export default function PersistedResultPage() {
               className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-xs font-medium transition-all opacity-40 cursor-not-allowed"
               style={{ background: "var(--ds-badge-bg)", border: "1px solid var(--ds-badge-border)", color: "var(--ds-text-3)" }}
               title="Window sticker lookup coming soon">
-              <IconFileText /> Window Sticker <span className="text-[10px] ml-1 px-1.5 py-0.5 rounded-md" style={{ background: "rgba(99,102,241,0.1)", color: "#818cf8", border: "1px solid rgba(99,102,241,0.2)" }}>Soon</span>
+              <IconFileText /> Window Sticker <span className="text-[10px] ml-1 px-1.5 py-0.5 rounded-md" style={{ background: "rgba(99,102,241,0.1)", color: "var(--ds-accent-text)", border: "1px solid rgba(99,102,241,0.2)" }}>Soon</span>
             </button>
           </motion.div>
         </FadeSection>
@@ -963,14 +963,14 @@ export default function PersistedResultPage() {
                       onClick={() => submitFeedback(true)}
                       disabled={feedbackSending}
                       className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium transition-all hover:scale-105 disabled:opacity-50"
-                      style={{ background: "rgba(52,211,153,0.08)", border: "1px solid rgba(52,211,153,0.20)", color: "#34d399" }}>
+                      style={{ background: "var(--ds-success-bg)", border: "1px solid var(--ds-success-border)", color: "var(--ds-success)" }}>
                       👍 Yes
                     </button>
                     <button
                       onClick={() => setFeedbackState("negative")}
                       disabled={feedbackSending}
                       className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium transition-all hover:scale-105 disabled:opacity-50"
-                      style={{ background: "rgba(248,113,113,0.08)", border: "1px solid rgba(248,113,113,0.20)", color: "#f87171" }}>
+                      style={{ background: "var(--ds-danger-bg)", border: "1px solid var(--ds-danger-border)", color: "var(--ds-danger)" }}>
                       👎 No
                     </button>
                   </div>

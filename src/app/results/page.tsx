@@ -681,10 +681,10 @@ function ResultsContent() {
             {priceDelta !== 0 && (
               <div className="mt-4 rounded-xl px-4 py-3"
                 style={{
-                  background: priceDelta < 0 ? "rgba(52,211,153,0.06)" : "rgba(248,113,113,0.06)",
-                  border: `1px solid ${priceDelta < 0 ? "rgba(52,211,153,0.18)" : "rgba(248,113,113,0.18)"}`,
+                  background: priceDelta < 0 ? "var(--ds-success-glow)" : "var(--ds-danger-glow)",
+                  border: `1px solid ${priceDelta < 0 ? "var(--ds-success-border)" : "var(--ds-danger-border)"}`,
                 }}>
-                <p className="text-sm font-semibold" style={{ color: priceDelta < 0 ? "#34d399" : "#f87171" }}>
+                <p className="text-sm font-semibold" style={{ color: priceDelta < 0 ? "var(--ds-success)" : "var(--ds-danger)" }}>
                   {priceDelta < 0
                     ? `$${Math.abs(priceDelta).toLocaleString()} below estimated fair value`
                     : `$${priceDelta.toLocaleString()} above estimated fair value`}
@@ -805,9 +805,9 @@ function ResultsContent() {
                 onClick={() => handleCopy(negotiationScript)}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
                 style={{
-                  background: copied ? "rgba(52,211,153,0.12)" : "rgba(99,102,241,0.10)",
-                  border: copied ? "1px solid rgba(52,211,153,0.30)" : "1px solid rgba(99,102,241,0.22)",
-                  color: copied ? "#34d399" : "#818cf8",
+                  background: copied ? "var(--ds-success-bg)" : "rgba(99,102,241,0.10)",
+                  border: copied ? "1px solid var(--ds-success-border)" : "1px solid rgba(99,102,241,0.22)",
+                  color: copied ? "var(--ds-success)" : "var(--ds-accent-text)",
                 }}
                 aria-label="Copy script"
               >
@@ -873,9 +873,9 @@ function ResultsContent() {
                 onClick={() => handleCopy(negotiationScript)}
                 className="flex-1 flex items-center justify-center gap-2 py-3.5 rounded-xl text-sm font-semibold transition-all"
                 style={{
-                  background: copied ? "rgba(52,211,153,0.10)" : "var(--ds-badge-bg)",
-                  border: copied ? "1px solid rgba(52,211,153,0.25)" : "1px solid var(--ds-badge-border)",
-                  color: copied ? "#34d399" : "var(--ds-text-2)",
+                  background: copied ? "var(--ds-success-bg)" : "var(--ds-badge-bg)",
+                  border: copied ? "1px solid var(--ds-success-border)" : "1px solid var(--ds-badge-border)",
+                  color: copied ? "var(--ds-success)" : "var(--ds-text-2)",
                 }}>
                 {copied ? <><IconCheckLg />Copied!</> : <><IconCopy />{verdict === "Buy" ? "Copy closing script" : "Copy script"}</>}
               </button>
@@ -886,7 +886,7 @@ function ResultsContent() {
               className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-xs font-medium transition-all opacity-40 cursor-not-allowed"
               style={{ background: "var(--ds-badge-bg)", border: "1px solid var(--ds-badge-border)", color: "var(--ds-text-3)" }}
               title="Window sticker lookup coming soon">
-              <IconFileText /> Window Sticker <span className="text-[10px] ml-1 px-1.5 py-0.5 rounded-md" style={{ background: "rgba(99,102,241,0.1)", color: "#818cf8", border: "1px solid rgba(99,102,241,0.2)" }}>Soon</span>
+              <IconFileText /> Window Sticker <span className="text-[10px] ml-1 px-1.5 py-0.5 rounded-md" style={{ background: "rgba(99,102,241,0.1)", color: "var(--ds-accent-text)", border: "1px solid rgba(99,102,241,0.2)" }}>Soon</span>
             </button>
           </motion.div>
         </FadeSection>
@@ -939,14 +939,14 @@ function ResultsContent() {
                     onClick={() => submitFeedback(true)}
                     disabled={feedbackSending}
                     className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium transition-all hover:scale-105 disabled:opacity-50"
-                    style={{ background: "rgba(52,211,153,0.08)", border: "1px solid rgba(52,211,153,0.20)", color: "#34d399" }}>
+                    style={{ background: "var(--ds-success-bg)", border: "1px solid var(--ds-success-border)", color: "var(--ds-success)" }}>
                     👍 Yes
                   </button>
                   <button
                     onClick={() => setFeedbackState("negative")}
                     disabled={feedbackSending}
                     className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium transition-all hover:scale-105 disabled:opacity-50"
-                    style={{ background: "rgba(248,113,113,0.08)", border: "1px solid rgba(248,113,113,0.20)", color: "#f87171" }}>
+                    style={{ background: "var(--ds-danger-bg)", border: "1px solid var(--ds-danger-border)", color: "var(--ds-danger)" }}>
                     👎 No
                   </button>
                 </div>
