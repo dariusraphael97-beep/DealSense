@@ -766,7 +766,7 @@ export default function HomePage() {
             </motion.p>
           </ScrollSection>
 
-          <ScrollSection className="hidden sm:grid sm:grid-cols-3 gap-4 max-w-4xl mx-auto opacity-55">
+          <ScrollSection className="hidden sm:grid sm:grid-cols-3 gap-4 max-w-4xl mx-auto">
             {/* Starter */}
             <motion.div variants={cardVariant} className="rounded-2xl p-6 flex flex-col"
               style={{ background: "var(--ds-card-bg)", border: "1px solid var(--ds-card-border)", boxShadow: "var(--ds-card-shadow)" }}>
@@ -788,10 +788,11 @@ export default function HomePage() {
                 ))}
               </ul>
               <p className="text-xs italic mb-4" style={{ color: "var(--ds-text-4)" }}>Best for: checking one car</p>
-              <span className="w-full py-2.5 rounded-xl text-sm font-semibold text-center"
-                style={{ background:"var(--ds-badge-bg)", border:"1px solid var(--ds-badge-border)", color: "var(--ds-text-4)" }}>
-                Coming soon
-              </span>
+              <a href="https://buy.stripe.com/test_8x2cN64QnbvVbEWfjsaAw00"
+                className="w-full py-2.5 rounded-xl text-sm font-semibold text-center transition-all hover:brightness-110 active:scale-[0.98] text-white block"
+                style={{ background:"linear-gradient(135deg, #4f46e5, #6366f1)", boxShadow:"0 0 20px var(--ds-accent-glow)" }}>
+                Buy Starter
+              </a>
             </motion.div>
 
             {/* Standard */}
@@ -819,10 +820,11 @@ export default function HomePage() {
                 ))}
               </ul>
               <p className="text-xs italic mb-4" style={{ color: "var(--ds-text-4)" }}>Best for: comparing multiple options</p>
-              <span className="w-full py-2.5 rounded-xl text-sm font-semibold text-center"
-                style={{ background:"rgba(99,102,241,0.10)", border:"1px solid rgba(99,102,241,0.15)", color: "var(--ds-text-4)" }}>
-                Coming soon
-              </span>
+              <a href="https://buy.stripe.com/test_14A28s4Qn8jJ4cu1sCaAw01"
+                className="w-full py-2.5 rounded-xl text-sm font-semibold text-center transition-all hover:brightness-110 active:scale-[0.98] text-white block"
+                style={{ background:"linear-gradient(135deg, #4f46e5, #6366f1)", boxShadow:"0 0 20px var(--ds-accent-glow)" }}>
+                Buy Standard
+              </a>
             </motion.div>
 
             {/* Pro */}
@@ -850,10 +852,11 @@ export default function HomePage() {
                 ))}
               </ul>
               <p className="text-xs italic mb-4" style={{ color: "var(--ds-text-4)" }}>Best for: serious shoppers &amp; flippers</p>
-              <span className="w-full py-2.5 rounded-xl text-sm font-semibold text-center"
-                style={{ background:"var(--ds-badge-bg)", border:"1px solid var(--ds-badge-border)", color: "var(--ds-text-4)" }}>
-                Coming soon
-              </span>
+              <a href="https://buy.stripe.com/test_eVq4gA82z9nN38q2wGaAw02"
+                className="w-full py-2.5 rounded-xl text-sm font-semibold text-center transition-all hover:brightness-110 active:scale-[0.98] text-white block"
+                style={{ background:"linear-gradient(135deg, #4f46e5, #6366f1)", boxShadow:"0 0 20px var(--ds-accent-glow)" }}>
+                Buy Pro
+              </a>
             </motion.div>
           </ScrollSection>
 
