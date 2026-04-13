@@ -12,6 +12,7 @@ import { EtherealShadow } from "@/components/ui/etheral-shadow";
 import { useSettings } from "@/contexts/settings-context";
 import { useCredits } from "@/contexts/credits-context";
 import { PaywallModal } from "@/components/ui/paywall-modal";
+import { RecentlyViewed } from "@/components/ui/recently-viewed";
 
 const CURRENT_YEAR = new Date().getFullYear();
 const YEARS = Array.from({ length: 30 }, (_, i) => CURRENT_YEAR - i);
@@ -916,6 +917,9 @@ export default function AnalyzePage() {
           </motion.div>
 
         </form>
+
+        {/* Recently Viewed */}
+        <RecentlyViewed />
       </div>
     </div>
   );

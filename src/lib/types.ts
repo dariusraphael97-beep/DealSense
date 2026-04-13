@@ -177,3 +177,88 @@ export interface TrimValidation {
   trimValidationNotes: string[];
   isHighRiskModel: boolean;
 }
+
+/* ── Score Breakdown types ─────────────────────────────────────────────── */
+export type FactorSentiment = "positive" | "neutral" | "negative";
+
+export interface ScoreBreakdownFactor {
+  id: string;
+  label: string;
+  description: string;
+  sentiment: FactorSentiment;
+  /** 0–100 visual bar value */
+  barValue: number;
+  /** Points added/subtracted to the deal score */
+  scoreDelta: number;
+}
+
+export interface ScoreBreakdown {
+  factors: ScoreBreakdownFactor[];
+  baseScore: number;
+  finalScore: number;
+  summary: string;
+}
+
+/* ── Saved Cars ────────────────────────────────────────────────────────── */
+export interface SavedCar {
+  id: string;
+  userId: string;
+  analysisId?: string;
+  vin?: string;
+  year: number;
+  make: string;
+  model: string;
+  trim?: string;
+  mileage: number;
+  askingPrice: number;
+  dealScore: number;
+  verdict: string;
+  priceDelta: number;
+  fairValueMid: number;
+  confidenceLevel?: string;
+  resultJson?: AnalysisResult;
+  savedAt: string;
+}
+
+/* ── Recently Viewed ───────────────────────────────────────────────────── */
+export interface RecentlyViewedItem {
+  vin: string;
+  year: number;
+  make: string;
+  model: string;
+  trim?: string;
+  askingPrice: number;
+  mileage: number;
+  dealScore: number;
+  verdict: string;
+  priceDelta: number;
+  confidenceLevel?: string;
+  analysisId?: string;
+  viewedAt: number;
+}
+
+/* ── Compare ───────────────────────────────────────────────────────────── */
+export interface CompareItem {
+  analysisId?: string;
+  vin?: string;
+  year: number;
+  make: string;
+  model: string;
+  trim?: string;
+  askingPrice: number;
+  mileage: number;
+  dealScore: number;
+  verdict: string;
+  priceDelta: number;
+  priceDeltaPct: number;
+  fairValueLow: number;
+  fairValueMid: number;
+  fairValueHigh: number;
+  confidenceLevel: string;
+  confidenceScore: number;
+  vehicleCategory: string;
+  monthlyPayment: number;
+  keyInsights: string[];
+  optionDataStatus: string;
+  resultJson?: AnalysisResult;
+}

@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { motion, AnimatePresence } from "framer-motion"
-import { LogOut, ChevronDown, Settings, Clock, Shield } from "lucide-react"
+import { LogOut, ChevronDown, Settings, Clock, Shield, Bookmark, BarChart3 } from "lucide-react"
 import { useCredits } from "@/contexts/credits-context"
 
 export function UserNav() {
@@ -92,6 +92,22 @@ export function UserNav() {
 
             {/* Menu items */}
             <div className="p-1.5 space-y-0.5" role="none">
+              <Link href="/saved" onClick={() => setOpen(false)} role="menuitem"
+                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
+                style={{ color: "var(--ds-text-3)" }}
+              >
+                <Bookmark className="w-4 h-4" />
+                Saved Cars
+              </Link>
+
+              <Link href="/compare" onClick={() => setOpen(false)} role="menuitem"
+                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
+                style={{ color: "var(--ds-text-3)" }}
+              >
+                <BarChart3 className="w-4 h-4" />
+                Compare
+              </Link>
+
               <Link href="/history" onClick={() => setOpen(false)} role="menuitem"
                 className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
                 style={{ color: "var(--ds-text-3)" }}

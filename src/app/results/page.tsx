@@ -10,6 +10,10 @@ const DepreciationChart = dynamic(() => import("@/components/ui/depreciation-cha
 import { UserNav } from "@/components/ui/user-nav";
 import { Logo } from "@/components/ui/logo";
 import { USMapPin } from "@/components/ui/us-map-pin";
+import { ScoreBreakdown } from "@/components/ui/score-breakdown";
+import { SaveButton } from "@/components/ui/save-button";
+import { AddToCompareButton } from "@/components/ui/add-to-compare-button";
+import { addRecentlyViewed } from "@/lib/recentlyViewed";
 
 const ease = [0.22, 1, 0.36, 1] as const;
 const fadeUp = { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0, transition: { duration: 0.5, ease } } };
@@ -330,7 +334,6 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 function ResultsContent() {
   const params = useSearchParams();
   const [copied, setCopied] = useState(false);
-  const [saved, setSaved] = useState(false);
 
   // PART 3: Confidence explanation dropdown
   const [confOpen, setConfOpen] = useState(false);
@@ -354,6 +357,27 @@ function ResultsContent() {
     const raw = params.get("data");
     if (raw) result = JSON.parse(raw);
   } catch { parseError = true; }
+
+  // Track recently viewed
+  useEffect(() => {
+    if (!result?.input) return;
+    addRecentlyViewed({
+      vin: result.input.vin ?? "",
+      year: result.input.year,
+      make: result.input.make,
+      model: result.input.model,
+      trim: result.input.trim,
+      askingPrice: result.input.askingPrice,
+      mileage: result.input.mileage,
+      dealScore: result.score,
+      verdict: result.verdict,
+      priceDelta: result.priceDelta,
+      confidenceLevel: result.confidenceLevel,
+      analysisId: (result as any).savedId,
+      viewedAt: Date.now(),
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const submitFeedback = useCallback(async (helpful: boolean, comment?: string) => {
     if (!result) return;
@@ -465,19 +489,10 @@ function ResultsContent() {
             <span className="text-sm truncate hidden sm:inline" style={{ color: "var(--ds-text-3)" }}>{vehicleLabel}</span>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
-            <button
-              onClick={() => { setSaved(true); setTimeout(() => setSaved(false), 2000); }}
-              className="hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium transition-all"
-              style={{
-                background: saved ? "var(--ds-success-bg)" : "var(--ds-badge-bg)",
-                border: saved ? "1px solid var(--ds-success-border)" : "1px solid var(--ds-badge-border)",
-                color: saved ? "var(--ds-success)" : "var(--ds-text-2)",
-              }}>
-              {saved ? <><IconCheckLg />Saved</> : <>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
-                Save
-              </>}
-            </button>
+            <div className="hidden sm:flex items-center gap-2">
+              {result && <SaveButton analysisId={(result as any).savedId} result={result} variant="compact" />}
+              {result && <AddToCompareButton result={result} variant="compact" />}
+            </div>
             <Link href="/analyze" className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold text-white transition-all hover:brightness-110"
               style={{ background: "linear-gradient(135deg,#4f46e5,#6366f1)", boxShadow: "0 0 16px rgba(99,102,241,0.3)" }}>
               Check another deal
@@ -633,6 +648,18 @@ function ResultsContent() {
           </div>
         </motion.div>
 
+        {/* ── Score Breakdown ── */}
+        <FadeSection>
+          <motion.div variants={fadeUp}>
+            <ScoreBreakdown result={result} />
+          </motion.div>
+        </FadeSection>
+
+        {/* ── Save + Compare actions (mobile) ── */}
+        <div className="flex sm:hidden items-center gap-2">
+          <SaveButton analysisId={(result as any).savedId} result={result} />
+          <AddToCompareButton result={result} />
+        </div>
 
         {/* ── Two-column grid: Price + Monthly ── */}
         <FadeSection className="grid sm:grid-cols-2 gap-5">

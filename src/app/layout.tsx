@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { Providers } from "@/components/providers";
+import { CompareTrayWrapper } from "@/components/ui/compare-tray-wrapper";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/next";
 
@@ -49,7 +50,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" suppressHydrationWarning>
       <body suppressHydrationWarning className="bg-slate-50 dark:bg-[#030303] text-slate-800 dark:text-white/90 antialiased font-sans transition-colors duration-300">
-        <Providers>{children}</Providers>
+        <Providers>
+          {children}
+          <CompareTrayWrapper />
+        </Providers>
         <Analytics />
         <SpeedInsights />
       </body>

@@ -38,6 +38,7 @@ export async function middleware(request: NextRequest) {
     (pathname === "/results") ||
     pathname.startsWith("/settings") ||
     pathname.startsWith("/history") ||
+    pathname.startsWith("/saved") ||
     pathname.startsWith("/admin")
 
   // Unauthenticated + protected route → send to /auth

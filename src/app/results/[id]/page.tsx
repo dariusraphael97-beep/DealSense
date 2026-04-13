@@ -10,6 +10,10 @@ const DepreciationChart = dynamic(() => import("@/components/ui/depreciation-cha
 import { UserNav } from "@/components/ui/user-nav";
 import { Logo } from "@/components/ui/logo";
 import { USMapPin } from "@/components/ui/us-map-pin";
+import { ScoreBreakdown } from "@/components/ui/score-breakdown";
+import { SaveButton } from "@/components/ui/save-button";
+import { AddToCompareButton } from "@/components/ui/add-to-compare-button";
+import { addRecentlyViewed } from "@/lib/recentlyViewed";
 
 const ease = [0.22, 1, 0.36, 1] as const;
 const fadeUp = { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0, transition: { duration: 0.5, ease } } };
@@ -347,6 +351,26 @@ export default function PersistedResultPage() {
     setFeedbackState("submitted");
   }, [result]);
 
+  // Track recently viewed
+  useEffect(() => {
+    if (!result?.input) return;
+    addRecentlyViewed({
+      vin: result.input.vin ?? "",
+      year: result.input.year,
+      make: result.input.make,
+      model: result.input.model,
+      trim: result.input.trim,
+      askingPrice: result.input.askingPrice,
+      mileage: result.input.mileage,
+      dealScore: result.score,
+      verdict: result.verdict,
+      priceDelta: result.priceDelta,
+      confidenceLevel: result.confidenceLevel,
+      analysisId: result.savedId,
+      viewedAt: Date.now(),
+    });
+  }, [result]);
+
   useEffect(() => {
     if (!id) return;
     (async () => {
@@ -483,12 +507,10 @@ export default function PersistedResultPage() {
               }}>
               {copied ? <><IconCheckLg />Copied!</> : <><IconShare />Share</>}
             </button>
-            <button
-              onClick={() => window.print()}
-              className="hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium transition-all"
-              style={{ background: "var(--ds-badge-bg)", border: "1px solid var(--ds-badge-border)", color: "var(--ds-text-2)" }}>
-              <IconPrint />Print
-            </button>
+            <div className="hidden sm:flex items-center gap-2">
+              {result && <SaveButton analysisId={result.savedId} result={result} variant="compact" />}
+              {result && <AddToCompareButton result={result} variant="compact" />}
+            </div>
             <Link href="/analyze"
               className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold text-white transition-all hover:brightness-110"
               style={{ background: "linear-gradient(135deg,#4f46e5,#6366f1)", boxShadow: "0 0 16px rgba(99,102,241,0.3)" }}>
@@ -666,6 +688,18 @@ export default function PersistedResultPage() {
           </div>
         </motion.div>
 
+        {/* ── Score Breakdown ── */}
+        <FadeSection>
+          <motion.div variants={fadeUp}>
+            <ScoreBreakdown result={result} />
+          </motion.div>
+        </FadeSection>
+
+        {/* ── Save + Compare actions (mobile) ── */}
+        <div className="flex sm:hidden items-center gap-2">
+          <SaveButton analysisId={result.savedId} result={result} />
+          <AddToCompareButton result={result} />
+        </div>
 
         {/* ── Two-column: Price + Loan ── */}
         <FadeSection className="grid sm:grid-cols-2 gap-5">
