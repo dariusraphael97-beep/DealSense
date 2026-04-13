@@ -11,7 +11,7 @@ export interface AppSettings {
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
-  theme: "light",
+  theme: "dark",
   defaultAPR: 7.5,
   defaultDownPayment: 10,
   defaultLoanTerm: 60,
