@@ -13,6 +13,10 @@ import { USMapPin } from "@/components/ui/us-map-pin";
 import { ScoreBreakdown } from "@/components/ui/score-breakdown";
 import { SaveButton } from "@/components/ui/save-button";
 import { AddToCompareButton } from "@/components/ui/add-to-compare-button";
+import { RiskFlags } from "@/components/ui/risk-flags";
+import { RecommendedOffer } from "@/components/ui/recommended-offer";
+import { MarketPositionBadge } from "@/components/ui/market-position-badge";
+import { DealStrengthTag } from "@/components/ui/deal-strength-tag";
 import { addRecentlyViewed } from "@/lib/recentlyViewed";
 
 const ease = [0.22, 1, 0.36, 1] as const;
@@ -581,8 +585,10 @@ function ResultsContent() {
                 {aiSummary}
               </p>
 
-              {/* Badges — confidence + data source */}
+              {/* Badges — deal strength + market position + confidence + data source */}
               <div className="flex items-center gap-2 flex-wrap justify-center sm:justify-start pt-1">
+                <DealStrengthTag result={result} />
+                <MarketPositionBadge result={result} />
                 {/* Confidence badge — clickable with explanation dropdown (PART 3) */}
                 <div className="relative" ref={confRef}>
                   <button
@@ -655,6 +661,13 @@ function ResultsContent() {
           </motion.div>
         </FadeSection>
 
+        {/* ── Risk Flags ── */}
+        <FadeSection>
+          <motion.div variants={fadeUp}>
+            <RiskFlags result={result} />
+          </motion.div>
+        </FadeSection>
+
         {/* ── Save + Compare actions (mobile) ── */}
         <div className="flex sm:hidden items-center gap-2">
           <SaveButton analysisId={(result as any).savedId} result={result} />
@@ -678,7 +691,7 @@ function ResultsContent() {
                 </p>
               </div>
               <div>
-                <p className="text-xs mb-1" style={{ color: "var(--ds-text-4)" }}>Fair value mid</p>
+                <p className="text-xs mb-1" style={{ color: "var(--ds-text-4)" }}>Est. fair value</p>
                 <p className="font-heading text-2xl font-extrabold" style={{ color: "var(--ds-text-1)" }}>
                   ${fairValueRange.midpoint.toLocaleString()}
                 </p>
@@ -732,6 +745,13 @@ function ResultsContent() {
               initialApr={input.loanApr ?? 7.5}
               initialDownPct={input.loanDownPct ?? 10}
               initialTerm={input.loanTermMonths ?? 60} />
+          </motion.div>
+        </FadeSection>
+
+        {/* ── Recommended Offer ── */}
+        <FadeSection>
+          <motion.div variants={fadeUp}>
+            <RecommendedOffer result={result} />
           </motion.div>
         </FadeSection>
 
@@ -849,15 +869,26 @@ function ResultsContent() {
               </p>
               <p className="text-xs mt-4 pt-4" style={{ color: "var(--ds-text-4)", borderTop: "1px solid var(--ds-divider)" }}>
                 {verdict === "Buy" || verdict === "Fair Deal"
-                  ? "💡 This car is priced well — focus on confirming out-the-door fees, not pushing the price lower."
+                  ? confidenceLevel === "High"
+                    ? "💡 This appears well-priced based on strong data — focus on confirming out-the-door fees, not pushing the sticker lower."
+                    : "💡 This appears competitively priced, though some data gaps exist. Confirm configuration details and focus on out-the-door fees."
                   : verdict === "Walk Away"
                   ? "💡 Be prepared to actually walk. Sellers often come back with a lower number when they see you mean it."
                   : verdict === "Needs Option Review"
-                  ? "💡 Ask for a full option/package list before discussing price. Configuration can shift the fair value significantly."
+                  ? "💡 Ask for a full option/package list before discussing price. Configuration can shift the estimated fair value significantly on this type of vehicle."
                   : verdict === "Possibly Overpriced"
-                  ? "💡 This may be overpriced, but verify the full configuration first — some options can justify a premium."
-                  : "💡 Customize with specifics — service history, competing listings, or anything found in an inspection."}
+                  ? confidenceLevel === "High"
+                    ? "💡 This appears overpriced based on market data. Negotiate firmly using comparable listings."
+                    : "💡 This may be above fair value, but verify the full configuration first — some options can justify a premium. Our estimate has limited data."
+                  : confidenceLevel === "High"
+                    ? "💡 Customize with specifics — service history, competing listings, or anything found in an inspection."
+                    : "💡 Our estimate has some data gaps. Customize your approach with comparable listings, service records, and a pre-purchase inspection."}
               </p>
+              {confidenceLevel !== "High" && (
+                <p className="text-[10px] mt-2" style={{ color: "var(--ds-text-4)" }}>
+                  Note: This script is based on estimated values with {confidenceLevel.toLowerCase()} confidence. Verify key details before using specific numbers in negotiation.
+                </p>
+              )}
             </div>
           </motion.div>
         </FadeSection>
@@ -982,12 +1013,15 @@ function ResultsContent() {
           </motion.div>
         </FadeSection>
 
-        {/* ── Disclaimer (PART 8) ── */}
+        {/* ── Disclaimer ── */}
         <div className="text-center px-4 pt-2 pb-4">
-          <p className="text-[11px] leading-relaxed" style={{ color: "var(--ds-text-4)", maxWidth: 520, margin: "0 auto" }}>
-            Estimates are based on available market data and vehicle configuration. Actual value may vary.
+          <p className="text-[11px] leading-relaxed" style={{ color: "var(--ds-text-4)", maxWidth: 560, margin: "0 auto" }}>
+            All values shown are estimates based on available market data and vehicle configuration at the time of analysis.
+            Actual fair market value may differ based on condition, history, local demand, and factors not captured here.
+            {confidenceLevel !== "High" && " This analysis carries " + confidenceLevel.toLowerCase() + " confidence — treat numbers as directional guidance."}
             {(vehicleCategory === "performance" || vehicleCategory === "exotic" || vehicleCategory === "luxury") &&
               " Value may vary significantly based on factory options and packages."}
+            {" "}This is not financial advice.
           </p>
         </div>
 
