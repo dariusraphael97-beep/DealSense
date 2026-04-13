@@ -205,14 +205,14 @@ export default function AdminPage() {
                       onClick={() => patchUser(user.id, { credits: (user.credits ?? 0) + 5 })}
                       title="Add 5 credits"
                       className="text-xs px-2.5 py-1.5 rounded-lg transition-all hover:brightness-125"
-                      style={{ background: "rgba(52,211,153,0.1)", border: "1px solid rgba(52,211,153,0.2)", color: "#34d399" }}>
+                      style={{ background: "var(--ds-success-bg)", border: "1px solid var(--ds-success-border)", color: "var(--ds-success)" }}>
                       +5
                     </button>
                     <button
                       onClick={() => patchUser(user.id, { credits: 0 })}
                       title="Zero out credits"
                       className="text-xs px-2.5 py-1.5 rounded-lg transition-all hover:brightness-125"
-                      style={{ background: "rgba(248,113,113,0.08)", border: "1px solid rgba(248,113,113,0.15)", color: "#f87171" }}>
+                      style={{ background: "var(--ds-danger-bg)", border: "1px solid var(--ds-danger-border)", color: "var(--ds-danger)" }}>
                       0
                     </button>
                   </div>

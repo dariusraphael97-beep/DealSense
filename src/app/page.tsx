@@ -96,9 +96,9 @@ function MiniScoreCard({ score, verdict, car, delta }: { score: number; verdict:
   const circum = 2 * Math.PI * 22;
   const offset = circum - (score / 100) * circum;
   const colors = {
-    Buy:         { stroke: "#34d399", glow: "rgba(52,211,153,0.12)",  border: "rgba(52,211,153,0.20)",  label: "rgba(52,211,153,0.9)"  },
-    Negotiate:   { stroke: "#fbbf24", glow: "rgba(251,191,36,0.10)",  border: "rgba(251,191,36,0.20)",  label: "rgba(251,191,36,0.9)"  },
-    "Walk Away": { stroke: "#f87171", glow: "rgba(248,113,113,0.10)", border: "rgba(248,113,113,0.20)", label: "rgba(248,113,113,0.9)" },
+    Buy:         { stroke: "var(--ds-success)",  glow: "var(--ds-success-glow)",  border: "var(--ds-success-border)",  label: "var(--ds-success)"  },
+    Negotiate:   { stroke: "var(--ds-warn)",     glow: "var(--ds-warn-glow)",     border: "var(--ds-warn-border)",     label: "var(--ds-warn)"     },
+    "Walk Away": { stroke: "var(--ds-danger)",   glow: "var(--ds-danger-glow)",   border: "var(--ds-danger-border)",   label: "var(--ds-danger)"   },
   } as const;
   const c = colors[verdict as keyof typeof colors] ?? colors["Negotiate"];
 
@@ -201,7 +201,7 @@ export default function HomePage() {
           <div className="flex items-center gap-3">
             <Link href="/analyze"
               className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold transition-all"
-              style={{ boxShadow: "0 0 20px rgba(99,102,241,0.3), 0 4px 12px rgba(0,0,0,0.2)" }}>
+              style={{ boxShadow: "0 0 20px var(--ds-accent-glow), 0 4px 12px var(--ds-shadow-heavy)" }}>
               Check a Deal
             </Link>
             <UserNav />
@@ -409,7 +409,7 @@ export default function HomePage() {
               style={{
                 background: "var(--ds-card-bg)",
                 border: "1px solid var(--ds-card-border)",
-                boxShadow: "0 0 0 1px var(--ds-card-border), 0 0 48px rgba(99,102,241,0.12), 0 8px 32px rgba(0,0,0,0.18)",
+                boxShadow: "0 0 0 1px var(--ds-card-border), 0 0 48px var(--ds-accent-glow), 0 8px 32px var(--ds-shadow-heavy)",
               }}
             >
               {/* Vehicle label */}
@@ -425,11 +425,11 @@ export default function HomePage() {
                     <circle cx="40" cy="40" r="34" fill="none" stroke="var(--ds-divider)" strokeWidth="6"/>
                     <circle
                       cx="40" cy="40" r="34" fill="none"
-                      stroke="#34d399" strokeWidth="6"
+                      stroke="var(--ds-success)" strokeWidth="6"
                       strokeDasharray={`${2 * Math.PI * 34}`}
                       strokeDashoffset={`${2 * Math.PI * 34 * (1 - 74/100)}`}
                       strokeLinecap="round"
-                      style={{ filter: "drop-shadow(0 0 8px rgba(52,211,153,0.6))" }}
+                      style={{ filter: "drop-shadow(0 0 8px var(--ds-success-glow))" }}
                     />
                   </svg>
                   <div className="absolute inset-0 flex flex-col items-center justify-center">
@@ -442,7 +442,7 @@ export default function HomePage() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-3">
                     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold"
-                      style={{ background: "rgba(52,211,153,0.14)", border: "1px solid rgba(52,211,153,0.28)", color: "#34d399" }}>
+                      style={{ background: "var(--ds-success-bg)", border: "1px solid var(--ds-success-border)", color: "var(--ds-success)" }}>
                       Buy
                     </span>
                     <span className="text-xs font-medium px-2 py-0.5 rounded-full" style={{ background: "rgba(99,102,241,0.10)", border: "1px solid rgba(99,102,241,0.18)", color: "var(--ds-text-3)" }}>
@@ -478,7 +478,7 @@ export default function HomePage() {
                   "Market comps show strong demand in this zip",
                 ].map((insight) => (
                   <li key={insight} className="flex items-start gap-2.5 text-sm" style={{ color: "var(--ds-text-2)" }}>
-                    <span className="text-emerald-400 mt-0.5"><IconBullet /></span>
+                    <span className="mt-0.5" style={{ color: "var(--ds-success)" }}><IconBullet /></span>
                     {insight}
                   </li>
                 ))}
@@ -507,7 +507,7 @@ export default function HomePage() {
                 {/* Connecting line */}
                 <div className="flex flex-col items-center flex-shrink-0">
                   <div className="w-10 h-10 rounded-xl flex items-center justify-center text-base font-extrabold text-white"
-                    style={{ background: "linear-gradient(135deg, #4f46e5, #6366f1)", boxShadow: "0 0 20px rgba(99,102,241,0.35)" }}>
+                    style={{ background: "linear-gradient(135deg, #4f46e5, #6366f1)", boxShadow: "0 0 20px var(--ds-accent-glow)" }}>
                     {i + 1}
                   </div>
                   {i < steps.length - 1 && (
@@ -634,7 +634,7 @@ export default function HomePage() {
               style={{ background: "rgba(99,102,241,0.06)", border: "1px solid rgba(99,102,241,0.22)", boxShadow: "0 0 60px rgba(99,102,241,0.12)" }}>
               <div className="absolute -top-px left-0 right-0 h-[2px]" style={{ background: "linear-gradient(90deg, transparent, #6366f1, transparent)" }} />
               <div className="inline-flex items-center gap-1.5 rounded-full px-3.5 py-1 text-xs font-semibold mb-5"
-                style={{ background: "linear-gradient(135deg,#4f46e5,#6366f1)", color: "white", boxShadow: "0 0 20px rgba(99,102,241,0.5)" }}>
+                style={{ background: "linear-gradient(135deg,#4f46e5,#6366f1)", color: "white", boxShadow: "0 0 20px var(--ds-accent-glow)" }}>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3" aria-hidden="true">
                   <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
                 </svg>
@@ -667,7 +667,7 @@ export default function HomePage() {
               </ul>
               <a href="/analyze"
                 className="w-full max-w-xs py-3 rounded-xl text-sm font-semibold text-center transition-all hover:brightness-110 active:scale-[0.98] text-white block"
-                style={{ background:"linear-gradient(135deg, #4f46e5, #6366f1)", boxShadow:"0 0 24px rgba(99,102,241,0.35)" }}>
+                style={{ background:"linear-gradient(135deg, #4f46e5, #6366f1)", boxShadow:"0 0 24px var(--ds-accent-glow)" }}>
                 Analyze a car free
               </a>
               <p className="text-xs mt-3" style={{ color: "var(--ds-text-4)" }}>
@@ -696,8 +696,8 @@ export default function HomePage() {
               <ul className="space-y-2.5 mb-7 flex-1">
                 {["3 car analyses","Deal Score + verdict","Fair value range","Negotiation script","Depreciation chart"].map(item => (
                   <li key={item} className="flex items-center gap-2.5 text-sm" style={{ color: "var(--ds-text-2)" }}>
-                    <span className="w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0 text-emerald-600 dark:text-emerald-400"
-                      style={{ background:"rgba(52,211,153,0.10)", border:"1px solid rgba(52,211,153,0.20)" }}>
+                    <span className="w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0"
+                      style={{ background:"var(--ds-success-bg)", border:"1px solid var(--ds-success-border)", color: "var(--ds-success)" }}>
                       <IconCheck />
                     </span>
                     {item}
@@ -746,7 +746,7 @@ export default function HomePage() {
             <motion.div variants={cardVariant} className="relative rounded-2xl p-6 flex flex-col"
               style={{ background: "var(--ds-card-bg)", border: "1px solid var(--ds-card-border)", boxShadow: "var(--ds-card-shadow)" }}>
               <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 rounded-full px-3 py-0.5 text-xs font-semibold whitespace-nowrap"
-                style={{ background:"rgba(52,211,153,0.10)", border:"1px solid rgba(52,211,153,0.20)", color: "var(--ds-text-4)" }}>
+                style={{ background:"var(--ds-success-bg)", border:"1px solid var(--ds-success-border)", color: "var(--ds-text-4)" }}>
                 Best value
               </div>
               <p className="text-xs font-semibold uppercase tracking-[0.15em] mb-4" style={{ color: "var(--ds-text-4)" }}>Pro</p>
@@ -758,8 +758,8 @@ export default function HomePage() {
               <ul className="space-y-2.5 mb-7 flex-1">
                 {["25 car analyses","Everything in Standard","Best per-analysis value","Priority support","Early access to new features"].map(item => (
                   <li key={item} className="flex items-center gap-2.5 text-sm" style={{ color: "var(--ds-text-2)" }}>
-                    <span className="w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0 text-emerald-600 dark:text-emerald-400"
-                      style={{ background:"rgba(52,211,153,0.10)", border:"1px solid rgba(52,211,153,0.20)" }}>
+                    <span className="w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0"
+                      style={{ background:"var(--ds-success-bg)", border:"1px solid var(--ds-success-border)", color: "var(--ds-success)" }}>
                       <IconCheck />
                     </span>
                     {item}
@@ -833,7 +833,7 @@ export default function HomePage() {
               className="inline-flex items-center gap-2 rounded-xl px-8 py-4 text-base font-semibold text-white transition-all hover:brightness-110 active:scale-[0.98]"
               style={{
                 background: "linear-gradient(135deg, #4f46e5, #6366f1)",
-                boxShadow: "0 0 32px rgba(99,102,241,0.4), 0 4px 20px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.12)",
+                boxShadow: "0 0 32px var(--ds-accent-glow), 0 4px 20px var(--ds-shadow-heavy), inset 0 1px 0 rgba(255,255,255,0.12)",
               }}>
               Get my Deal Score <IconArrow />
             </Link>

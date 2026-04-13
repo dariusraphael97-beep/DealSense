@@ -199,9 +199,9 @@ function ScoreRing({ score, size = 180 }: { score: number; size?: number }) {
     return () => { clearTimeout(delay); clearTimeout(dotTimer); clearTimeout(kickoff); cancelAnimationFrame(raf); };
   }, [score]);
 
-  const color = score >= 72 ? "#34d399" : score >= 48 ? "#fbbf24" : "#f87171";
+  const color = score >= 72 ? "var(--ds-success)" : score >= 48 ? "var(--ds-warn)" : "var(--ds-danger)";
   const colorEnd = score >= 72 ? "#6ee7b7" : score >= 48 ? "#fde047" : "#fca5a5";
-  const glowColor = score >= 72 ? "rgba(52,211,153,0.25)" : score >= 48 ? "rgba(251,191,36,0.25)" : "rgba(248,113,113,0.25)";
+  const glowColor = score >= 72 ? "var(--ds-success-glow)" : score >= 48 ? "var(--ds-warn-bg)" : "var(--ds-danger-bg)";
 
   function polar(angle: number) {
     const rad = (angle * Math.PI) / 180;
@@ -272,13 +272,13 @@ function DeltaPill({ delta, pct }: { delta: number; pct: number }) {
   const absPct = Math.abs(pct * 100).toFixed(1);
   if (delta > 0) return (
     <div className="inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-sm font-semibold font-mono"
-      style={{ background: "rgba(248,113,113,0.10)", border: "1px solid rgba(248,113,113,0.22)", color: "#f87171" }}>
+      style={{ background: "var(--ds-danger-bg)", border: "1px solid var(--ds-danger-border)", color: "var(--ds-danger)" }}>
       <IconTrendUp />${abs} over · +{absPct}%
     </div>
   );
   if (delta < 0) return (
     <div className="inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-sm font-semibold font-mono"
-      style={{ background: "rgba(52,211,153,0.10)", border: "1px solid rgba(52,211,153,0.22)", color: "#34d399" }}>
+      style={{ background: "var(--ds-success-bg)", border: "1px solid var(--ds-success-border)", color: "var(--ds-success)" }}>
       <IconTrendDown />${abs} under · −{absPct}%
     </div>
   );
@@ -439,9 +439,9 @@ export default function PersistedResultPage() {
 
   // Confidence badge styling
   const confidenceColors = {
-    High:   { bg: "rgba(52,211,153,0.08)", border: "rgba(52,211,153,0.20)", text: "#34d399", icon: "●" },
-    Medium: { bg: "rgba(251,191,36,0.08)", border: "rgba(251,191,36,0.20)", text: "#fbbf24", icon: "●" },
-    Low:    { bg: "rgba(248,113,113,0.08)", border: "rgba(248,113,113,0.20)", text: "#f87171", icon: "●" },
+    High:   { bg: "var(--ds-success-bg)", border: "var(--ds-success-border)", text: "var(--ds-success)", icon: "●" },
+    Medium: { bg: "var(--ds-warn-bg)", border: "var(--ds-warn-border)", text: "var(--ds-warn)", icon: "●" },
+    Low:    { bg: "var(--ds-danger-bg)", border: "var(--ds-danger-border)", text: "var(--ds-danger)", icon: "●" },
   };
   const confStyle = confidenceColors[confidenceLevel as keyof typeof confidenceColors] ?? confidenceColors.Medium;
   // Avoid duplication when trim starts with model name (e.g. model="M3" trim="M3 Competition")
@@ -450,11 +450,11 @@ export default function PersistedResultPage() {
     : ` ${input.model}`;
   const vehicleLabel = `${input.year} ${input.make}${trimSuffix}`;
 
-  const scoreColor = score >= 72 ? "#34d399" : score >= 48 ? "#fbbf24" : "#f87171";
+  const scoreColor = score >= 72 ? "var(--ds-success)" : score >= 48 ? "var(--ds-warn)" : "var(--ds-danger)";
   const scoreColorEnd = score >= 72 ? "#6ee7b7" : score >= 48 ? "#fde047" : "#fca5a5";
 
   const barPct = Math.min(100, Math.max(2, 50 + priceDeltaPct * -150));
-  const barColor = priceDelta <= 0 ? "#34d399" : priceDeltaPct < 0.12 ? "#fbbf24" : "#f87171";
+  const barColor = priceDelta <= 0 ? "var(--ds-success)" : priceDeltaPct < 0.12 ? "var(--ds-warn)" : "var(--ds-danger)";
 
   return (
     <div className="min-h-screen" style={{ background: "var(--ds-bg)" }}>
@@ -477,9 +477,9 @@ export default function PersistedResultPage() {
               aria-label={copied ? "Link copied to clipboard" : "Copy share link"}
               className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium transition-all"
               style={{
-                background: copied ? "rgba(52,211,153,0.10)" : "var(--ds-badge-bg)",
-                border: copied ? "1px solid rgba(52,211,153,0.25)" : "1px solid var(--ds-badge-border)",
-                color: copied ? "#34d399" : "var(--ds-text-2)",
+                background: copied ? "var(--ds-success-bg)" : "var(--ds-badge-bg)",
+                border: copied ? "1px solid var(--ds-success-border)" : "1px solid var(--ds-badge-border)",
+                color: copied ? "var(--ds-success)" : "var(--ds-text-2)",
               }}>
               {copied ? <><IconCheckLg />Copied!</> : <><IconShare />Share</>}
             </button>
@@ -557,9 +557,9 @@ export default function PersistedResultPage() {
                       </span>
                     )}
                     <span className="text-[10px] px-2 py-0.5 rounded-md font-medium" style={{
-                      background: trimValidation.trimConfidence === "high" ? "rgba(52,211,153,0.08)" : trimValidation.trimConfidence === "medium" ? "rgba(251,191,36,0.08)" : "rgba(248,113,113,0.08)",
-                      border: `1px solid ${trimValidation.trimConfidence === "high" ? "rgba(52,211,153,0.2)" : trimValidation.trimConfidence === "medium" ? "rgba(251,191,36,0.2)" : "rgba(248,113,113,0.2)"}`,
-                      color: trimValidation.trimConfidence === "high" ? "#34d399" : trimValidation.trimConfidence === "medium" ? "#fbbf24" : "#f87171",
+                      background: trimValidation.trimConfidence === "high" ? "var(--ds-success-bg)" : trimValidation.trimConfidence === "medium" ? "var(--ds-warn-bg)" : "var(--ds-danger-bg)",
+                      border: `1px solid ${trimValidation.trimConfidence === "high" ? "var(--ds-success-border)" : trimValidation.trimConfidence === "medium" ? "var(--ds-warn-border)" : "var(--ds-danger-border)"}`,
+                      color: trimValidation.trimConfidence === "high" ? "var(--ds-success)" : trimValidation.trimConfidence === "medium" ? "var(--ds-warn)" : "var(--ds-danger)",
                     }}>
                       Trim: {trimValidation.trimConfidence} confidence
                     </span>
@@ -648,7 +648,7 @@ export default function PersistedResultPage() {
                 </div>
                 {isVinVerified ? (
                   <span className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg font-semibold"
-                    style={{ background: "rgba(52,211,153,0.08)", border: "1px solid rgba(52,211,153,0.20)", color: "#34d399" }}>
+                    style={{ background: "var(--ds-success-bg)", border: "1px solid var(--ds-success-border)", color: "var(--ds-success)" }}>
                     <IconShield />VIN-verified data
                   </span>
                 ) : (
@@ -711,10 +711,10 @@ export default function PersistedResultPage() {
             {priceDelta !== 0 && (
               <div className="mt-4 rounded-xl px-4 py-3"
                 style={{
-                  background: priceDelta < 0 ? "rgba(52,211,153,0.06)" : "rgba(248,113,113,0.06)",
-                  border: `1px solid ${priceDelta < 0 ? "rgba(52,211,153,0.18)" : "rgba(248,113,113,0.18)"}`,
+                  background: priceDelta < 0 ? "var(--ds-success-glow)" : "var(--ds-danger-bg)",
+                  border: `1px solid ${priceDelta < 0 ? "var(--ds-success-border)" : "var(--ds-danger-border)"}`,
                 }}>
-                <p className="text-sm font-semibold" style={{ color: priceDelta < 0 ? "#34d399" : "#f87171" }}>
+                <p className="text-sm font-semibold" style={{ color: priceDelta < 0 ? "var(--ds-success)" : "var(--ds-danger)" }}>
                   {priceDelta < 0
                     ? `$${Math.abs(priceDelta).toLocaleString()} below estimated fair value`
                     : `$${priceDelta.toLocaleString()} above estimated fair value`}

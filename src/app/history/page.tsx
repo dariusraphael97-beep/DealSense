@@ -24,9 +24,9 @@ interface Analysis {
 }
 
 const VERDICT_STYLE = {
-  "Buy":        { bg: "rgba(52,211,153,0.10)",  border: "rgba(52,211,153,0.25)",  text: "#34d399" },
-  "Negotiate":  { bg: "rgba(251,191,36,0.10)",  border: "rgba(251,191,36,0.25)",  text: "#fbbf24" },
-  "Walk Away":  { bg: "rgba(248,113,113,0.10)", border: "rgba(248,113,113,0.25)", text: "#f87171" },
+  "Buy":        { bg: "var(--ds-success-bg)",  border: "var(--ds-success-border)",  text: "var(--ds-success)" },
+  "Negotiate":  { bg: "rgba(251,191,36,0.10)",  border: "rgba(251,191,36,0.25)",  text: "var(--ds-warn)" },
+  "Walk Away":  { bg: "var(--ds-danger-bg)", border: "var(--ds-danger-border)", text: "var(--ds-danger)" },
 };
 
 export default function HistoryPage() {
@@ -155,7 +155,7 @@ export default function HistoryPage() {
 
                     {/* Delta */}
                     <span className="text-xs font-mono flex-shrink-0 hidden md:block"
-                      style={{ color: isOver ? "#f87171" : "#34d399" }}>
+                      style={{ color: isOver ? "var(--ds-danger)" : "var(--ds-success)" }}>
                       {isOver ? "+" : "−"}${delta.toLocaleString()}
                     </span>
 

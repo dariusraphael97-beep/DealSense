@@ -310,9 +310,9 @@ export default function SettingsPage() {
                       onClick={copyRefLink}
                       className="text-xs px-2.5 py-1 rounded-lg transition-all flex-shrink-0"
                       style={{
-                        background: refCopied ? "rgba(52,211,153,0.12)" : "var(--ds-badge-bg)",
-                        border: refCopied ? "1px solid rgba(52,211,153,0.25)" : "1px solid var(--ds-badge-border)",
-                        color: refCopied ? "rgba(52,211,153,0.9)" : "var(--ds-text-2)",
+                        background: refCopied ? "var(--ds-success-bg)" : "var(--ds-badge-bg)",
+                        border: refCopied ? "1px solid var(--ds-success-border)" : "1px solid var(--ds-badge-border)",
+                        color: refCopied ? "var(--ds-success)" : "var(--ds-text-2)",
                       }}>
                       {refCopied ? "✓ Copied!" : "Copy link"}
                     </button>
@@ -333,9 +333,9 @@ export default function SettingsPage() {
                       onClick={copyEmail}
                       className="text-xs px-2.5 py-1 rounded-lg transition-all"
                       style={{
-                        background: copied ? "rgba(52,211,153,0.12)" : "var(--ds-badge-bg)",
-                        border: copied ? "1px solid rgba(52,211,153,0.25)" : "1px solid var(--ds-badge-border)",
-                        color: copied ? "rgba(52,211,153,0.9)" : "var(--ds-text-2)",
+                        background: copied ? "var(--ds-success-bg)" : "var(--ds-badge-bg)",
+                        border: copied ? "1px solid var(--ds-success-border)" : "1px solid var(--ds-badge-border)",
+                        color: copied ? "var(--ds-success)" : "var(--ds-text-2)",
                       }}
                     >
                       {copied ? "Copied" : "Copy"}

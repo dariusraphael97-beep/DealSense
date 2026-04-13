@@ -99,7 +99,7 @@ function Combobox({ value, onChange, options, placeholder, disabled = false, id 
     if (e.key === "Enter")     { e.preventDefault(); if (filtered[highlighted]) select(filtered[highlighted]); }
     if (e.key === "Escape")    { setOpen(false); setQuery(""); }
   }
-  const dropStyle = { background: "var(--ds-card-bg)", border: "1px solid var(--ds-card-border)", boxShadow: "0 8px 32px rgba(0,0,0,0.3)", backdropFilter: "blur(16px)" };
+  const dropStyle = { background: "var(--ds-card-bg)", border: "1px solid var(--ds-card-border)", boxShadow: "0 8px 32px var(--ds-shadow-heavy)", backdropFilter: "blur(16px)" };
   return (
     <div ref={containerRef} className="relative">
       <div className={disabled ? "opacity-40 pointer-events-none" : ""}>
@@ -265,7 +265,7 @@ function LoadingOverlay() {
         initial={{ opacity: 0, scale: 0.92, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }}
         transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
         className="rounded-3xl p-8 max-w-sm w-full mx-4 text-center"
-        style={{ background: "var(--ds-card-bg)", border: "1px solid var(--ds-card-border)", boxShadow: "0 24px 80px rgba(0,0,0,0.3)" }}
+        style={{ background: "var(--ds-card-bg)", border: "1px solid var(--ds-card-border)", boxShadow: "var(--ds-card-shadow-lg)" }}
       >
         {/* Progress ring */}
         <div className="relative w-20 h-20 mx-auto mb-6">
@@ -338,15 +338,15 @@ function LoadingOverlay() {
               >
                 <div className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-500"
                   style={{
-                    background: isDone ? "rgba(52,211,153,0.15)" : isActive ? "rgba(99,102,241,0.15)" : "var(--ds-badge-bg)",
-                    border: `1px solid ${isDone ? "rgba(52,211,153,0.4)" : isActive ? "rgba(99,102,241,0.4)" : "var(--ds-badge-border)"}`,
+                    background: isDone ? "var(--ds-success-bg)" : isActive ? "rgba(99,102,241,0.15)" : "var(--ds-badge-bg)",
+                    border: `1px solid ${isDone ? "var(--ds-success-border)" : isActive ? "rgba(99,102,241,0.4)" : "var(--ds-badge-border)"}`,
                     transform: isActive ? "scale(1.1)" : "scale(1)",
                   }}>
                   {isDone ? (
                     <motion.svg
                       initial={{ scale: 0 }} animate={{ scale: 1 }}
                       transition={{ type: "spring", stiffness: 400, damping: 15 }}
-                      viewBox="0 0 24 24" fill="none" stroke="#34d399" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="w-2.5 h-2.5"
+                      viewBox="0 0 24 24" fill="none" stroke="var(--ds-success)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="w-2.5 h-2.5"
                     ><polyline points="20 6 9 17 4 12"/></motion.svg>
                   ) : isActive ? (
                     <div className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-pulse"/>
@@ -354,7 +354,7 @@ function LoadingOverlay() {
                 </div>
                 <span className="text-xs transition-all duration-300"
                   style={{
-                    color: isDone ? "#34d399" : isActive ? "var(--ds-text-1)" : "var(--ds-text-4)",
+                    color: isDone ? "var(--ds-success)" : isActive ? "var(--ds-text-1)" : "var(--ds-text-4)",
                     fontWeight: isActive ? 500 : 400,
                   }}>
                   {s}
@@ -551,11 +551,11 @@ export default function AnalyzePage() {
   };
 
   const creditsColor =
-    isStaff          ? "#818cf8"
-    : credits === null ? "rgba(255,255,255,0.3)"
-    : credits === 0  ? "#f87171"
-    : credits === 1  ? "#fbbf24"
-    : "#34d399";
+    isStaff          ? "var(--ds-accent-text)"
+    : credits === null ? "var(--ds-text-4)"
+    : credits === 0  ? "var(--ds-danger)"
+    : credits === 1  ? "var(--ds-warn)"
+    : "var(--ds-success)";
 
   const ease = [0.22, 1, 0.36, 1] as const;
 
@@ -573,7 +573,7 @@ export default function AnalyzePage() {
           <motion.div
             initial={{ opacity: 0, y: -40 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -40 }}
             className="fixed top-4 left-1/2 -translate-x-1/2 z-[90] px-5 py-3 rounded-2xl text-sm font-semibold flex items-center gap-2"
-            style={{ background: "rgba(52,211,153,0.15)", border: "1px solid rgba(52,211,153,0.3)", color: "#34d399", backdropFilter: "blur(12px)" }}
+            style={{ background: "var(--ds-success-bg)", border: "1px solid var(--ds-success-border)", color: "var(--ds-success)", backdropFilter: "blur(12px)" }}
           >
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4"><polyline points="20 6 9 17 4 12"/></svg>
             Credits added — ready to analyze!
@@ -603,7 +603,7 @@ export default function AnalyzePage() {
             <button
               onClick={() => credits === 0 ? setShowPaywall(true) : undefined}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all"
-              style={{ background: "rgba(255,255,255,0.04)", border: `1px solid ${creditsColor}30`, color: creditsColor, cursor: credits === 0 ? "pointer" : "default" }}
+              style={{ background: "var(--ds-glass-bg)", border: `1px solid ${creditsColor}30`, color: creditsColor, cursor: credits === 0 ? "pointer" : "default" }}
             >
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3">
                 <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/>
@@ -635,7 +635,7 @@ export default function AnalyzePage() {
               <button
                 onClick={dismissWelcome}
                 className="absolute top-3 right-3 w-6 h-6 flex items-center justify-center rounded-full transition-colors"
-                style={{ background: "rgba(255,255,255,0.05)", color: "var(--ds-text-4)" }}
+                style={{ background: "var(--ds-glass-bg)", color: "var(--ds-text-4)" }}
                 aria-label="Dismiss welcome banner"
               >
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
@@ -643,7 +643,7 @@ export default function AnalyzePage() {
               <div className="flex items-start gap-3">
                 <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
                   style={{ background: "rgba(99,102,241,0.15)", border: "1px solid rgba(99,102,241,0.25)" }}>
-                  <svg viewBox="0 0 24 24" fill="none" stroke="#818cf8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="var(--ds-accent-text)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4" aria-hidden="true">
                     <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
                   </svg>
                 </div>
@@ -670,7 +670,7 @@ export default function AnalyzePage() {
           </p>
           <div className="mt-3 flex items-center gap-1.5 text-xs" style={{ color: "var(--ds-text-4)" }}>
             <IconShield />
-            <span style={{ color: "#34d399" }}>One check can save you thousands</span>
+            <span style={{ color: "var(--ds-success)" }}>One check can save you thousands</span>
             <span>— backed by real market data</span>
           </div>
         </motion.div>
@@ -681,7 +681,7 @@ export default function AnalyzePage() {
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.06, ease }} className="mb-3">
             <div className="rounded-2xl p-5"
               style={vinSuccess
-                ? { ...glassCard, border: "1px solid rgba(52,211,153,0.35)", boxShadow: "0 0 24px rgba(52,211,153,0.06)" }
+                ? { ...glassCard, border: "1px solid var(--ds-success-border)", boxShadow: "0 0 24px var(--ds-success-glow)" }
                 : glassCard}>
 
               {/* Step label */}
@@ -689,21 +689,21 @@ export default function AnalyzePage() {
                 <div className="flex items-center gap-2.5">
                   <div className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold"
                     style={vinSuccess
-                      ? { background: "rgba(52,211,153,0.15)", border: "1px solid rgba(52,211,153,0.3)", color: "#34d399" }
-                      : { background: "rgba(99,102,241,0.15)", border: "1px solid rgba(99,102,241,0.3)", color: "#818cf8" }}>
+                      ? { background: "var(--ds-success-bg)", border: "1px solid var(--ds-success-border)", color: "var(--ds-success)" }
+                      : { background: "rgba(99,102,241,0.15)", border: "1px solid rgba(99,102,241,0.3)", color: "var(--ds-accent-text)" }}>
                     {vinSuccess ? <IconCheck /> : "1"}
                   </div>
                   <span className="text-sm font-semibold" style={{ color: "var(--ds-text-1)" }}>
                     Enter VIN
                   </span>
                   <span className="text-xs px-2 py-0.5 rounded-md font-medium"
-                    style={{ background: "rgba(99,102,241,0.1)", color: "#818cf8", border: "1px solid rgba(99,102,241,0.2)" }}>
+                    style={{ background: "rgba(99,102,241,0.1)", color: "var(--ds-accent-text)", border: "1px solid rgba(99,102,241,0.2)" }}>
                     Required
                   </span>
                 </div>
                 {vinSuccess && (
                   <span className="flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full"
-                    style={{ background: "rgba(52,211,153,0.12)", border: "1px solid rgba(52,211,153,0.25)", color: "#34d399" }}>
+                    style={{ background: "var(--ds-success-bg)", border: "1px solid var(--ds-success-border)", color: "var(--ds-success)" }}>
                     <IconCheck /> Verified
                   </span>
                 )}
@@ -728,7 +728,7 @@ export default function AnalyzePage() {
                     aria-label="VIN number"
                   />
                   <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs tabular-nums pointer-events-none"
-                    style={{ color: vinInput.length === 17 ? "#34d399" : "var(--ds-text-4)" }}>
+                    style={{ color: vinInput.length === 17 ? "var(--ds-success)" : "var(--ds-text-4)" }}>
                     {vinInput.length}/17
                   </span>
                 </div>
@@ -747,9 +747,9 @@ export default function AnalyzePage() {
                 <p className="mt-2.5 text-xs text-red-500 flex items-center gap-1.5"><IconAlert />{vinError}</p>
               )}
               {vinSuccess && (
-                <div className="mt-2.5 flex items-center gap-2 text-xs" style={{ color: "#34d399" }}>
+                <div className="mt-2.5 flex items-center gap-2 text-xs" style={{ color: "var(--ds-success)" }}>
                   <span className="w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0"
-                    style={{ background: "rgba(52,211,153,0.12)", border: "1px solid rgba(52,211,153,0.25)" }}>
+                    style={{ background: "var(--ds-success-bg)", border: "1px solid var(--ds-success-border)" }}>
                     <IconCheck />
                   </span>
                   VIN verified — {form.year} {form.make} {form.model}{form.trim ? ` ${form.trim}` : ""}. Confirm details below.
@@ -800,9 +800,9 @@ export default function AnalyzePage() {
                 <p className="mt-2 text-xs text-amber-500 flex items-center gap-1.5"><IconAlert />{linkError}</p>
               )}
               {linkSuccess && (
-                <p className="mt-2 text-xs flex items-center gap-1.5" style={{ color: "#34d399" }}>
+                <p className="mt-2 text-xs flex items-center gap-1.5" style={{ color: "var(--ds-success)" }}>
                   <span className="w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0"
-                    style={{ background: "rgba(52,211,153,0.12)", border: "1px solid rgba(52,211,153,0.25)" }}>
+                    style={{ background: "var(--ds-success-bg)", border: "1px solid var(--ds-success-border)" }}>
                     <IconCheck />
                   </span>
                   {linkExtracted.length > 1
@@ -820,7 +820,7 @@ export default function AnalyzePage() {
               {/* Step label */}
               <div className="flex items-center gap-2.5 -mb-2">
                 <div className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold"
-                  style={{ background: "rgba(99,102,241,0.15)", border: "1px solid rgba(99,102,241,0.3)", color: "#818cf8" }}>
+                  style={{ background: "rgba(99,102,241,0.15)", border: "1px solid rgba(99,102,241,0.3)", color: "var(--ds-accent-text)" }}>
                   2
                 </div>
                 <span className="text-sm font-semibold" style={{ color: "var(--ds-text-1)" }}>Confirm details</span>
@@ -901,7 +901,7 @@ export default function AnalyzePage() {
               {/* Submit */}
               <button type="submit" disabled={submitting}
                 className="w-full py-3.5 rounded-xl text-sm font-semibold text-white flex items-center justify-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:brightness-110 active:scale-[0.99]"
-                style={{ background: "linear-gradient(135deg, #4f46e5, #6366f1)", boxShadow: "0 0 24px rgba(99,102,241,0.35), 0 4px 16px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.12)" }}>
+                style={{ background: "linear-gradient(135deg, #4f46e5, #6366f1)", boxShadow: "0 0 24px var(--ds-accent-glow), 0 4px 16px var(--ds-shadow-heavy), inset 0 1px 0 rgba(255,255,255,0.12)" }}>
                 Get my Deal Score <IconArrow />
               </button>
 

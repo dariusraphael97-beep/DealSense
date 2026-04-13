@@ -221,9 +221,9 @@ function ScoreRing({ score, size = 180 }: { score: number; size?: number }) {
     return () => { clearTimeout(delay); clearTimeout(dotTimer); clearTimeout(kickoff); cancelAnimationFrame(raf); };
   }, [score]);
 
-  const color = score >= 72 ? "#34d399" : score >= 48 ? "#fbbf24" : "#f87171";
+  const color = score >= 72 ? "var(--ds-success)" : score >= 48 ? "var(--ds-warn)" : "var(--ds-danger)";
   const colorEnd = score >= 72 ? "#6ee7b7" : score >= 48 ? "#fde047" : "#fca5a5";
-  const glowColor = score >= 72 ? "rgba(52,211,153,0.25)" : score >= 48 ? "rgba(251,191,36,0.25)" : "rgba(248,113,113,0.25)";
+  const glowColor = score >= 72 ? "var(--ds-success-glow)" : score >= 48 ? "var(--ds-warn-glow)" : "var(--ds-danger-glow)";
 
   function polar(angle: number) {
     const rad = (angle * Math.PI) / 180;
@@ -300,13 +300,13 @@ function DeltaPill({ delta, pct }: { delta: number; pct: number }) {
   const absPct = Math.abs(pct * 100).toFixed(1);
   if (delta > 0) return (
     <div className="inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-sm font-semibold font-mono"
-      style={{ background: "rgba(248,113,113,0.10)", border: "1px solid rgba(248,113,113,0.22)", color: "#f87171" }}>
+      style={{ background: "var(--ds-danger-bg)", border: "1px solid var(--ds-danger-border)", color: "var(--ds-danger)" }}>
       <IconTrendUp />${abs} over · +{absPct}%
     </div>
   );
   if (delta < 0) return (
     <div className="inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-sm font-semibold font-mono"
-      style={{ background: "rgba(52,211,153,0.10)", border: "1px solid rgba(52,211,153,0.22)", color: "#34d399" }}>
+      style={{ background: "var(--ds-success-bg)", border: "1px solid var(--ds-success-border)", color: "var(--ds-success)" }}>
       <IconTrendDown />${abs} under · −{absPct}%
     </div>
   );
@@ -420,9 +420,9 @@ function ResultsContent() {
 
   // Confidence badge styling
   const confidenceColors = {
-    High:   { bg: "rgba(52,211,153,0.08)", border: "rgba(52,211,153,0.20)", text: "#34d399", icon: "●" },
-    Medium: { bg: "rgba(251,191,36,0.08)", border: "rgba(251,191,36,0.20)", text: "#fbbf24", icon: "●" },
-    Low:    { bg: "rgba(248,113,113,0.08)", border: "rgba(248,113,113,0.20)", text: "#f87171", icon: "●" },
+    High:   { bg: "var(--ds-success-bg)", border: "var(--ds-success-border)", text: "var(--ds-success)", icon: "●" },
+    Medium: { bg: "var(--ds-warn-bg)", border: "var(--ds-warn-border)", text: "var(--ds-warn)", icon: "●" },
+    Low:    { bg: "var(--ds-danger-bg)", border: "var(--ds-danger-border)", text: "var(--ds-danger)", icon: "●" },
   };
   const confStyle = confidenceColors[(confidenceLevel as keyof typeof confidenceColors) ?? "Medium"] ?? confidenceColors.Medium;
 
@@ -432,11 +432,11 @@ function ResultsContent() {
     : ` ${input.model}`;
   const vehicleLabel = `${input.year} ${input.make}${trimSuffix}`;
 
-  const scoreColor = score >= 72 ? "#34d399" : score >= 48 ? "#fbbf24" : "#f87171";
+  const scoreColor = score >= 72 ? "var(--ds-success)" : score >= 48 ? "var(--ds-warn)" : "var(--ds-danger)";
   const scoreColorEnd = score >= 72 ? "#6ee7b7" : score >= 48 ? "#fde047" : "#fca5a5";
 
   const barPct = Math.min(100, Math.max(2, 50 + priceDeltaPct * -150));
-  const barColor = priceDelta <= 0 ? "#34d399" : priceDeltaPct < 0.12 ? "#fbbf24" : "#f87171";
+  const barColor = priceDelta <= 0 ? "var(--ds-success)" : priceDeltaPct < 0.12 ? "var(--ds-warn)" : "var(--ds-danger)";
 
   const vehicleType = /truck|pickup|silverado|sierra|f-150|tacoma|tundra|ranger|colorado|frontier|ridgeline|maverick/i.test(input.model)
     ? "truck"
@@ -469,9 +469,9 @@ function ResultsContent() {
               onClick={() => { setSaved(true); setTimeout(() => setSaved(false), 2000); }}
               className="hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium transition-all"
               style={{
-                background: saved ? "rgba(52,211,153,0.10)" : "var(--ds-badge-bg)",
-                border: saved ? "1px solid rgba(52,211,153,0.25)" : "1px solid var(--ds-badge-border)",
-                color: saved ? "#34d399" : "var(--ds-text-2)",
+                background: saved ? "var(--ds-success-bg)" : "var(--ds-badge-bg)",
+                border: saved ? "1px solid var(--ds-success-border)" : "1px solid var(--ds-badge-border)",
+                color: saved ? "var(--ds-success)" : "var(--ds-text-2)",
               }}>
               {saved ? <><IconCheckLg />Saved</> : <>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
@@ -522,9 +522,9 @@ function ResultsContent() {
                       </span>
                     )}
                     <span className="text-[10px] px-2 py-0.5 rounded-md font-medium" style={{
-                      background: trimValidation.trimConfidence === "high" ? "rgba(52,211,153,0.08)" : trimValidation.trimConfidence === "medium" ? "rgba(251,191,36,0.08)" : "rgba(248,113,113,0.08)",
-                      border: `1px solid ${trimValidation.trimConfidence === "high" ? "rgba(52,211,153,0.2)" : trimValidation.trimConfidence === "medium" ? "rgba(251,191,36,0.2)" : "rgba(248,113,113,0.2)"}`,
-                      color: trimValidation.trimConfidence === "high" ? "#34d399" : trimValidation.trimConfidence === "medium" ? "#fbbf24" : "#f87171",
+                      background: trimValidation.trimConfidence === "high" ? "var(--ds-success-bg)" : trimValidation.trimConfidence === "medium" ? "var(--ds-warn-bg)" : "var(--ds-danger-bg)",
+                      border: `1px solid ${trimValidation.trimConfidence === "high" ? "var(--ds-success-border)" : trimValidation.trimConfidence === "medium" ? "var(--ds-warn-border)" : "var(--ds-danger-border)"}`,
+                      color: trimValidation.trimConfidence === "high" ? "var(--ds-success)" : trimValidation.trimConfidence === "medium" ? "var(--ds-warn)" : "var(--ds-danger)",
                     }}>
                       Trim: {trimValidation.trimConfidence} confidence
                     </span>
@@ -615,7 +615,7 @@ function ResultsContent() {
                 </div>
                 {isVinVerified ? (
                   <span className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg font-semibold"
-                    style={{ background: "rgba(52,211,153,0.08)", border: "1px solid rgba(52,211,153,0.20)", color: "#34d399" }}>
+                    style={{ background: "var(--ds-success-bg)", border: "1px solid var(--ds-success-border)", color: "var(--ds-success)" }}>
                     <IconShield />VIN-verified data
                   </span>
                 ) : (
@@ -734,7 +734,7 @@ function ResultsContent() {
                     <p className="text-[10px] font-semibold uppercase tracking-wide mb-0.5" style={{ color: "var(--ds-text-4)" }}>{item.label}</p>
                     <p className="text-xs font-semibold capitalize flex items-center gap-1.5"
                       style={{ color: item.ok ? "var(--ds-text-2)" : "var(--ds-text-3)" }}>
-                      <span style={{ fontSize: 7, color: item.ok ? "#34d399" : "#f87171" }}>●</span>
+                      <span style={{ fontSize: 7, color: item.ok ? "var(--ds-success)" : "var(--ds-danger)" }}>●</span>
                       {item.value}
                     </p>
                   </div>
@@ -749,8 +749,8 @@ function ResultsContent() {
           <FadeSection>
             <motion.div variants={fadeUp} className="rounded-2xl px-6 py-5"
               style={{
-                background: "rgba(251,191,36,0.05)",
-                border: "1px solid rgba(251,191,36,0.18)",
+                background: "var(--ds-warn-bg)",
+                border: "1px solid var(--ds-warn-border)",
               }}>
               <div className="flex items-start gap-3">
                 <span className="text-base flex-shrink-0 mt-0.5">⚠️</span>
