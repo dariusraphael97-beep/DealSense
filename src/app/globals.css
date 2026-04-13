@@ -200,6 +200,22 @@
   }
 }
 
+/* ── Mobile performance optimizations ──
+ * Reduce compositing-heavy effects (backdrop-blur, large box-shadows)
+ * on mobile devices to prevent GPU over-commitment and jank.
+ * Visual appearance is preserved on desktop. */
+@media (max-width: 768px) {
+  /* Reduce nav backdrop-blur from 20px → 8px (still frosted, much cheaper) */
+  .backdrop-blur-sm  { --tw-backdrop-blur: blur(4px) !important; }
+  .backdrop-blur-2xl { --tw-backdrop-blur: blur(10px) !important; }
+
+  /* Promote animated/blurred layers to own compositor layer */
+  .blur-3xl, .blur-\\[100px\\], .blur-\\[60px\\] {
+    transform: translateZ(0);
+    will-change: transform;
+  }
+}
+
 /* Prevent transition flash on page load */
 html.no-transitions * {
   transition: none !important;

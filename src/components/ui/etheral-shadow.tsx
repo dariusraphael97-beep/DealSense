@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef, useId, useEffect, CSSProperties } from 'react';
+import React, { useRef, useId, useEffect, useState, CSSProperties } from 'react';
 import { animate, useMotionValue, AnimationPlaybackControls } from 'framer-motion';
 
 interface AnimationConfig {
@@ -35,6 +35,19 @@ function useInstanceId(): string {
   return `shadowoverlay-${id.replace(/:/g, "")}`;
 }
 
+/** Detect mobile / low-power devices to simplify expensive SVG filters */
+function useIsMobile(): boolean {
+  const [mobile, setMobile] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 768px)");
+    setMobile(mq.matches);
+    const handler = (e: MediaQueryListEvent) => setMobile(e.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
+  return mobile;
+}
+
 export function EtherealShadow({
   sizing = 'fill',
   color = 'rgba(99, 102, 241, 1)',
@@ -45,7 +58,11 @@ export function EtherealShadow({
   children,
 }: EtherealShadowProps) {
   const id = useInstanceId();
-  const animationEnabled = animation && animation.scale > 0;
+  const isMobile = useIsMobile();
+  // On mobile: disable the expensive SVG filter pipeline entirely —
+  // the shadow color layer + mask still renders (same visual), just no
+  // feTurbulence/feDisplacementMap/hueRotate animation.
+  const animationEnabled = animation && animation.scale > 0 && !isMobile;
   const feColorMatrixRef = useRef<SVGFEColorMatrixElement>(null);
   const hueRotateMotionValue = useMotionValue(180);
   const hueRotateAnimation = useRef<AnimationPlaybackControls | null>(null);
@@ -83,8 +100,10 @@ export function EtherealShadow({
       <div
         style={{
           position: "absolute",
-          inset: -displacementScale,
+          inset: animationEnabled ? -displacementScale : 0,
           filter: animationEnabled ? `url(#${id}) blur(4px)` : "none",
+          willChange: animationEnabled ? "filter" : "auto",
+          transform: "translateZ(0)", // GPU layer
         }}
       >
         {animationEnabled && (
@@ -94,7 +113,7 @@ export function EtherealShadow({
                 <feTurbulence
                   result="undulation"
                   numOctaves="2"
-                  baseFrequency={`${mapRange(animation.scale, 0, 100, 0.001, 0.0005)},${mapRange(animation.scale, 0, 100, 0.004, 0.002)}`}
+                  baseFrequency={`${mapRange(animation!.scale, 0, 100, 0.001, 0.0005)},${mapRange(animation!.scale, 0, 100, 0.004, 0.002)}`}
                   seed="0"
                   type="turbulence"
                 />

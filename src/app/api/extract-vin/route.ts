@@ -11,7 +11,6 @@ const ALLOWED_DOMAINS = [
   "cargurus.com",
   "carfax.com",
   "truecar.com",
-  "edmunds.com",
   "kbb.com",
   "carmax.com",
   "vroom.com",

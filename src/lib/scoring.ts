@@ -1069,7 +1069,7 @@ export function calculateConfidenceScore(
   else if (optionDataStatus === "partial") score += 10;
 
   // Market data specificity
-  const isTransaction = /vinaudit|edmunds|tmv/i.test(priceSource);
+  const isTransaction = /vinaudit/i.test(priceSource);
   const isListings = /auto\.dev|marketcheck|listing/i.test(priceSource);
   const isStatistical = /statistical|depreciation/i.test(priceSource);
 

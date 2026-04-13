@@ -132,77 +132,6 @@ export async function fetchMarketCheckValue(input: CarInput): Promise<PriceRange
 }
 
 /**
- * Edmunds True Market Value (TMV) API — transaction-based pricing, no VIN required.
- * Uses real closed-sale data, not just listing prices. More accurate than listing-based APIs.
- * Sign up at developer.edmunds.com (free tier available).
- *
- * Flow: year/make/model → styleId lookup → TMV call with mileage + zip
- */
-export async function fetchEdmundsTMV(input: CarInput): Promise<PriceRange | null> {
-  const apiKey = process.env.EDMUNDS_API_KEY;
-  if (!apiKey) return null;
-
-  try {
-    // Edmunds uses "niceId" format: lowercase, spaces → hyphens, strip special chars
-    const toNiceId = (s: string) =>
-      s.toLowerCase().trim().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
-
-    const makeNiceId  = toNiceId(input.make);
-    const modelNiceId = toNiceId(input.model);
-
-    // Step 1: Get all styles (trim levels) for this year/make/model
-    const stylesRes = await fetch(
-      `https://api.edmunds.com/api/vehicle/v2/${makeNiceId}/${modelNiceId}/${input.year}/styles?view=basic&api_key=${apiKey}`,
-      { cache: "no-store" }
-    );
-    if (!stylesRes.ok) return null;
-
-    const stylesData = await stylesRes.json();
-    const styles: Array<{ id: number; name: string }> = stylesData?.styles ?? [];
-    if (styles.length === 0) return null;
-
-    // Step 2: Find best matching style for the given trim
-    let bestStyle = styles[0];
-    if (input.trim) {
-      const trimLower = input.trim.toLowerCase();
-      const exact   = styles.find(s => s.name.toLowerCase() === trimLower);
-      const partial = styles.find(s =>
-        s.name.toLowerCase().includes(trimLower) || trimLower.includes(s.name.toLowerCase())
-      );
-      bestStyle = exact ?? partial ?? styles[0];
-    }
-
-    // Step 3: Get TMV for this style + mileage + zip
-    const tmvRes = await fetch(
-      `https://api.edmunds.com/v1/api/tmv/tmvservice/calculateusedtmv?styleid=${bestStyle.id}&condition=Good&mileage=${input.mileage}&zip=${input.zipCode}&api_key=${apiKey}`,
-      { cache: "no-store" }
-    );
-    if (!tmvRes.ok) return null;
-
-    const tmvData = await tmvRes.json();
-    const base = tmvData?.tmv?.nationalBasePrice;
-    if (!base) return null;
-
-    // Edmunds returns three price points — use private party as midpoint (most relevant for buyers)
-    const privateParty = base.usedPrivateParty as number | undefined;
-    const retail       = base.usedTmvRetail    as number | undefined;
-    const tradeIn      = base.usedTradeIn      as number | undefined;
-
-    const midpoint = privateParty ?? retail;
-    if (!midpoint || midpoint < 500) return null;
-
-    return {
-      low:      tradeIn      ?? Math.round(midpoint * 0.88),
-      high:     retail       ?? Math.round(midpoint * 1.08),
-      midpoint: midpoint,
-    };
-  } catch (err) {
-    console.error("[Edmunds] error:", err);
-    return null;
-  }
-}
-
-/**
  * Auto.dev Listings API — searches real dealer listings to derive fair value.
  * Free tier: 1,000 calls/mo. Uses median of comparable listings as anchor.
  * Set AUTODEV_API_KEY in env (get one at auto.dev/pricing).
@@ -231,6 +160,7 @@ export async function fetchAutoDevValue(input: CarInput): Promise<AutoDevResult 
       "vehicle.model": input.model,
       "vehicle.year": String(input.year),
       ...(input.trim ? { "vehicle.trim": input.trim } : {}),
+      ...(input.zipCode ? { zip: input.zipCode, radius: "150" } : {}),
     });
 
     // SDK types result.data as {} — cast to array
@@ -305,8 +235,7 @@ interface ValuationResult {
  * in priority order:
  *   1. VinAudit (transaction data, most accurate)
  *   2. Auto.dev (dealer listings)
- *   3. Edmunds TMV (transaction-based fallback)
- *   4. MarketCheck (live listings)
+ *   3. MarketCheck (live listings)
  *
  * Comp metadata is always collected from auto.dev (when available)
  * regardless of which provider wins — this feeds confidence scoring.
@@ -323,17 +252,13 @@ export async function fetchValuation(input: CarInput): Promise<ValuationResult> 
   const errors: ProviderError[] = [];
 
   // Run all providers in parallel
-  const [vinAuditValue, autoDevResult, edmundsValue, marketCheckValue] = await Promise.all([
+  const [vinAuditValue, autoDevResult, marketCheckValue] = await Promise.all([
     fetchVinAuditValue(input).catch((err) => {
       errors.push({ provider: "VinAudit", message: String(err), code: "unknown" });
       return null;
     }),
     fetchAutoDevValue(input).catch((err) => {
       errors.push({ provider: "Auto.dev", message: String(err), code: "unknown" });
-      return null;
-    }),
-    fetchEdmundsTMV(input).catch((err) => {
-      errors.push({ provider: "Edmunds", message: String(err), code: "unknown" });
       return null;
     }),
     fetchMarketCheckValue(input).catch((err) => {
@@ -363,13 +288,6 @@ export async function fetchValuation(input: CarInput): Promise<ValuationResult> 
       sourceType: "listings",
       timestamp: Date.now(),
       compMetadata: compMetadata ?? undefined,
-    };
-  } else if (edmundsValue) {
-    valuation = {
-      range: edmundsValue,
-      source: "Edmunds True Market Value (TMV)",
-      sourceType: "transaction",
-      timestamp: Date.now(),
     };
   } else if (marketCheckValue) {
     valuation = {

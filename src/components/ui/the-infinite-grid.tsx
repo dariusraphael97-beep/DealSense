@@ -1,6 +1,19 @@
 "use client";
-import React, { useRef } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
+
+/** Detect mobile to skip expensive continuous animation + mouse tracking */
+function useIsMobile(): boolean {
+  const [mobile, setMobile] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 768px)");
+    setMobile(mq.matches);
+    const handler = (e: MediaQueryListEvent) => setMobile(e.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
+  return mobile;
+}
 
 export const InfiniteGridHero = ({
   children,
@@ -8,16 +21,19 @@ export const InfiniteGridHero = ({
   children?: React.ReactNode;
 }) => {
   const revealRef = useRef<HTMLDivElement>(null);
+  const isMobile = useIsMobile();
 
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    if (revealRef.current) {
-      revealRef.current.style.setProperty("--mx", `${x}px`);
-      revealRef.current.style.setProperty("--my", `${y}px`);
-    }
-  };
+  const handleMouseMove = isMobile
+    ? undefined
+    : (e: React.MouseEvent<HTMLDivElement>) => {
+        const rect = e.currentTarget.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        if (revealRef.current) {
+          revealRef.current.style.setProperty("--mx", `${x}px`);
+          revealRef.current.style.setProperty("--my", `${y}px`);
+        }
+      };
 
   return (
     <div
@@ -25,7 +41,7 @@ export const InfiniteGridHero = ({
       className={cn("relative w-full min-h-screen flex flex-col items-center justify-center overflow-hidden")}
       style={{ background: "var(--ds-bg)" }}
     >
-      {/* Static dim grid */}
+      {/* Static dim grid — on mobile: no continuous scroll animation */}
       <div
         className="absolute inset-0 z-0"
         style={{
@@ -34,32 +50,36 @@ export const InfiniteGridHero = ({
             linear-gradient(to bottom, var(--ds-grid-dim) 1px, transparent 1px)
           `,
           backgroundSize: "40px 40px",
-          animation: "gridScroll 8s linear infinite",
+          ...(isMobile ? {} : { animation: "gridScroll 8s linear infinite" }),
+          transform: "translateZ(0)", /* GPU layer */
         }}
       />
 
-      {/* Mouse-reveal brighter grid */}
-      <div
-        ref={revealRef}
-        className="absolute inset-0 z-0 pointer-events-none"
-        style={{
-          backgroundImage: `
-            linear-gradient(to right, var(--ds-grid-bright) 1px, transparent 1px),
-            linear-gradient(to bottom, var(--ds-grid-bright) 1px, transparent 1px)
-          `,
-          backgroundSize: "40px 40px",
-          animation: "gridScroll 8s linear infinite",
-          WebkitMaskImage: "radial-gradient(280px circle at var(--mx, -999px) var(--my, -999px), black, transparent)",
-          maskImage: "radial-gradient(280px circle at var(--mx, -999px) var(--my, -999px), black, transparent)",
-        }}
-      />
+      {/* Mouse-reveal brighter grid — desktop only */}
+      {!isMobile && (
+        <div
+          ref={revealRef}
+          className="absolute inset-0 z-0 pointer-events-none"
+          style={{
+            backgroundImage: `
+              linear-gradient(to right, var(--ds-grid-bright) 1px, transparent 1px),
+              linear-gradient(to bottom, var(--ds-grid-bright) 1px, transparent 1px)
+            `,
+            backgroundSize: "40px 40px",
+            animation: "gridScroll 8s linear infinite",
+            WebkitMaskImage: "radial-gradient(280px circle at var(--mx, -999px) var(--my, -999px), black, transparent)",
+            maskImage: "radial-gradient(280px circle at var(--mx, -999px) var(--my, -999px), black, transparent)",
+            transform: "translateZ(0)",
+          }}
+        />
+      )}
 
-      {/* Ambient glow orbs */}
+      {/* Ambient glow orbs — on mobile: smaller blur radius */}
       <div className="absolute inset-0 pointer-events-none z-0">
-        <div className="absolute right-[-15%] top-[-15%] w-[35%] h-[35%] rounded-full blur-[100px]"
-          style={{ background: "var(--ds-orb-indigo)" }} />
-        <div className="absolute left-[-10%] bottom-[-15%] w-[35%] h-[35%] rounded-full blur-[100px]"
-          style={{ background: "var(--ds-orb-blue)" }} />
+        <div className={cn("absolute right-[-15%] top-[-15%] w-[35%] h-[35%] rounded-full", isMobile ? "blur-[60px]" : "blur-[100px]")}
+          style={{ background: "var(--ds-orb-indigo)", transform: "translateZ(0)" }} />
+        <div className={cn("absolute left-[-10%] bottom-[-15%] w-[35%] h-[35%] rounded-full", isMobile ? "blur-[60px]" : "blur-[100px]")}
+          style={{ background: "var(--ds-orb-blue)", transform: "translateZ(0)" }} />
       </div>
 
       {/* Fade bottom edge */}
@@ -71,12 +91,14 @@ export const InfiniteGridHero = ({
         {children}
       </div>
 
-      <style>{`
-        @keyframes gridScroll {
-          0%   { background-position: 0 0; }
-          100% { background-position: 40px 40px; }
-        }
-      `}</style>
+      {!isMobile && (
+        <style>{`
+          @keyframes gridScroll {
+            0%   { background-position: 0 0; }
+            100% { background-position: 40px 40px; }
+          }
+        `}</style>
+      )}
     </div>
   );
 };
