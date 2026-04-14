@@ -1,14 +1,20 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useEffect, useRef, useCallback, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { createClient } from "@/lib/supabase/client";
 
-const FOUNDER_PERKS = [
-  "Free analyses during early access",
-  "Deal Score + fair value + negotiation script",
-  "Your feedback shapes the product",
-  "Founding member perks — kept when pricing launches",
+const PLANS = [
+  { key: "starter",  label: "Starter",  price: "$6.99",  credits: 3,  href: "https://buy.stripe.com/test_8x2cN64QnbvVbEWfjsaAw00" },
+  { key: "standard", label: "Standard", price: "$14.99", credits: 10, href: "https://buy.stripe.com/test_14A28s4Qn8jJ4cu1sCaAw01", popular: true },
+  { key: "pro",      label: "Pro",      price: "$29.99", credits: 25, href: "https://buy.stripe.com/test_eVq4gA82z9nN38q2wGaAw02" },
 ];
+
+function buildStripeLink(baseUrl: string, userId: string | null): string {
+  if (!userId) return baseUrl;
+  const sep = baseUrl.includes("?") ? "&" : "?";
+  return `${baseUrl}${sep}client_reference_id=${userId}`;
+}
 
 interface PaywallModalProps {
   open: boolean;
@@ -16,41 +22,27 @@ interface PaywallModalProps {
 }
 
 export function PaywallModal({ open, onClose }: PaywallModalProps) {
-  const [claiming, setClaiming] = useState(false);
-  const [claimed, setClaimed]   = useState(false);
-  const [error, setError]       = useState<string | null>(null);
-  const modalRef  = useRef<HTMLDivElement>(null);
-  const closeRef  = useRef<HTMLButtonElement>(null);
+  const modalRef = useRef<HTMLDivElement>(null);
+  const closeRef = useRef<HTMLButtonElement>(null);
+  const [userId, setUserId] = useState<string | null>(null);
 
-  // ── Focus trap + Escape handler ────────────────────────────────────────
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id ?? null));
+  }, []);
+
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        onClose();
-        return;
-      }
-
+      if (e.key === "Escape") { onClose(); return; }
       if (e.key !== "Tab" || !modalRef.current) return;
-
       const focusable = modalRef.current.querySelectorAll<HTMLElement>(
-        'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        'button:not([disabled]), [href], input:not([disabled]), [tabindex]:not([tabindex="-1"])'
       );
-      if (focusable.length === 0) return;
-
+      if (!focusable.length) return;
       const first = focusable[0];
       const last  = focusable[focusable.length - 1];
-
-      if (e.shiftKey) {
-        if (document.activeElement === first) {
-          e.preventDefault();
-          last.focus();
-        }
-      } else {
-        if (document.activeElement === last) {
-          e.preventDefault();
-          first.focus();
-        }
-      }
+      if (e.shiftKey) { if (document.activeElement === first) { e.preventDefault(); last.focus(); } }
+      else            { if (document.activeElement === last)  { e.preventDefault(); first.focus(); } }
     },
     [onClose]
   );
@@ -58,48 +50,14 @@ export function PaywallModal({ open, onClose }: PaywallModalProps) {
   useEffect(() => {
     if (!open) return;
     document.addEventListener("keydown", handleKeyDown);
-
-    // Auto-focus the close button when modal opens
     requestAnimationFrame(() => closeRef.current?.focus());
-
-    // Lock body scroll
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
-
     return () => {
       document.removeEventListener("keydown", handleKeyDown);
       document.body.style.overflow = prev;
     };
   }, [open, handleKeyDown]);
-
-  // Clear state when modal closes
-  useEffect(() => {
-    if (!open) {
-      setError(null);
-      setClaiming(false);
-      setClaimed(false);
-    }
-  }, [open]);
-
-  async function handleClaim() {
-    setClaiming(true);
-    setError(null);
-    try {
-      const res = await fetch("/api/founders-credits", { method: "POST" });
-      const data = await res.json();
-      if (!res.ok) {
-        setError(data.error ?? "Something went wrong. Please try again.");
-        setClaiming(false);
-        return;
-      }
-      setClaimed(true);
-      // Reload the page after a short delay so credits refresh
-      setTimeout(() => window.location.reload(), 1500);
-    } catch {
-      setError("Network error. Please check your connection and try again.");
-      setClaiming(false);
-    }
-  }
 
   return (
     <AnimatePresence>
@@ -107,9 +65,7 @@ export function PaywallModal({ open, onClose }: PaywallModalProps) {
         <motion.div
           className="fixed inset-0 z-[100] flex items-center justify-center p-4"
           initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="paywall-title"
+          role="dialog" aria-modal="true" aria-labelledby="paywall-title"
         >
           {/* Backdrop */}
           <motion.div
@@ -134,7 +90,8 @@ export function PaywallModal({ open, onClose }: PaywallModalProps) {
             }}
           >
             {/* Top accent line */}
-            <div className="absolute top-0 left-6 right-6 h-[2px] rounded-full" style={{ background: "linear-gradient(90deg, transparent, #6366f1, transparent)" }} />
+            <div className="absolute top-0 left-6 right-6 h-[2px] rounded-full"
+              style={{ background: "linear-gradient(90deg, transparent, #6366f1, transparent)" }} />
 
             {/* Close button */}
             <button
@@ -142,88 +99,76 @@ export function PaywallModal({ open, onClose }: PaywallModalProps) {
               onClick={onClose}
               aria-label="Close dialog"
               className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full transition-colors"
-              style={{ background: "var(--ds-glass-bg)", color: "var(--ds-text-4)" }}>
+              style={{ background: "var(--ds-glass-bg)", color: "var(--ds-text-4)" }}
+            >
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4" aria-hidden="true">
                 <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
               </svg>
             </button>
 
             {/* Header */}
-            <div className="text-center mb-5">
-              <div className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold mb-4"
-                style={{ background: "linear-gradient(135deg,#4f46e5,#6366f1)", color: "white", boxShadow: "0 0 16px rgba(99,102,241,0.4)" }}>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3" aria-hidden="true">
-                  <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+            <div className="text-center mb-6">
+              <div className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4"
+                style={{ background: "rgba(99,102,241,0.12)", border: "1px solid rgba(99,102,241,0.25)" }}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="#818cf8" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-7 h-7">
+                  <circle cx="12" cy="12" r="10"/>
+                  <line x1="12" y1="8" x2="12" y2="12"/>
+                  <line x1="12" y1="16" x2="12.01" y2="16"/>
                 </svg>
-                Founders Deal
               </div>
-              <h2 id="paywall-title" className="text-xl font-bold text-white mb-1">
-                {claimed ? "You\u2019re all set!" : "You\u2019ve used your analyses"}
+              <h2 id="paywall-title" className="text-xl font-bold text-white mb-1.5">
+                You&apos;re out of credits
               </h2>
-              <p className="text-sm" style={{ color: "rgba(255,255,255,0.4)" }}>
-                {claimed
-                  ? "Credits added — reloading now\u2026"
-                  : "Early access is still free. Claim 5 more analyses and keep checking deals."}
+              <p className="text-sm" style={{ color: "rgba(255,255,255,0.45)" }}>
+                Pick a pack to keep checking deals.
               </p>
             </div>
 
-            {/* Perks */}
-            {!claimed && (
-              <div className="space-y-2 mb-5">
-                {FOUNDER_PERKS.map((v) => (
-                  <div key={v} className="flex items-center gap-2.5 text-sm px-3 py-2 rounded-xl"
-                    style={{ background: "var(--ds-glass-bg)", border: "1px solid var(--ds-badge-border)" }}>
-                    <svg viewBox="0 0 24 24" fill="none" stroke="var(--ds-accent-text)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5 flex-shrink-0" aria-hidden="true">
-                      <polyline points="20 6 9 17 4 12"/>
-                    </svg>
-                    <span style={{ color: "rgba(255,255,255,0.55)" }}>{v}</span>
+            {/* Pricing options */}
+            <div className="space-y-2.5 mb-5">
+              {PLANS.map((plan) => (
+                <a
+                  key={plan.key}
+                  href={buildStripeLink(plan.href, userId)}
+                  onClick={onClose}
+                  className="flex items-center justify-between w-full px-4 py-3 rounded-2xl transition-all hover:brightness-110 active:scale-[0.98]"
+                  style={{
+                    background: plan.popular
+                      ? "linear-gradient(135deg, rgba(79,70,229,0.25), rgba(99,102,241,0.25))"
+                      : "rgba(255,255,255,0.04)",
+                    border: plan.popular
+                      ? "1px solid rgba(99,102,241,0.45)"
+                      : "1px solid rgba(255,255,255,0.08)",
+                  }}
+                >
+                  <div className="flex items-center gap-3">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-semibold text-white">{plan.label}</span>
+                        {plan.popular && (
+                          <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full"
+                            style={{ background: "rgba(99,102,241,0.3)", color: "#a5b4fc" }}>
+                            Most popular
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-xs" style={{ color: "rgba(255,255,255,0.4)" }}>
+                        {plan.credits} analyses
+                      </span>
+                    </div>
                   </div>
-                ))}
-              </div>
-            )}
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-bold text-white">{plan.price}</span>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4" style={{ color: "rgba(255,255,255,0.3)" }}>
+                      <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+                    </svg>
+                  </div>
+                </a>
+              ))}
+            </div>
 
-            {/* Error feedback */}
-            {error && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: "auto" }}
-                className="mb-3 rounded-xl px-3 py-2.5 text-xs font-medium flex items-center gap-2"
-                style={{
-                  background: "rgba(239,68,68,0.12)",
-                  border: "1px solid rgba(239,68,68,0.25)",
-                  color: "#fca5a5",
-                }}
-                role="alert"
-              >
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5 flex-shrink-0" aria-hidden="true">
-                  <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
-                </svg>
-                {error}
-              </motion.div>
-            )}
-
-            {/* CTA */}
-            {claimed ? (
-              <div className="flex items-center justify-center gap-2 py-4">
-                <svg className="animate-spin w-4 h-4 text-indigo-400" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
-                </svg>
-                <span className="text-sm text-indigo-300">Refreshing credits&hellip;</span>
-              </div>
-            ) : (
-              <button
-                onClick={handleClaim}
-                disabled={claiming}
-                className="w-full py-3 rounded-2xl text-sm font-semibold text-center transition-all hover:brightness-110 active:scale-[0.98] text-white disabled:opacity-60"
-                style={{ background: "linear-gradient(135deg, #4f46e5, #6366f1)", boxShadow: "0 0 24px rgba(99,102,241,0.35)" }}
-              >
-                {claiming ? "Claiming\u2026" : "Claim 5 free analyses"}
-              </button>
-            )}
-
-            <p className="text-center text-xs mt-4" style={{ color: "rgba(255,255,255,0.18)" }}>
-              No credit card needed · Paid plans launching soon · Founders keep perks
+            <p className="text-center text-xs" style={{ color: "rgba(255,255,255,0.18)" }}>
+              Secure checkout via Stripe · Credits never expire
             </p>
           </motion.div>
         </motion.div>
