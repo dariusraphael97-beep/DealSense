@@ -44,6 +44,18 @@ const AMOUNT_TO_PLAN: Record<number, { credits: number; plan: string }> = {
 // Disable body parsing — Stripe needs the raw body for signature verification
 export const runtime = "nodejs";
 
+/** GET /api/webhook — env var health check (safe: shows presence, not values) */
+export async function GET() {
+  return NextResponse.json({
+    STRIPE_SECRET_KEY:      !!process.env.STRIPE_SECRET_KEY,
+    STRIPE_WEBHOOK_SECRET:  !!process.env.STRIPE_WEBHOOK_SECRET,
+    SUPABASE_URL:           !!process.env.NEXT_PUBLIC_SUPABASE_URL,
+    SUPABASE_SERVICE_KEY:   !!process.env.SUPABASE_SERVICE_ROLE_KEY,
+    // Partial key prefix to confirm it's the right account (safe to expose)
+    KEY_PREFIX: process.env.STRIPE_SECRET_KEY?.slice(0, 14) ?? "missing",
+  });
+}
+
 export async function POST(req: NextRequest) {
   const body = await req.text();
   const sig  = req.headers.get("stripe-signature");
@@ -61,8 +73,10 @@ export async function POST(req: NextRequest) {
     const stripe = getStripe();
     event = stripe.webhooks.constructEvent(body, sig, webhookSecret);
   } catch (err) {
-    console.error("Webhook signature verification failed:", err);
-    return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
+    const message = err instanceof Error ? err.message : String(err);
+    console.error("Webhook signature verification failed:", message);
+    console.error("Check that STRIPE_WEBHOOK_SECRET on Vercel matches the signing secret in Stripe Dashboard → Webhooks.");
+    return NextResponse.json({ error: "Invalid signature", detail: message }, { status: 400 });
   }
 
   // ── Only handle checkout completions ────────────────────────────────────
