@@ -552,11 +552,12 @@ export default function AnalyzePage() {
   };
 
   const creditsColor =
-    isStaff          ? "var(--ds-accent-text)"
-    : credits === null ? "var(--ds-text-4)"
-    : credits === 0  ? "var(--ds-danger)"
-    : credits === 1  ? "var(--ds-warn)"
+    isStaff                            ? "var(--ds-accent-text)"
+    : credits === null                 ? "var(--ds-text-4)"
+    : credits === 0                    ? "var(--ds-danger)"
+    : credits !== null && credits <= 3 ? "var(--ds-warn)"
     : "var(--ds-success)";
+  const isLow = !isStaff && credits !== null && credits > 0 && credits <= 3;
 
   const ease = [0.22, 1, 0.36, 1] as const;
 
@@ -601,16 +602,32 @@ export default function AnalyzePage() {
             <span className="text-sm" style={{ color: "var(--ds-text-3)" }}>Analyze</span>
           </div>
           <div className="flex items-center gap-3">
-            <button
-              onClick={() => credits === 0 ? setShowPaywall(true) : undefined}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all"
-              style={{ background: "var(--ds-glass-bg)", border: `1px solid ${creditsColor}30`, color: creditsColor, cursor: credits === 0 ? "pointer" : "default" }}
-            >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3">
-                <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/>
-              </svg>
-              {isStaff ? "∞ credits" : credits === null ? "—" : credits === 0 ? "Buy credits" : `${credits} credit${credits !== 1 ? "s" : ""} left`}
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => (credits === 0 || isLow) ? setShowPaywall(true) : undefined}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all"
+                style={{ background: "var(--ds-glass-bg)", border: `1px solid ${creditsColor}40`, color: creditsColor, cursor: (credits === 0 || isLow) ? "pointer" : "default" }}
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3">
+                  <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/>
+                </svg>
+                {isStaff ? "∞ credits" : credits === null ? "—" : credits === 0 ? "Out of credits" : `${credits} credit${credits !== 1 ? "s" : ""} left`}
+              </button>
+              {!isStaff && credits === 0 && (
+                <button onClick={() => setShowPaywall(true)}
+                  className="px-3 py-1.5 rounded-xl text-xs font-semibold text-white transition-all hover:brightness-110"
+                  style={{ background: "linear-gradient(135deg,#4f46e5,#6366f1)", boxShadow: "0 0 12px rgba(99,102,241,0.4)" }}>
+                  Buy Credits
+                </button>
+              )}
+              {isLow && (
+                <button onClick={() => setShowPaywall(true)}
+                  className="px-3 py-1.5 rounded-xl text-xs font-semibold transition-all hover:brightness-110"
+                  style={{ background: "rgba(251,191,36,0.12)", border: "1px solid rgba(251,191,36,0.3)", color: "var(--ds-warn)" }}>
+                  Running low
+                </button>
+              )}
+            </div>
             <UserNav />
           </div>
         </div>
@@ -650,10 +667,10 @@ export default function AnalyzePage() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold mb-1" style={{ color: "var(--ds-text-1)" }}>
-                    You&apos;re in — analyses are free
+                    You have 1 credit — your first analysis is on us
                   </p>
                   <p className="text-xs leading-relaxed" style={{ color: "var(--ds-text-3)" }}>
-                    As a founding member, your analyses are free during early access. Paste a VIN and get your Deal Score. Your feedback helps us build a better product.
+                    Paste a VIN and get your Deal Score, fair value range, and a negotiation script. Each analysis uses 1 credit.
                   </p>
                 </div>
               </div>
@@ -900,18 +917,27 @@ export default function AnalyzePage() {
               )}
 
               {/* Submit */}
-              <button type="submit" disabled={submitting}
-                className="w-full py-3.5 rounded-xl text-sm font-semibold text-white flex items-center justify-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:brightness-110 active:scale-[0.99]"
-                style={{ background: "linear-gradient(135deg, #4f46e5, #6366f1)", boxShadow: "0 0 24px var(--ds-accent-glow), 0 4px 16px var(--ds-shadow-heavy), inset 0 1px 0 rgba(255,255,255,0.12)" }}>
-                Get my Deal Score <IconArrow />
-              </button>
+              {!isStaff && credits === 0 ? (
+                <button type="button" onClick={() => setShowPaywall(true)}
+                  className="w-full py-3.5 rounded-xl text-sm font-semibold text-white flex items-center justify-center gap-2 transition-all hover:brightness-110 active:scale-[0.99]"
+                  style={{ background: "linear-gradient(135deg,#dc2626,#ef4444)", boxShadow: "0 0 24px rgba(239,68,68,0.3), 0 4px 16px var(--ds-shadow-heavy)" }}>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                  Out of credits — buy more to continue
+                </button>
+              ) : (
+                <button type="submit" disabled={submitting}
+                  className="w-full py-3.5 rounded-xl text-sm font-semibold text-white flex items-center justify-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:brightness-110 active:scale-[0.99]"
+                  style={{ background: "linear-gradient(135deg, #4f46e5, #6366f1)", boxShadow: "0 0 24px var(--ds-accent-glow), 0 4px 16px var(--ds-shadow-heavy), inset 0 1px 0 rgba(255,255,255,0.12)" }}>
+                  Get my Deal Score <IconArrow />
+                </button>
+              )}
 
               <div className="flex items-center justify-center gap-4 text-xs" style={{ color: "var(--ds-text-4)" }}>
                 <span className="flex items-center gap-1"><IconShield />VIN-verified data</span>
                 <span>·</span>
                 <span>Results in ~3 seconds</span>
                 <span>·</span>
-                <span>Free during early access</span>
+                <span>1 credit per analysis</span>
               </div>
             </div>
           </motion.div>

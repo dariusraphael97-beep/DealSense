@@ -257,6 +257,22 @@ export async function POST(req: NextRequest) {
       console.error("Credit deduction failed:", deductError ?? "no matching row (race)");
       return NextResponse.json({ error: "No credits remaining." }, { status: 402 });
     }
+
+    // ── Fire-and-forget event logging ──────────────────────────────────────
+    const creditsRemaining = updated[0].credits;
+    supabase.from("events").insert({
+      user_id:    userId,
+      event_type: "analysis_used",
+      properties: { credits_remaining: creditsRemaining },
+    }).then(() => {}, () => {});
+
+    if (creditsRemaining === 0) {
+      supabase.from("events").insert({
+        user_id:    userId,
+        event_type: "credits_exhausted",
+        properties: {},
+      }).then(() => {}, () => {});
+    }
   }
 
   // ── VIN cache DISABLED ───────────────────────────────────────────────────

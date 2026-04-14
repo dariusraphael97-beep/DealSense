@@ -88,22 +88,31 @@ export function UserNav() {
             <div className="px-4 py-3" style={{ borderBottom: "1px solid var(--ds-divider)" }}>
               <p className="text-xs font-medium mb-0.5" style={{ color: "var(--ds-text-4)" }}>Signed in as</p>
               <p className="text-sm font-semibold truncate mb-2" style={{ color: "var(--ds-text-1)" }}>{email}</p>
-              <div className="flex items-center justify-between rounded-lg px-2.5 py-1.5"
-                style={{ background: "var(--ds-badge-bg)", border: "1px solid var(--ds-badge-border)" }}>
-                <div className="flex items-center gap-1.5">
-                  <Zap className="w-3 h-3" style={{ color: credits === 0 ? "var(--ds-danger)" : "#818cf8" }} />
-                  <span className="text-xs font-semibold" style={{ color: credits === 0 ? "var(--ds-danger)" : "var(--ds-text-2)" }}>
-                    {isStaff ? "∞ credits" : credits === null ? "—" : credits === 0 ? "Out of credits" : `${credits} credit${credits !== 1 ? "s" : ""}`}
-                  </span>
-                </div>
-                {!isStaff && credits === 0 && (
-                  <Link href="/#pricing" onClick={() => setOpen(false)}
-                    className="text-[10px] font-semibold px-2 py-0.5 rounded-md text-white"
-                    style={{ background: "linear-gradient(135deg,#4f46e5,#6366f1)" }}>
-                    Buy
-                  </Link>
-                )}
-              </div>
+              {(() => {
+                const isOut  = !isStaff && credits === 0;
+                const isLow  = !isStaff && credits !== null && credits > 0 && credits <= 3;
+                const zapColor = isOut ? "var(--ds-danger)" : isLow ? "var(--ds-warn)" : "#818cf8";
+                const textColor = isOut ? "var(--ds-danger)" : isLow ? "var(--ds-warn)" : "var(--ds-text-2)";
+                const borderColor = isOut ? "rgba(239,68,68,0.3)" : isLow ? "rgba(251,191,36,0.3)" : "var(--ds-badge-border)";
+                return (
+                  <div className="flex items-center justify-between rounded-lg px-2.5 py-1.5"
+                    style={{ background: "var(--ds-badge-bg)", border: `1px solid ${borderColor}` }}>
+                    <div className="flex items-center gap-1.5">
+                      <Zap className="w-3 h-3" style={{ color: zapColor }} />
+                      <span className="text-xs font-semibold" style={{ color: textColor }}>
+                        {isStaff ? "∞ credits" : credits === null ? "—" : isOut ? "Out of credits" : `${credits} credit${credits !== 1 ? "s" : ""}`}
+                      </span>
+                    </div>
+                    {(isOut || isLow) && (
+                      <Link href="/#pricing" onClick={() => setOpen(false)}
+                        className="text-[10px] font-semibold px-2 py-0.5 rounded-md text-white ml-2"
+                        style={{ background: isOut ? "linear-gradient(135deg,#dc2626,#ef4444)" : "linear-gradient(135deg,#4f46e5,#6366f1)" }}>
+                        {isOut ? "Buy" : "Get more"}
+                      </Link>
+                    )}
+                  </div>
+                );
+              })()}
             </div>
 
             {/* Menu items */}

@@ -178,6 +178,13 @@ export async function POST(req: NextRequest) {
     }
 
     console.log(`Webhook: added ${creditsToAdd} credits (${planName}) to user ${userId}`);
+
+    // Fire-and-forget event log
+    supabase.from("events").insert({
+      user_id:    userId,
+      event_type: "purchase_completed",
+      properties: { plan: planName, credits: creditsToAdd, amount_cents: amountPaid },
+    }).then(() => {}, () => {});
   } else {
     console.error(`Webhook: no profile found for user ${userId}`);
   }

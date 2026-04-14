@@ -287,7 +287,7 @@ const scoreFactors = [
 const faqs = [
   { q: "How accurate is the fair value estimate?", a: "It depends on the data available. When we find many comparable listings with consistent pricing, confidence is high and the range is tight. When data is sparse or the vehicle is heavily configurable, we widen the range and tell you. We always show a confidence level so you know how much weight to put on the number." },
   { q: "Why is a VIN required?", a: "A VIN locks in the exact vehicle \u2014 year, make, model, trim, drivetrain, and body style. Without it, we\u2019d be guessing which version of the car you\u2019re looking at. That matters \u2014 a base Honda Accord and a Touring are very different prices." },
-  { q: "Do I need a credit card to try it?", a: "No. Every new account includes one free analysis — no card required. After that, credits are available in packs starting at $6.99. Early access pricing is lower than what we plan to charge as the product grows." },
+  { q: "Do I need a credit card to try it?", a: "No. Every new account includes 1 free credit — no card required. After that, buy a credit pack starting at $6.99. Early access pricing is lower than what we plan to charge as the product grows." },
   { q: "Do I need an account?", a: "Yes \u2014 a free account, takes 30 seconds. Your analysis history, saved reports, and negotiation scripts are tied to it." },
   { q: "How is the monthly payment calculated?", a: "Default: 10% down, 7.5% APR, 60-month term. You can adjust all three on the results page. Your actual rate depends on credit and lender." },
   { q: "What about luxury and performance cars?", a: "Factory packages on vehicles like BMW M-Sport, Porsche, or high-trim trucks can shift value by thousands. We account for vehicle category and show lower confidence when package-level detail is incomplete. The score still works \u2014 just know the range may be wider." },
@@ -370,7 +370,7 @@ export default function HomePage() {
               color: "var(--ds-text-3)",
             }}>
             <IconShield />
-            Early access &mdash; first analysis free, no credit card needed
+            Early access &mdash; 1 free credit on signup, no card needed
           </motion.div>
 
           {/* Headline */}
@@ -748,9 +748,9 @@ export default function HomePage() {
                 <span className="font-heading text-4xl font-extrabold bg-clip-text text-transparent bg-gradient-to-b from-slate-800 to-slate-600 dark:from-white dark:to-white/70">$6</span>
                 <span className="text-sm font-medium" style={{ color: "var(--ds-text-4)" }}>.99</span>
               </div>
-              <p className="text-xs mb-6" style={{ color: "var(--ds-text-4)" }}>3 analyses &middot; <span style={{ color: "var(--ds-text-3)" }}>$2.33 each</span></p>
+              <p className="text-xs mb-6" style={{ color: "var(--ds-text-4)" }}>3 credits &middot; <span style={{ color: "var(--ds-text-3)" }}>$2.33 each</span></p>
               <ul className="space-y-2.5 mb-7 flex-1">
-                {["3 car analyses","Deal Score + verdict","Fair value range","Negotiation script","Depreciation chart"].map(item => (
+                {["3 credits","Deal Score + verdict","Fair value range","Negotiation script","Depreciation chart"].map(item => (
                   <li key={item} className="flex items-center gap-2.5 text-sm" style={{ color: "var(--ds-text-2)" }}>
                     <span className="w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0"
                       style={{ background:"var(--ds-success-bg)", border:"1px solid var(--ds-success-border)", color: "var(--ds-success)" }}>
@@ -780,9 +780,9 @@ export default function HomePage() {
                 <span className="font-heading text-4xl font-extrabold bg-clip-text text-transparent bg-gradient-to-b from-slate-800 to-slate-600 dark:from-white dark:to-white/70">$14</span>
                 <span className="text-sm font-medium" style={{ color: "var(--ds-text-4)" }}>.99</span>
               </div>
-              <p className="text-xs mb-6" style={{ color: "var(--ds-text-4)" }}>10 analyses &middot; <span style={{ color: "var(--ds-text-3)" }}>$1.50 each</span></p>
+              <p className="text-xs mb-6" style={{ color: "var(--ds-text-4)" }}>10 credits &middot; <span style={{ color: "var(--ds-text-3)" }}>$1.50 each</span></p>
               <ul className="space-y-2.5 mb-7 flex-1">
-                {["10 car analyses","Everything in Starter","VIN-verified pricing","Save & share reports","Analysis history"].map(item => (
+                {["10 credits","Everything in Starter","VIN-verified pricing","Save & share reports","Analysis history"].map(item => (
                   <li key={item} className="flex items-center gap-2.5 text-sm" style={{ color: "var(--ds-text-2)" }}>
                     <span className="w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0 text-indigo-500 dark:text-indigo-300"
                       style={{ background:"rgba(99,102,241,0.10)", border:"1px solid rgba(99,102,241,0.22)" }}>
@@ -812,9 +812,9 @@ export default function HomePage() {
                 <span className="font-heading text-4xl font-extrabold bg-clip-text text-transparent bg-gradient-to-b from-slate-800 to-slate-600 dark:from-white dark:to-white/70">$29</span>
                 <span className="text-sm font-medium" style={{ color: "var(--ds-text-4)" }}>.99</span>
               </div>
-              <p className="text-xs mb-6" style={{ color: "var(--ds-text-4)" }}>25 analyses &middot; <span style={{ color: "var(--ds-text-3)" }}>$1.20 each</span></p>
+              <p className="text-xs mb-6" style={{ color: "var(--ds-text-4)" }}>25 credits &middot; <span style={{ color: "var(--ds-text-3)" }}>$1.20 each</span></p>
               <ul className="space-y-2.5 mb-7 flex-1">
-                {["25 car analyses","Everything in Standard","Best per-analysis value","Priority support","Early access to new features"].map(item => (
+                {["25 credits","Everything in Standard","Best per-credit value","Priority support","Early access to new features"].map(item => (
                   <li key={item} className="flex items-center gap-2.5 text-sm" style={{ color: "var(--ds-text-2)" }}>
                     <span className="w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0"
                       style={{ background:"var(--ds-success-bg)", border:"1px solid var(--ds-success-border)", color: "var(--ds-success)" }}>
