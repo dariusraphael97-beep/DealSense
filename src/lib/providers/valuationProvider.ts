@@ -155,16 +155,22 @@ export async function fetchAutoDevValue(input: CarInput): Promise<AutoDevResult 
     const milesLow = Math.max(0, Math.round(input.mileage * 0.5));
     const milesHigh = Math.max(milesLow + 5000, Math.round(input.mileage * 1.8));
 
-    const result = await auto.listings({
-      "vehicle.make": input.make,
-      "vehicle.model": input.model,
-      "vehicle.year": String(input.year),
-      ...(input.trim ? { "vehicle.trim": input.trim } : {}),
-      ...(input.zipCode ? { zip: input.zipCode, radius: "150" } : {}),
-    });
+    // Try progressively wider radii until we get enough comps.
+    // 150mi covers most metro areas; 300mi and 500mi help rural/rare vehicles.
+    let listings: Record<string, unknown>[] = [];
+    for (const searchRadius of ["150", "300", "500"]) {
+      const result = await auto.listings({
+        "vehicle.make": input.make,
+        "vehicle.model": input.model,
+        "vehicle.year": String(input.year),
+        ...(input.trim ? { "vehicle.trim": input.trim } : {}),
+        ...(input.zipCode ? { zip: input.zipCode, radius: searchRadius } : {}),
+      });
+      listings = (Array.isArray(result?.data) ? result.data : []) as Record<string, unknown>[];
+      // Stop expanding if we have enough raw listings to work with
+      if (listings.length >= 5) break;
+    }
 
-    // SDK types result.data as {} — cast to array
-    const listings = (Array.isArray(result?.data) ? result.data : []) as Record<string, unknown>[];
     if (listings.length < 3) return null;
 
     // Extract prices, filter to valid range and mileage window

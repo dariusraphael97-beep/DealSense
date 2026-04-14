@@ -477,10 +477,12 @@ const PROFILES: Record<string, DepreciationProfile> = {
   "gmc|hummer ev":            { fiveYear: 0.52, tenYear: 0.28, mileagePenaltyPer1k: 55 },
 
   // ── ELECTRIC VEHICLES ─────────────────────────────────────────────────────
-  "tesla|model 3":            { fiveYear: 0.54, tenYear: 0.28, mileagePenaltyPer1k: 42 },
-  "tesla|model y":            { fiveYear: 0.56, tenYear: 0.30, mileagePenaltyPer1k: 44 },
-  "tesla|model s":            { fiveYear: 0.46, tenYear: 0.22, mileagePenaltyPer1k: 50 },
-  "tesla|model x":            { fiveYear: 0.46, tenYear: 0.22, mileagePenaltyPer1k: 50 },
+  // Tesla: Elon price cuts (2023–2024) significantly accelerated real-world depreciation.
+  // Model 3/Y have lost ~45–50% in 5 years in practice (iSeeCars 2024 data).
+  "tesla|model 3":            { fiveYear: 0.50, tenYear: 0.24, mileagePenaltyPer1k: 42 },
+  "tesla|model y":            { fiveYear: 0.52, tenYear: 0.26, mileagePenaltyPer1k: 44 },
+  "tesla|model s":            { fiveYear: 0.42, tenYear: 0.20, mileagePenaltyPer1k: 50 },
+  "tesla|model x":            { fiveYear: 0.42, tenYear: 0.20, mileagePenaltyPer1k: 50 },
   "rivian|r1t":               { fiveYear: 0.55, tenYear: 0.28, mileagePenaltyPer1k: 46 },
   "rivian|r1s":               { fiveYear: 0.55, tenYear: 0.28, mileagePenaltyPer1k: 48 },
   "lucid|air":                { fiveYear: 0.38, tenYear: 0.16, mileagePenaltyPer1k: 60 },

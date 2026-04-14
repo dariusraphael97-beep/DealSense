@@ -56,14 +56,16 @@ const MODEL_BASE: Record<string, number> = {
   "toyota|corolla hybrid":     26000,
   "toyota|corolla gr":         31000,
   "toyota|gr corolla":         38000,
-  "toyota|rav4":               30000,
-  "toyota|rav4 hybrid":        35000,
-  "toyota|rav4 prime":         42000,
-  "toyota|highlander":         38000,
+  "toyota|rav4":               32000,  // XLE/Adventure are the volume sellers (~$32k), not base LE
+  "toyota|rav4 hybrid":        36000,
+  "toyota|rav4 prime":         44000,
+  "toyota|highlander":         40000,
   "toyota|highlander hybrid":  47000,
-  "toyota|4runner":            40000,
+  "toyota|4runner":            44000,  // SR5 Premium/TRD Off-Road are volume sellers (~$44k), not base SR5
+  "toyota|4runner sr5":        40000,
+  "toyota|4runner trd off-road": 46000,
   "toyota|4runner trd pro":    56000,
-  "toyota|tacoma":             34000,
+  "toyota|tacoma":             38000,  // TRD Off-Road/Sport are the volume sellers, not base SR
   "toyota|tacoma trd pro":     52000,
   "toyota|tacoma trailhunter": 60000,
   "toyota|tundra":             48000,  // median trim (Limited range) — was 42k (base SR)
@@ -120,7 +122,11 @@ const MODEL_BASE: Record<string, number> = {
   "ford|f-250":                48000,
   "ford|f-350":                52000,
   "ford|escape":               28000,
-  "ford|explorer":             38000,
+  "ford|explorer":             42000,  // XLT/Limited are volume sellers, not base
+  "ford|explorer xlt":         42000,
+  "ford|explorer limited":     50000,
+  "ford|explorer st":          56000,
+  "ford|explorer platinum":    58000,
   "ford|edge":                 36000,
   "ford|bronco":               38000,
   "ford|bronco raptor":        70000,
@@ -249,7 +255,10 @@ const MODEL_BASE: Record<string, number> = {
   "hyundai|elantra n":  33000,
   "hyundai|sonata":     26000,
   "hyundai|sonata n line": 30000,
-  "hyundai|tucson":     28000,
+  "hyundai|tucson":     30000,  // SEL is the volume seller (~$30k), not base SE
+  "hyundai|tucson sel": 32000,
+  "hyundai|tucson limited": 38000,
+  "hyundai|tucson n line": 34000,
   "hyundai|santa fe":   32000,
   "hyundai|palisade":   36000,
   "hyundai|kona":       24000,
@@ -262,8 +271,14 @@ const MODEL_BASE: Record<string, number> = {
 
   // ── Kia ─────────────────────────────────────────────────────────────────
   "kia|sportage":    27000,
-  "kia|sorento":     30000,
-  "kia|telluride":   36000,
+  "kia|sorento":     33000,  // EX/SX are more common than base LX
+  "kia|sorento ex":  36000,
+  "kia|sorento sx":  40000,
+  "kia|telluride":   40000,  // EX ($41.7k) is the volume seller, not base LX ($35.5k)
+  "kia|telluride ex": 42000,
+  "kia|telluride sx": 47000,
+  "kia|telluride sx prestige": 51000,
+  "kia|telluride sxp": 51000,
   "kia|forte":       20000,
   "kia|k5":          25000,
   "kia|k5 gt":       32000,
@@ -861,7 +876,9 @@ export function getBaseFairValueRange(input: CarInput, category: VehicleCategory
   const midBase = baseNewPrice * retention;
 
   // 3. Mileage adjustment — reduced weight for performance/exotic (PART 1D)
-  const avgMileage = Math.max(ageYears * 13500, 1);
+  // Floor at 6,750 (half-year baseline) so current-model-year cars don't get
+  // treated as having astronomically high mileage relative to a 1-mile average.
+  const avgMileage = Math.max(ageYears * 13500, 6750);
   const mileDelta = input.mileage - avgMileage;
   const mileagePenalty = profile.mileagePenaltyPer1k;
 
@@ -1503,7 +1520,9 @@ export function scoreCarDeal(
   const currentYear = new Date().getFullYear();
   const ageYears    = Math.max(0, currentYear - input.year);
   const avgMileage  = ageYears * 13500;
-  const mileageRatio = input.mileage / Math.max(avgMileage, 1);
+  // Floor at 6,750 (half-year baseline) — prevents current-model-year cars
+  // from getting astronomically high mileage ratios against a near-zero average.
+  const mileageRatio = input.mileage / Math.max(avgMileage, 6750);
 
   // ── Price vs. market (primary driver) ──
   let score = 65;
