@@ -2,13 +2,12 @@
 
 import { useEffect, useRef, useCallback, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { createClient } from "@/lib/supabase/client";
-import { STRIPE_LINKS, buildStripeLink } from "@/lib/stripe-config";
+import { CheckoutModal, type CheckoutPlan } from "@/components/ui/checkout-modal";
 
-const PLANS = [
-  { key: "starter",  label: "Starter",  price: "$6.99",  credits: 3,  href: STRIPE_LINKS.starter  },
-  { key: "standard", label: "Standard", price: "$14.99", credits: 10, href: STRIPE_LINKS.standard, popular: true },
-  { key: "pro",      label: "Pro",      price: "$29.99", credits: 25, href: STRIPE_LINKS.pro       },
+const PLANS: { key: CheckoutPlan; label: string; price: string; credits: number; popular?: true }[] = [
+  { key: "starter",  label: "Starter",  price: "$6.99",  credits: 3  },
+  { key: "standard", label: "Standard", price: "$14.99", credits: 10, popular: true },
+  { key: "pro",      label: "Pro",      price: "$29.99", credits: 25 },
 ];
 
 interface PaywallModalProps {
@@ -19,12 +18,7 @@ interface PaywallModalProps {
 export function PaywallModal({ open, onClose }: PaywallModalProps) {
   const modalRef = useRef<HTMLDivElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
-  const [userId, setUserId] = useState<string | null>(null);
-
-  useEffect(() => {
-    const supabase = createClient();
-    supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id ?? null));
-  }, []);
+  const [checkoutPlan, setCheckoutPlan] = useState<CheckoutPlan | null>(null);
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
@@ -54,89 +48,94 @@ export function PaywallModal({ open, onClose }: PaywallModalProps) {
     };
   }, [open, handleKeyDown]);
 
+  function selectPlan(plan: CheckoutPlan) {
+    onClose();           // close paywall
+    setCheckoutPlan(plan); // open checkout
+  }
+
   return (
-    <AnimatePresence>
-      {open && (
-        <motion.div
-          className="fixed inset-0 z-[100] flex items-center justify-center p-4"
-          initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-          role="dialog" aria-modal="true" aria-labelledby="paywall-title"
-        >
-          {/* Backdrop */}
+    <>
+      {/* ── Plan selection modal ── */}
+      <AnimatePresence>
+        {open && (
           <motion.div
-            className="absolute inset-0"
-            style={{ background: "rgba(0,0,0,0.78)", backdropFilter: "blur(10px)" }}
-            onClick={onClose}
-            aria-hidden="true"
-          />
-
-          {/* Modal */}
-          <motion.div
-            ref={modalRef}
-            initial={{ opacity: 0, scale: 0.94, y: 20 }}
-            animate={{ opacity: 1, scale: 1,    y: 0  }}
-            exit={{   opacity: 0, scale: 0.94, y: 10  }}
-            transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-            className="relative w-full max-w-md rounded-3xl p-6"
-            style={{
-              background: "linear-gradient(145deg, rgba(12,12,22,0.99), rgba(8,8,18,0.99))",
-              border: "1px solid rgba(255,255,255,0.07)",
-              boxShadow: "0 32px 80px rgba(0,0,0,0.65), 0 0 0 1px rgba(99,102,241,0.12)",
-            }}
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4"
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            role="dialog" aria-modal="true" aria-labelledby="paywall-title"
           >
-            {/* Top accent line */}
-            <div className="absolute top-0 left-6 right-6 h-[2px] rounded-full"
-              style={{ background: "linear-gradient(90deg, transparent, #6366f1, transparent)" }} />
-
-            {/* Close button */}
-            <button
-              ref={closeRef}
+            {/* Backdrop */}
+            <motion.div
+              className="absolute inset-0"
+              style={{ background: "rgba(0,0,0,0.78)", backdropFilter: "blur(10px)" }}
               onClick={onClose}
-              aria-label="Close dialog"
-              className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full transition-colors"
-              style={{ background: "var(--ds-glass-bg)", color: "var(--ds-text-4)" }}
+              aria-hidden="true"
+            />
+
+            {/* Modal */}
+            <motion.div
+              ref={modalRef}
+              initial={{ opacity: 0, scale: 0.94, y: 20 }}
+              animate={{ opacity: 1, scale: 1,    y: 0  }}
+              exit={{   opacity: 0, scale: 0.94, y: 10  }}
+              transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+              className="relative w-full max-w-md rounded-3xl p-6"
+              style={{
+                background: "linear-gradient(145deg, rgba(12,12,22,0.99), rgba(8,8,18,0.99))",
+                border: "1px solid rgba(255,255,255,0.07)",
+                boxShadow: "0 32px 80px rgba(0,0,0,0.65), 0 0 0 1px rgba(99,102,241,0.12)",
+              }}
             >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4" aria-hidden="true">
-                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-              </svg>
-            </button>
+              {/* Top accent */}
+              <div className="absolute top-0 left-6 right-6 h-[2px] rounded-full"
+                style={{ background: "linear-gradient(90deg, transparent, #6366f1, transparent)" }} />
 
-            {/* Header */}
-            <div className="text-center mb-6">
-              <div className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4"
-                style={{ background: "rgba(99,102,241,0.12)", border: "1px solid rgba(99,102,241,0.25)" }}>
-                <svg viewBox="0 0 24 24" fill="none" stroke="#818cf8" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-7 h-7">
-                  <circle cx="12" cy="12" r="10"/>
-                  <line x1="12" y1="8" x2="12" y2="12"/>
-                  <line x1="12" y1="16" x2="12.01" y2="16"/>
+              {/* Close */}
+              <button
+                ref={closeRef}
+                onClick={onClose}
+                aria-label="Close dialog"
+                className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full transition-colors"
+                style={{ background: "var(--ds-glass-bg)", color: "var(--ds-text-4)" }}
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+                  strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4" aria-hidden="true">
+                  <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
                 </svg>
-              </div>
-              <h2 id="paywall-title" className="text-xl font-bold text-white mb-1.5">
-                You&apos;re out of credits
-              </h2>
-              <p className="text-sm" style={{ color: "rgba(255,255,255,0.45)" }}>
-                Pick a pack to keep checking deals.
-              </p>
-            </div>
+              </button>
 
-            {/* Pricing options */}
-            <div className="space-y-2.5 mb-5">
-              {PLANS.map((plan) => (
-                <a
-                  key={plan.key}
-                  href={buildStripeLink(plan.href, userId)}
-                  onClick={onClose}
-                  className="flex items-center justify-between w-full px-4 py-3 rounded-2xl transition-all hover:brightness-110 active:scale-[0.98]"
-                  style={{
-                    background: plan.popular
-                      ? "linear-gradient(135deg, rgba(79,70,229,0.25), rgba(99,102,241,0.25))"
-                      : "rgba(255,255,255,0.04)",
-                    border: plan.popular
-                      ? "1px solid rgba(99,102,241,0.45)"
-                      : "1px solid rgba(255,255,255,0.08)",
-                  }}
-                >
-                  <div className="flex items-center gap-3">
+              {/* Header */}
+              <div className="text-center mb-6">
+                <div className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4"
+                  style={{ background: "rgba(99,102,241,0.12)", border: "1px solid rgba(99,102,241,0.25)" }}>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="#818cf8" strokeWidth="1.5"
+                    strokeLinecap="round" strokeLinejoin="round" className="w-7 h-7">
+                    <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+                  </svg>
+                </div>
+                <h2 id="paywall-title" className="text-xl font-bold text-white mb-1.5">
+                  You&apos;re out of credits
+                </h2>
+                <p className="text-sm" style={{ color: "rgba(255,255,255,0.45)" }}>
+                  Each credit = 1 full analysis. Pick a pack to keep going.
+                </p>
+              </div>
+
+              {/* Plans */}
+              <div className="space-y-2.5 mb-5">
+                {PLANS.map((plan) => (
+                  <button
+                    key={plan.key}
+                    onClick={() => selectPlan(plan.key)}
+                    className="flex items-center justify-between w-full px-4 py-3 rounded-2xl transition-all hover:brightness-110 active:scale-[0.98] text-left"
+                    style={{
+                      background: plan.popular
+                        ? "linear-gradient(135deg, rgba(79,70,229,0.25), rgba(99,102,241,0.25))"
+                        : "rgba(255,255,255,0.04)",
+                      border: plan.popular
+                        ? "1px solid rgba(99,102,241,0.45)"
+                        : "1px solid rgba(255,255,255,0.08)",
+                    }}
+                  >
                     <div>
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-semibold text-white">{plan.label}</span>
@@ -148,26 +147,34 @@ export function PaywallModal({ open, onClose }: PaywallModalProps) {
                         )}
                       </div>
                       <span className="text-xs" style={{ color: "rgba(255,255,255,0.4)" }}>
-                        {plan.credits} analyses
+                        {plan.credits} full {plan.credits === 1 ? "analysis" : "analyses"} · never expire
                       </span>
                     </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-bold text-white">{plan.price}</span>
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4" style={{ color: "rgba(255,255,255,0.3)" }}>
-                      <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
-                    </svg>
-                  </div>
-                </a>
-              ))}
-            </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-bold text-white">{plan.price}</span>
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+                        strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4"
+                        style={{ color: "rgba(255,255,255,0.3)" }}>
+                        <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+                      </svg>
+                    </div>
+                  </button>
+                ))}
+              </div>
 
-            <p className="text-center text-xs" style={{ color: "rgba(255,255,255,0.18)" }}>
-              Secure checkout via Stripe · Credits never expire
-            </p>
+              <p className="text-center text-xs" style={{ color: "rgba(255,255,255,0.18)" }}>
+                🔒 Secure checkout via Stripe · Credits never expire
+              </p>
+            </motion.div>
           </motion.div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+        )}
+      </AnimatePresence>
+
+      {/* ── Embedded checkout — opens after plan is selected ── */}
+      <CheckoutModal
+        plan={checkoutPlan}
+        onClose={() => setCheckoutPlan(null)}
+      />
+    </>
   );
 }

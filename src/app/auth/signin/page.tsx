@@ -96,6 +96,26 @@ function GlassInput({ label, type = "text", value, onChange, error, suffix }: {
   )
 }
 
+// ─── Map Supabase error codes → human-readable messages ──────────────────────
+function mapAuthError(message: string): string {
+  const m = message.toLowerCase()
+  if (m.includes("rate limit") || m.includes("over_email_send_rate_limit") || m.includes("email rate limit"))
+    return "Email sending is temporarily rate-limited. Please wait 60 seconds and try again."
+  if (m.includes("user already registered") || m.includes("already been registered") || m.includes("already registered"))
+    return "An account with this email already exists. Sign in instead."
+  if (m.includes("invalid login credentials"))
+    return "Incorrect email or password."
+  if (m.includes("email not confirmed"))
+    return "Please verify your email before signing in. Check your inbox (and spam folder)."
+  if (m.includes("too many requests") || m.includes("429"))
+    return "Too many attempts. Please wait a minute before trying again."
+  if (m.includes("network") || m.includes("failed to fetch"))
+    return "Network error. Check your connection and try again."
+  if (m.includes("signup is disabled"))
+    return "New signups are temporarily disabled. Please try again later."
+  return message
+}
+
 // ─── Auth form ────────────────────────────────────────────────────────────────
 function AuthForm() {
   const router = useRouter()
@@ -105,6 +125,8 @@ function AuthForm() {
   const [showPass, setShowPass] = useState(false)
   const [loading, setLoading] = useState(false)
   const [resendTimer, setResendTimer] = useState(0)
+  const [resendError, setResendError] = useState("")
+  const [resendSuccess, setResendSuccess] = useState(false)
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [fullName, setFullName] = useState("")
@@ -155,7 +177,7 @@ function AuthForm() {
     if (!supabaseAvailable) {
       await new Promise(r => setTimeout(r, 1200))
       setLoading(false)
-      router.push("/")
+      router.push("/analyze")
       return
     }
 
@@ -163,31 +185,51 @@ function AuthForm() {
     if (mode === "signin") {
       const { error } = await supabase.auth.signInWithPassword({ email, password })
       if (error) {
-        setGlobalError(error.message === "Invalid login credentials" ? "Incorrect email or password." : error.message)
+        setGlobalError(mapAuthError(error.message))
         setLoading(false)
         return
       }
-      router.push("/")
+      router.push("/analyze")
       router.refresh()
     } else {
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email, password,
         options: {
           data: {
             full_name: fullName,
             ...(refCode ? { referred_by_code: refCode } : {}),
           },
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
+          emailRedirectTo: `${window.location.origin}/auth/callback?next=/analyze`,
         },
       })
       // Clear referral code from localStorage after use
       if (typeof window !== "undefined") localStorage.removeItem("ds_ref")
-      if (error) { setGlobalError(error.message); setLoading(false); return }
+      if (error) { setGlobalError(mapAuthError(error.message)); setLoading(false); return }
+      // If Supabase email confirmation is disabled, a session is returned immediately
+      if (data.session) {
+        router.push("/analyze")
+        router.refresh()
+        return
+      }
+      // Email confirmation required — show verify screen
       setStep("verify")
       setResendTimer(60)
     }
     setLoading(false)
   }, [email, password, fullName, mode, router, supabaseAvailable, refCode])
+
+  const handleResend = useCallback(async () => {
+    if (!supabaseAvailable || resendTimer > 0) return
+    setResendError("")
+    setResendSuccess(false)
+    const { error } = await createClient().auth.resend({ type: "signup", email })
+    if (error) {
+      setResendError(mapAuthError(error.message))
+    } else {
+      setResendTimer(60)
+      setResendSuccess(true)
+    }
+  }, [supabaseAvailable, resendTimer, email])
 
   const switchMode = (m: "signin" | "signup") => {
     setMode(m); setErrors({}); setGlobalError(""); setPassword("")
@@ -204,11 +246,16 @@ function AuthForm() {
             <IconMail />
           </motion.div>
           <h2 className="text-2xl font-bold text-white mb-2">Check your inbox</h2>
-          <p className="text-white/50 text-sm leading-relaxed mb-6">
+          <p className="text-white/50 text-sm leading-relaxed mb-1">
             Verification link sent to<br /><span className="text-white/80 font-medium">{email}</span>
           </p>
+          <p className="text-white/30 text-xs mb-6">Usually arrives within 1–2 minutes</p>
           <div className="space-y-3 mb-6">
-            {["Open the email from DealSense", "Click the verification link", "You'll be signed in automatically"].map((s, i) => (
+            {[
+              "Open the email from DealSense",
+              "Click the verification link",
+              "You'll be signed in automatically",
+            ].map((s, i) => (
               <motion.div key={s} initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.3 + i * 0.08 }} className="flex items-center gap-3 text-left">
                 <span className="w-5 h-5 rounded-full bg-emerald-500/20 border border-emerald-400/30 flex items-center justify-center text-emerald-400 flex-shrink-0"><IconCheck /></span>
@@ -216,12 +263,25 @@ function AuthForm() {
               </motion.div>
             ))}
           </div>
+
+          {/* Spam folder reminder */}
+          <div className="rounded-xl px-4 py-3 mb-5 text-left"
+            style={{ background: "rgba(251,191,36,0.06)", border: "1px solid rgba(251,191,36,0.15)" }}>
+            <p className="text-xs" style={{ color: "rgba(251,191,36,0.7)" }}>
+              <span className="font-semibold">Don&apos;t see it?</span> Check your spam or junk folder — some providers filter new senders.
+            </p>
+          </div>
+
           <div className="border-t border-white/10 pt-5 space-y-3">
-            <button onClick={async () => {
-              if (!supabaseAvailable || resendTimer > 0) return
-              await createClient().auth.resend({ type: "signup", email })
-              setResendTimer(60)
-            }} disabled={resendTimer > 0}
+            {resendError && (
+              <p className="text-xs text-red-400">{resendError}</p>
+            )}
+            {resendSuccess && (
+              <p className="text-xs text-emerald-400">Email resent — check your inbox again.</p>
+            )}
+            <button
+              onClick={handleResend}
+              disabled={resendTimer > 0}
               className="w-full text-sm text-white/50 hover:text-white/80 transition-colors disabled:cursor-not-allowed">
               {resendTimer > 0 ? `Resend in ${resendTimer}s` : "Resend verification email"}
             </button>
@@ -263,7 +323,7 @@ function AuthForm() {
               {mode === "signin" ? "Welcome back" : "Check your first deal free"}
             </h2>
             <p className="text-white/40 text-sm mt-1">
-              {mode === "signin" ? "Sign in to your DealSense account" : "Free during early access — no credit card needed"}
+              {mode === "signin" ? "Sign in to your DealSense account" : "1 free credit on signup — no card needed"}
             </p>
           </motion.div>
         </AnimatePresence>

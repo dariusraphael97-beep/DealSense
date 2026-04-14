@@ -18,6 +18,7 @@ import { RecommendedOffer } from "@/components/ui/recommended-offer";
 import { MarketPositionBadge } from "@/components/ui/market-position-badge";
 import { DealStrengthTag } from "@/components/ui/deal-strength-tag";
 import { addRecentlyViewed } from "@/lib/recentlyViewed";
+import { NegotiationScriptSection } from "@/components/ui/negotiation-scripts";
 
 const ease = [0.22, 1, 0.36, 1] as const;
 const fadeUp = { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0, transition: { duration: 0.5, ease } } };
@@ -459,10 +460,10 @@ export default function PersistedResultPage() {
   );
 
   const { input, score, verdict, fairValueRange, priceDelta, priceDeltaPct,
-          monthlyPayment, reasons, aiSummary, negotiationScript, priceSource, createdAt,
+          monthlyPayment, reasons, aiSummary, negotiationScript, negotiationScripts, priceSource, createdAt,
           confidenceLevel, confidenceScore, confidenceBreakdown, vehicleCategory,
           optionDataStatus, valuationWarnings, keyInsights, trimValidation,
-          compMetadata } = result;
+          compMetadata, isStatisticalFallback } = result as typeof result & { isStatisticalFallback?: boolean };
 
   const isVinVerified = typeof priceSource === "string" && priceSource.toLowerCase().includes("vinaudit");
 
@@ -527,6 +528,15 @@ export default function PersistedResultPage() {
       </nav>
 
       <div className="mx-auto max-w-4xl px-4 py-8 space-y-5 pb-20">
+
+        {/* ── Statistical fallback notice ── */}
+        {isStatisticalFallback && (
+          <div className="flex items-start gap-3 px-4 py-3 rounded-xl text-sm"
+            style={{ background: "var(--ds-warn-bg)", border: "1px solid var(--ds-warn-border)", color: "var(--ds-warn)" }}>
+            <span className="mt-0.5 flex-shrink-0">⚠</span>
+            <span>Live market data was temporarily limited when this analysis ran — pricing is based on estimated data. Results may be less precise than usual.</span>
+          </div>
+        )}
 
         {/* ── Shared banner ── */}
         {!result.isOwner && (
@@ -877,61 +887,15 @@ export default function PersistedResultPage() {
         )}
 
         {/* ── Negotiation / closing script ── */}
-        {negotiationScript && (
+        {(negotiationScripts || negotiationScript) && (
           <FadeSection>
-            <motion.div variants={fadeUp} className="rounded-2xl overflow-hidden"
-              style={{ border: "1px solid rgba(99,102,241,0.25)", boxShadow: "0 0 40px rgba(99,102,241,0.08)" }}>
-              <div className="px-6 py-4 flex items-center justify-between"
-                style={{ background: "rgba(99,102,241,0.08)", borderBottom: "1px solid rgba(99,102,241,0.15)" }}>
-                <div className="flex items-center gap-2.5">
-                  <div className="w-2 h-2 rounded-full bg-indigo-500"/>
-                  <p className="text-xs font-bold uppercase tracking-[0.18em] text-indigo-500 dark:text-indigo-400">
-                    {verdict === "Buy" ? "Your Closing Script"
-                      : verdict === "Walk Away" ? "Your Walk-Away Script"
-                      : verdict === "Needs Option Review" ? "Your Option Inquiry Script"
-                      : verdict === "Possibly Overpriced" ? "Your Inquiry Script"
-                      : verdict === "Fair Deal" ? "Your Closing Script"
-                      : "Your Negotiation Script"}
-                  </p>
-                </div>
-                <button
-                  onClick={() => handleCopyScript(negotiationScript)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
-                  style={{
-                    background: scriptCopied ? "var(--ds-success-bg)" : "rgba(99,102,241,0.10)",
-                    border: scriptCopied ? "1px solid var(--ds-success-border)" : "1px solid rgba(99,102,241,0.22)",
-                    color: scriptCopied ? "var(--ds-success)" : "var(--ds-accent-text)",
-                  }}>
-                  {scriptCopied ? <><IconCheckLg />Copied!</> : <><IconCopy />Copy script</>}
-                </button>
-              </div>
-              <div className="px-6 py-5" style={{ background: "var(--ds-card-bg)" }}>
-                <p className="text-sm leading-relaxed" style={{ color: "var(--ds-text-1)", fontStyle: "italic", lineHeight: 1.85 }}>
-                  &ldquo;{negotiationScript}&rdquo;
-                </p>
-                <p className="text-xs mt-4 pt-4" style={{ color: "var(--ds-text-4)", borderTop: "1px solid var(--ds-divider)" }}>
-                  {verdict === "Buy" || verdict === "Fair Deal"
-                    ? confidenceLevel === "High"
-                      ? "💡 This appears well-priced based on strong data — focus on confirming out-the-door fees, not pushing the sticker lower."
-                      : "💡 This appears competitively priced, though some data gaps exist. Confirm configuration details and focus on out-the-door fees."
-                    : verdict === "Walk Away"
-                    ? "💡 Be prepared to actually walk. Sellers often come back with a lower number when they see you mean it."
-                    : verdict === "Needs Option Review"
-                    ? "💡 Ask for a full option/package list before discussing price. Configuration can shift the estimated fair value significantly on this type of vehicle."
-                    : verdict === "Possibly Overpriced"
-                    ? confidenceLevel === "High"
-                      ? "💡 This appears overpriced based on market data. Negotiate firmly using comparable listings."
-                      : "💡 This may be above fair value, but verify the full configuration first — some options can justify a premium. Our estimate has limited data."
-                    : confidenceLevel === "High"
-                      ? "💡 Be ready to show your data. Sellers respond better when you can cite comparable listings."
-                      : "💡 Our estimate has some data gaps. Customize your approach with comparable listings, service records, and a pre-purchase inspection."}
-                </p>
-                {confidenceLevel !== "High" && (
-                  <p className="text-[10px] mt-2" style={{ color: "var(--ds-text-4)" }}>
-                    Note: This script is based on estimated values with {confidenceLevel.toLowerCase()} confidence. Verify key details before using specific numbers in negotiation.
-                  </p>
-                )}
-              </div>
+            <motion.div variants={fadeUp}>
+              <NegotiationScriptSection
+                negotiationScripts={negotiationScripts}
+                negotiationScript={negotiationScript}
+                verdict={verdict}
+                confidenceLevel={confidenceLevel}
+              />
             </motion.div>
           </FadeSection>
         )}
@@ -974,7 +938,7 @@ export default function PersistedResultPage() {
                 Don&apos;t overpay on your next car.
               </p>
               <p className="text-sm mb-6" style={{ color: "var(--ds-text-3)", maxWidth: 360, margin: "0 auto 24px" }}>
-                Paste a VIN, get a Deal Score, fair value range, and a negotiation script — in under a minute. Free during early access.
+                Paste a VIN, get a Deal Score, fair value range, and a negotiation script — in under a minute. First analysis free, no card needed.
               </p>
               <Link href="/analyze"
                 className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-white text-sm"

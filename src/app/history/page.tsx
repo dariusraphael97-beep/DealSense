@@ -123,7 +123,9 @@ export default function HistoryPage() {
               <div>
                 <p className="text-xs font-semibold uppercase tracking-wide mb-0.5" style={{ color: "var(--ds-text-4)" }}>Credit balance</p>
                 {isStaff ? (
-                  <p className="text-2xl font-extrabold font-heading" style={{ color: "#818cf8" }}>∞</p>
+                  <p className="text-2xl font-extrabold font-heading" style={{ color: "#818cf8" }}>Unlimited
+                    <span className="text-sm font-normal ml-1.5" style={{ color: "var(--ds-text-3)" }}>staff access</span>
+                  </p>
                 ) : (
                   <p className="text-2xl font-extrabold font-heading" style={{ color: creditColor }}>
                     {credits ?? "—"}

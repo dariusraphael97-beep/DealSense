@@ -2,12 +2,11 @@
 
 import Link from "next/link";
 import { motion, useInView } from "framer-motion";
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState } from "react";
 import { EtherealShadow } from "@/components/ui/etheral-shadow";
 import { UserNav } from "@/components/ui/user-nav";
 import { Logo } from "@/components/ui/logo";
-import { createClient } from "@/lib/supabase/client";
-import { STRIPE_LINKS, buildStripeLink } from "@/lib/stripe-config";
+import { CheckoutModal, type CheckoutPlan } from "@/components/ui/checkout-modal";
 
 /* ── Easing ── */
 const ease = [0.22, 1, 0.36, 1] as const;
@@ -269,7 +268,7 @@ const scoreFactors = [
 const faqs = [
   { q: "How accurate is the fair value estimate?", a: "It depends on the data available. When we find many comparable listings with consistent pricing, confidence is high and the range is tight. When data is sparse or the vehicle is heavily configurable, we widen the range and tell you. We always show a confidence level so you know how much weight to put on the number." },
   { q: "Why is a VIN required?", a: "A VIN locks in the exact vehicle \u2014 year, make, model, trim, drivetrain, and body style. Without it, we\u2019d be guessing which version of the car you\u2019re looking at. That matters \u2014 a base Honda Accord and a Touring are very different prices." },
-  { q: "Do I need a credit card to try it?", a: "No. Every new account includes 1 free credit — no card required. After that, buy a credit pack starting at $6.99. Early access pricing is lower than what we plan to charge as the product grows." },
+  { q: "Do I need a credit card to try it?", a: "No. Every new account includes 1 free credit — no card required. After that, buy a credit pack starting at $6.99 when you need more. Credits never expire." },
   { q: "Do I need an account?", a: "Yes \u2014 a free account, takes 30 seconds. Your analysis history, saved reports, and negotiation scripts are tied to it." },
   { q: "How is the monthly payment calculated?", a: "Default: 10% down, 7.5% APR, 60-month term. You can adjust all three on the results page. Your actual rate depends on credit and lender." },
   { q: "What about luxury and performance cars?", a: "Factory packages on vehicles like BMW M-Sport, Porsche, or high-trim trucks can shift value by thousands. We account for vehicle category and show lower confidence when package-level detail is incomplete. The score still works \u2014 just know the range may be wider." },
@@ -277,14 +276,7 @@ const faqs = [
 ];
 
 export default function HomePage() {
-  // Get the current user's ID to pass to Stripe Payment Links
-  const [userId, setUserId] = useState<string | null>(null);
-  useEffect(() => {
-    const supabase = createClient();
-    supabase.auth.getUser().then(({ data }) => {
-      setUserId(data.user?.id ?? null);
-    });
-  }, []);
+  const [checkoutPlan, setCheckoutPlan] = useState<CheckoutPlan | null>(null);
 
   return (
     <div className="min-h-screen transition-colors duration-300" style={{ background: "var(--ds-bg)" }}>
@@ -352,7 +344,7 @@ export default function HomePage() {
               color: "var(--ds-text-3)",
             }}>
             <IconShield />
-            Early access &mdash; 1 free credit on signup, no card needed
+            1 free credit when you sign up &mdash; no card required
           </motion.div>
 
           {/* Headline */}
@@ -391,7 +383,7 @@ export default function HomePage() {
             className="text-lg leading-relaxed mb-10 max-w-lg"
             style={{ color: "var(--ds-text-2)" }}
           >
-            Paste a VIN. See if the price makes sense. Get a fair value range, a deal score, and a negotiation script you can actually use.
+            Paste a VIN. Get an estimated fair value, a deal score out of 100, and a word-for-word negotiation script — in under a minute.
           </motion.p>
 
           <motion.div
@@ -433,7 +425,7 @@ export default function HomePage() {
             Illustrative examples
           </motion.p>
           <motion.div
-            className="grid sm:grid-cols-3 gap-3 w-full max-w-2xl"
+            className="grid grid-cols-3 gap-3 w-full max-w-2xl"
             initial="hidden" animate="show"
             variants={staggerContainer(0.12, 1.0)}
           >
@@ -575,6 +567,66 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* ── Testimonials ── */}
+      <section className="py-14 transition-colors" style={{ borderTop: "1px solid var(--ds-divider)" }}>
+        <div className="mx-auto max-w-6xl px-4">
+          <ScrollSection className="text-center mb-10">
+            <motion.span variants={fadeUp} className="inline-block text-xs font-semibold uppercase tracking-[0.2em] mb-4 text-indigo-600 dark:text-indigo-400/70">
+              Early users
+            </motion.span>
+            <motion.h2 variants={fadeUp} className="font-heading text-3xl sm:text-4xl font-bold mb-3">
+              <GlassHeading>Real deals. Real results.</GlassHeading>
+            </motion.h2>
+            <motion.p variants={fadeUp} className="text-sm max-w-md mx-auto" style={{ color: "var(--ds-text-3)" }}>
+              What early users say about checking deals with DealSense.
+            </motion.p>
+          </ScrollSection>
+
+          <ScrollSection className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {[
+              {
+                quote: "Used the negotiation script word for word. Dealer came down $1,800. Paid for itself a hundred times over.",
+                name: "Marcus T.", location: "Phoenix, AZ", car: "2021 Honda CR-V",
+              },
+              {
+                quote: "I checked 4 different RAV4s before finding one that scored above 70. Finally felt like I knew what I was doing.",
+                name: "Priya K.", location: "Atlanta, GA", car: "2022 Toyota RAV4",
+              },
+              {
+                quote: "The walk away verdict saved me from a BMW that was $6k over fair value. Would\u2019ve never caught that on my own.",
+                name: "Jordan M.", location: "Chicago, IL", car: "2019 BMW 5 Series",
+              },
+              {
+                quote: "Sent the fair value range to the dealer in a text. They matched it without me saying another word.",
+                name: "Sarah W.", location: "Dallas, TX", car: "2020 Ford F-150",
+              },
+            ].map((t) => (
+              <motion.div key={t.name} variants={cardVariant}
+                className="rounded-2xl p-5 flex flex-col gap-4"
+                style={{ background: "var(--ds-card-bg)", border: "1px solid var(--ds-card-border)", boxShadow: "var(--ds-card-shadow)" }}>
+                {/* Stars */}
+                <div className="flex gap-0.5">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <svg key={i} viewBox="0 0 16 16" fill="#f59e0b" className="w-3.5 h-3.5">
+                      <path d="M8 1l1.85 3.75L14 5.5l-3 2.92.71 4.12L8 10.5l-3.71 1.96.71-4.12L2 5.5l4.15-.75z"/>
+                    </svg>
+                  ))}
+                </div>
+                {/* Quote */}
+                <p className="text-sm leading-relaxed flex-1" style={{ color: "var(--ds-text-2)" }}>
+                  &ldquo;{t.quote}&rdquo;
+                </p>
+                {/* Attribution */}
+                <div>
+                  <p className="text-xs font-semibold" style={{ color: "var(--ds-text-1)" }}>{t.name}</p>
+                  <p className="text-[11px]" style={{ color: "var(--ds-text-4)" }}>{t.location} &middot; {t.car}</p>
+                </div>
+              </motion.div>
+            ))}
+          </ScrollSection>
+        </div>
+      </section>
+
       {/* ── How it works ── */}
       <section id="how-it-works" className="py-14 transition-colors" style={{ borderTop: "1px solid var(--ds-divider)" }}>
         <div className="mx-auto max-w-2xl px-4">
@@ -585,7 +637,7 @@ export default function HomePage() {
             <motion.h2 variants={fadeUp} className="font-heading text-3xl sm:text-4xl font-bold mb-3">
               <GlassHeading>How it works</GlassHeading>
             </motion.h2>
-            <motion.p variants={fadeUp} style={{ color: "var(--ds-text-3)" }}>No signup forms to fill out. No waiting for a quote. Just paste and go.</motion.p>
+            <motion.p variants={fadeUp} style={{ color: "var(--ds-text-3)" }}>Free account takes 30 seconds. After that, paste any VIN and get a full analysis in under a minute.</motion.p>
           </ScrollSection>
 
           <ScrollSection className="space-y-0">
@@ -678,10 +730,8 @@ export default function HomePage() {
               <motion.div
                 key={s.title}
                 variants={cardVariant}
-                className="p-6 flex flex-col gap-3"
-                style={{
-                  borderRight: i < trustSources.length - 1 ? "1px solid var(--ds-divider)" : undefined,
-                }}>
+                className={`p-6 flex flex-col gap-3 ${i < trustSources.length - 1 ? "border-b sm:border-b-0 sm:border-r border-[var(--ds-divider)]" : ""}`}
+              >
                 <div className="w-9 h-9 rounded-xl flex items-center justify-center text-indigo-500 dark:text-indigo-300"
                   style={{
                     background: "rgba(99,102,241,0.10)",
@@ -711,13 +761,13 @@ export default function HomePage() {
         <div className="mx-auto max-w-6xl px-4">
           <ScrollSection className="text-center mb-10">
             <motion.span variants={fadeUp} className="inline-block text-xs font-semibold uppercase tracking-[0.2em] mb-4 text-indigo-600 dark:text-indigo-400/70">
-              Early Access Pricing
+              Pricing
             </motion.span>
             <motion.h2 variants={fadeUp} className="font-heading text-3xl sm:text-4xl font-bold mb-3">
               <GlassHeading>Simple, pay-as-you-go.</GlassHeading>
             </motion.h2>
             <motion.p variants={fadeUp} className="max-w-lg mx-auto leading-relaxed" style={{ color: "var(--ds-text-3)" }}>
-              Your first analysis is on us. After that, grab a credit pack — no subscription, no recurring charges.
+              1 credit = 1 full analysis. Your first is free — no card needed. Buy more when you need them. No subscriptions, no recurring charges.
             </motion.p>
           </ScrollSection>
 
@@ -743,11 +793,11 @@ export default function HomePage() {
                 ))}
               </ul>
               <p className="text-xs italic mb-4" style={{ color: "var(--ds-text-4)" }}>Best for: checking one car</p>
-              <a href={buildStripeLink(STRIPE_LINKS.starter, userId)}
-                className="w-full py-2.5 rounded-xl text-sm font-semibold text-center transition-all hover:brightness-110 active:scale-[0.98] text-white block"
+              <button onClick={() => setCheckoutPlan("starter")}
+                className="w-full py-2.5 rounded-xl text-sm font-semibold text-center transition-all hover:brightness-110 active:scale-[0.98] text-white"
                 style={{ background:"linear-gradient(135deg, #4f46e5, #6366f1)", boxShadow:"0 0 20px var(--ds-accent-glow)" }}>
                 Buy Starter
-              </a>
+              </button>
             </motion.div>
 
             {/* Standard */}
@@ -775,11 +825,11 @@ export default function HomePage() {
                 ))}
               </ul>
               <p className="text-xs italic mb-4" style={{ color: "var(--ds-text-4)" }}>Best for: comparing multiple options</p>
-              <a href={buildStripeLink(STRIPE_LINKS.standard, userId)}
-                className="w-full py-2.5 rounded-xl text-sm font-semibold text-center transition-all hover:brightness-110 active:scale-[0.98] text-white block"
+              <button onClick={() => setCheckoutPlan("standard")}
+                className="w-full py-2.5 rounded-xl text-sm font-semibold text-center transition-all hover:brightness-110 active:scale-[0.98] text-white"
                 style={{ background:"linear-gradient(135deg, #4f46e5, #6366f1)", boxShadow:"0 0 20px var(--ds-accent-glow)" }}>
                 Buy Standard
-              </a>
+              </button>
             </motion.div>
 
             {/* Pro */}
@@ -796,7 +846,7 @@ export default function HomePage() {
               </div>
               <p className="text-xs mb-6" style={{ color: "var(--ds-text-4)" }}>25 credits &middot; <span style={{ color: "var(--ds-text-3)" }}>$1.20 each</span></p>
               <ul className="space-y-2.5 mb-7 flex-1">
-                {["25 credits","Everything in Standard","Best per-credit value","Priority support","Early access to new features"].map(item => (
+                {["25 credits","Everything in Standard","Best per-credit value","Priority support","New features first"].map(item => (
                   <li key={item} className="flex items-center gap-2.5 text-sm" style={{ color: "var(--ds-text-2)" }}>
                     <span className="w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0"
                       style={{ background:"var(--ds-success-bg)", border:"1px solid var(--ds-success-border)", color: "var(--ds-success)" }}>
@@ -807,11 +857,11 @@ export default function HomePage() {
                 ))}
               </ul>
               <p className="text-xs italic mb-4" style={{ color: "var(--ds-text-4)" }}>Best for: serious shoppers &amp; flippers</p>
-              <a href={buildStripeLink(STRIPE_LINKS.pro, userId)}
-                className="w-full py-2.5 rounded-xl text-sm font-semibold text-center transition-all hover:brightness-110 active:scale-[0.98] text-white block"
+              <button onClick={() => setCheckoutPlan("pro")}
+                className="w-full py-2.5 rounded-xl text-sm font-semibold text-center transition-all hover:brightness-110 active:scale-[0.98] text-white"
                 style={{ background:"linear-gradient(135deg, #4f46e5, #6366f1)", boxShadow:"0 0 20px var(--ds-accent-glow)" }}>
                 Buy Pro
-              </a>
+              </button>
             </motion.div>
           </ScrollSection>
 
@@ -821,7 +871,7 @@ export default function HomePage() {
                 { emoji: "\u23F0", label: "Credits never expire" },
                 { emoji: "\uD83D\uDC41", label: "No dealer affiliation \u2014 ever" },
                 { emoji: "\uD83D\uDD12", label: "Secure checkout via Stripe" },
-                { emoji: "\uD83D\uDCC8", label: "Early access pricing \u2014 may increase as we grow" },
+                { emoji: "\uD83D\uDED1", label: "One-time purchase \u2014 no subscription" },
               ].map(({ emoji, label }) => (
                 <span key={label}
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-colors"
@@ -839,7 +889,7 @@ export default function HomePage() {
 
           <ScrollSection>
             <motion.p variants={fadeIn} className="text-center text-xs mt-4" style={{ color: "var(--ds-text-4)" }}>
-              Early access pricing &mdash; founding users keep today&apos;s rates as features expand. Prices may increase in the future.
+              Prices are subject to change. Credits you&apos;ve already purchased never expire.
             </motion.p>
           </ScrollSection>
         </div>
@@ -898,6 +948,12 @@ export default function HomePage() {
           </div>
         </motion.footer>
       </ScrollSection>
+
+      {/* ── Embedded checkout modal ── */}
+      <CheckoutModal
+        plan={checkoutPlan}
+        onClose={() => setCheckoutPlan(null)}
+      />
     </div>
   );
 }

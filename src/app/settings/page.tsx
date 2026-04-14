@@ -294,33 +294,37 @@ export default function SettingsPage() {
             </motion.div>
 
             {/* ── Referral ── */}
-            {referralCode && (
-              <motion.div variants={fadeUp} className="rounded-2xl p-6" style={{ background: "var(--ds-card-bg)", border: "1px solid var(--ds-card-border)", boxShadow: "var(--ds-card-shadow)" }}>
-                <SectionHeader
-                  icon={<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>}
-                  title="Referral"
-                  subtitle="Invite friends to DealSense."
-                />
+            <motion.div variants={fadeUp} className="rounded-2xl p-6" style={{ background: "var(--ds-card-bg)", border: "1px solid var(--ds-card-border)", boxShadow: "var(--ds-card-shadow)" }}>
+              <SectionHeader
+                icon={<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>}
+                title="Refer a friend"
+                subtitle="Share your link. When a friend signs up and buys credits, you get 1 free credit."
+              />
 
-                <Row label="Your referral link" hint="Share your link with friends.">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-mono truncate max-w-[140px]" style={{ color: "var(--ds-text-3)" }}>
-                      /ref/{referralCode}
-                    </span>
-                    <button
-                      onClick={copyRefLink}
-                      className="text-xs px-2.5 py-1 rounded-lg transition-all flex-shrink-0"
-                      style={{
-                        background: refCopied ? "var(--ds-success-bg)" : "var(--ds-badge-bg)",
-                        border: refCopied ? "1px solid var(--ds-success-border)" : "1px solid var(--ds-badge-border)",
-                        color: refCopied ? "var(--ds-success)" : "var(--ds-text-2)",
-                      }}>
-                      {refCopied ? "✓ Copied!" : "Copy link"}
-                    </button>
-                  </div>
-                </Row>
-              </motion.div>
-            )}
+              <Row label="Your referral link" hint="Anyone who signs up through your link starts with your referral attached.">
+                <div className="flex items-center gap-2">
+                  {referralCode ? (
+                    <>
+                      <span className="text-xs font-mono truncate max-w-[140px]" style={{ color: "var(--ds-text-3)" }}>
+                        /ref/{referralCode}
+                      </span>
+                      <button
+                        onClick={copyRefLink}
+                        className="text-xs px-2.5 py-1 rounded-lg transition-all flex-shrink-0"
+                        style={{
+                          background: refCopied ? "var(--ds-success-bg)" : "var(--ds-badge-bg)",
+                          border: refCopied ? "1px solid var(--ds-success-border)" : "1px solid var(--ds-badge-border)",
+                          color: refCopied ? "var(--ds-success)" : "var(--ds-text-2)",
+                        }}>
+                        {refCopied ? "✓ Copied!" : "Copy link"}
+                      </button>
+                    </>
+                  ) : (
+                    <span className="text-xs" style={{ color: "var(--ds-text-4)" }}>Generating…</span>
+                  )}
+                </div>
+              </Row>
+            </motion.div>
 
             {/* ── Credits & Billing ── */}
             <motion.div variants={fadeUp} className="rounded-2xl p-6" style={{ background: "var(--ds-card-bg)", border: "1px solid var(--ds-card-border)", boxShadow: "var(--ds-card-shadow)" }}>

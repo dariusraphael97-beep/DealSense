@@ -98,11 +98,37 @@ export interface ScoreResult {
   compMetadata?: CompMetadata;
 }
 
+/* ── Negotiation scripts ─────────────────────────────────────────────────────
+ * Each analysis now returns 3 tone variations, each broken into 5 sections.
+ * The legacy `negotiationScript` string is kept for backwards compatibility
+ * with analyses stored before this schema change. */
+export interface NegotiationScriptVariant {
+  opening: string;       // First line — establishes position
+  valuePosition: string; // How you reference market data naturally
+  justification: string; // Why the price should move, or why you act fast
+  ask: string;           // The specific thing you want
+  close: string;         // Commit to buy or signal walk-away
+}
+
+export interface NegotiationScripts {
+  confident:  NegotiationScriptVariant; // Direct, data-backed, gets to the point
+  calm:       NegotiationScriptVariant; // Friendly, collaborative, leaves room for dialogue
+  aggressive: NegotiationScriptVariant; // Max leverage, references walk-away power
+  keyPoints:  string[];                 // 4–5 bullet talking points (≤8 words each)
+  priceAnchor: string | null;           // e.g. "Target: $22,500–$23,000" (overpriced only)
+  contextNote: string | null;           // Low/medium confidence caveat
+}
+
 export interface AnalysisResult extends ScoreResult {
   aiSummary: string;
-  negotiationScript: string;
+  negotiationScript: string;           // Legacy — assembled from confident variant
+  negotiationScripts?: NegotiationScripts; // New structured format
   input: CarInput;
-  priceSource: string; // describes which pricing layer was used
+  priceSource: string;
+  /** True when live market data was unavailable and the statistical model was used as fallback. */
+  isStatisticalFallback?: boolean;
+  /** True when this result was served from the server-side analysis cache (no credit consumed). */
+  fromCache?: boolean;
 }
 
 export interface VinDecodeResult {

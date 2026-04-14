@@ -611,7 +611,7 @@ export default function AnalyzePage() {
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3">
                   <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/>
                 </svg>
-                {isStaff ? "∞ credits" : credits === null ? "—" : credits === 0 ? "Out of credits" : `${credits} credit${credits !== 1 ? "s" : ""} left`}
+                {isStaff ? "Unlimited" : credits === null ? "—" : credits === 0 ? "Out of credits" : `${credits} credit${credits !== 1 ? "s" : ""} left`}
               </button>
               {!isStaff && credits === 0 && (
                 <button onClick={() => setShowPaywall(true)}
@@ -684,7 +684,7 @@ export default function AnalyzePage() {
             Check this deal
           </h1>
           <p className="mt-2 text-sm leading-relaxed" style={{ color: "var(--ds-text-3)" }}>
-            Paste the VIN from any listing. Get a Deal Score, fair value range, and a negotiation script you can actually use.
+            Paste a VIN or listing link. Get a Deal Score, estimated fair value, and a negotiation script — in under a minute.
           </p>
           <div className="mt-3 flex items-center gap-1.5 text-xs" style={{ color: "var(--ds-text-4)" }}>
             <IconShield />
@@ -879,7 +879,7 @@ export default function AnalyzePage() {
               <div className="h-px" style={{ background: "var(--ds-divider)" }} />
 
               {/* Mileage + Price + ZIP */}
-              <div className="grid sm:grid-cols-3 gap-5">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-5">
                 <Field label="Mileage" required htmlFor="field-mileage">
                   <div className="relative">
                     <input id="field-mileage" type="number" value={form.mileage || ""} onChange={(e) => setField("mileage", parseInt(e.target.value, 10) || 0)}
@@ -898,14 +898,14 @@ export default function AnalyzePage() {
                       onBlur={(e)  => Object.assign(e.target.style, iStyle)} />
                   </div>
                 </Field>
-                <Field label="ZIP Code" required htmlFor="field-zip">
+                <div className="col-span-2 sm:col-span-1"><Field label="ZIP Code" required htmlFor="field-zip">
                   <input id="field-zip" type="text" value={form.zipCode}
                     onChange={(e) => setField("zipCode", e.target.value.replace(/\D/g, "").slice(0, 5))}
                     placeholder="90210" pattern="\d{5}" required
                     className={inputCls + " font-mono tracking-widest placeholder:opacity-50"} style={iStyle}
                     onFocus={(e) => Object.assign(e.target.style, iFocus)}
                     onBlur={(e)  => Object.assign(e.target.style, iStyle)} />
-                </Field>
+                </Field></div>
               </div>
 
               {/* Error */}

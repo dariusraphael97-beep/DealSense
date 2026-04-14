@@ -1,6 +1,10 @@
 import type { CarInput, PriceRange, NormalizedValuation, ProviderError, CompMetadata } from "@/lib/types";
 import { valuationCache, VALUATION_CACHE_TTL } from "@/lib/cache";
+import { recordApiCall } from "@/lib/rateLimiter";
 import { AutoDev } from "@auto.dev/sdk";
+
+/** ms timeout for each individual external API fetch call */
+const FETCH_TIMEOUT_MS = 6000;
 
 // ── Cache key builder ──────────────────────────────────────────────────
 
@@ -20,6 +24,9 @@ export async function fetchVinAuditValue(input: CarInput): Promise<PriceRange | 
   if (!apiKey || !input.vin) return null;
 
   try {
+    const { nearLimit } = recordApiCall("vinaudit");
+    if (nearLimit) console.warn("[valuation] vinaudit quota near limit");
+
     const params = new URLSearchParams({
       key: apiKey,
       vin: input.vin,
@@ -28,7 +35,7 @@ export async function fetchVinAuditValue(input: CarInput): Promise<PriceRange | 
     });
     const res = await fetch(
       `https://api.vinaudit.com/query.php?${params}`,
-      { next: { revalidate: 3600 } }
+      { signal: AbortSignal.timeout(FETCH_TIMEOUT_MS), next: { revalidate: 3600 } }
     );
     if (!res.ok) return null;
     const data = await res.json();
@@ -64,6 +71,9 @@ export async function fetchMarketCheckValue(input: CarInput): Promise<PriceRange
   const milesMin = Math.max(0, Math.round(miles * 0.4));
   const milesMax = Math.round(miles * 2.5 + 15000); // generous upper bound
 
+  const { nearLimit } = recordApiCall("marketcheck");
+  if (nearLimit) console.warn("[valuation] marketcheck quota near limit");
+
   for (const radius of ["100", "500", "2000"]) {
     try {
       const params = new URLSearchParams({
@@ -80,10 +90,10 @@ export async function fetchMarketCheckValue(input: CarInput): Promise<PriceRange
       });
       const res = await fetch(
         `https://mc-api.marketcheck.com/v2/search/car/active?${params}`,
-        { cache: "no-store" }
+        { cache: "no-store", signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) }
       );
       if (!res.ok) {
-        // If radius restriction on free tier, still try without mileage filter
+        // Free tier may restrict radius — retry the current radius without mileage filter
         const params2 = new URLSearchParams({
           api_key: apiKey,
           year:    String(input.year),
@@ -94,10 +104,9 @@ export async function fetchMarketCheckValue(input: CarInput): Promise<PriceRange
           radius,
           rows:    "50",
         });
-        params2.set("radius", "100");
         const res2 = await fetch(
           `https://mc-api.marketcheck.com/v2/search/car/active?${params2}`,
-          { cache: "no-store" }
+          { cache: "no-store", signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) }
         );
         if (!res2.ok) continue;
         const data2 = await res2.json();
@@ -149,6 +158,9 @@ export async function fetchAutoDevValue(input: CarInput): Promise<AutoDevResult 
   if (!apiKey) return null;
 
   try {
+    const { nearLimit } = recordApiCall("autodev");
+    if (nearLimit) console.warn("[valuation] autodev quota near limit");
+
     const auto = new AutoDev({ apiKey });
 
     // Build mileage bounds for filtering (±50% of input mileage, min 5k window)

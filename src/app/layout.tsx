@@ -46,10 +46,37 @@ export const metadata: Metadata = {
   },
 };
 
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "DealSense",
+  "applicationCategory": "FinanceApplication",
+  "operatingSystem": "Web",
+  "url": SITE_URL,
+  "description": SITE_DESC,
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "USD",
+    "description": "1 free analysis credit on sign up. Additional credits from $6.99.",
+  },
+  "featureList": [
+    "VIN-based vehicle analysis",
+    "Fair value range estimation",
+    "Deal Score 0–100",
+    "Word-for-word negotiation script",
+    "Depreciation chart",
+  ],
+};
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
       <body suppressHydrationWarning className="bg-slate-50 dark:bg-[#030303] text-slate-800 dark:text-white/90 antialiased font-sans transition-colors duration-300">
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
         <Providers>
           {children}
           <CompareTrayWrapper />

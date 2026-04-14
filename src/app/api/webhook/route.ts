@@ -187,6 +187,36 @@ export async function POST(req: NextRequest) {
 
     console.log(`Webhook: added ${creditsToAdd} credits (${planName}) to user ${userId}`);
 
+    // ── Referral reward ──────────────────────────────────────────────────
+    // If this buyer was referred, give the referrer 1 bonus credit (first purchase only)
+    const referredBy = (profile as Record<string, unknown>).referred_by as string | null ?? null;
+    if (referredBy) {
+      // Only reward on first purchase (total_purchased was 0 before this)
+      const wasFirstPurchase = (profile.total_purchased ?? 0) === 0;
+      if (wasFirstPurchase) {
+        const { data: referrerProfile } = await supabase
+          .from("profiles")
+          .select("credits")
+          .eq("id", referredBy)
+          .maybeSingle();
+
+        if (referrerProfile) {
+          await supabase
+            .from("profiles")
+            .update({ credits: referrerProfile.credits + 1 })
+            .eq("id", referredBy);
+
+          console.log(`Webhook: referral reward — 1 credit added to referrer ${referredBy}`);
+
+          supabase.from("events").insert({
+            user_id:    referredBy,
+            event_type: "referral_reward",
+            properties: { referee_id: userId, credits_added: 1 },
+          }).then(() => {}, () => {});
+        }
+      }
+    }
+
     // Fire-and-forget event log
     supabase.from("events").insert({
       user_id:    userId,

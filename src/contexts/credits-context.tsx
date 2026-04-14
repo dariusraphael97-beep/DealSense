@@ -42,7 +42,32 @@ export function CreditsProvider({ children }: { children: React.ReactNode }) {
       .single();
     setCredits(data?.credits ?? null);
     setRole((data?.role as UserRole) ?? "user");
-    setReferralCode(data?.referral_code ?? null);
+
+    // Auto-generate referral code if user doesn't have one
+    let code = data?.referral_code ?? null;
+    if (!code && user) {
+      code = user.id.replace(/-/g, "").slice(0, 8).toLowerCase();
+      await supabase.from("profiles").update({ referral_code: code }).eq("id", user.id);
+    }
+    setReferralCode(code);
+
+    // Resolve referred_by_code → referred_by user ID (only on first load if not yet set)
+    const profileData = data as Record<string, unknown> | null;
+    const alreadyHasReferredBy = profileData?.referred_by != null;
+    const metaRefCode = (user?.user_metadata?.referred_by_code as string | undefined) ?? null;
+    if (!alreadyHasReferredBy && metaRefCode && user) {
+      const { data: referrerProfile } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("referral_code", metaRefCode.toLowerCase())
+        .maybeSingle();
+      if (referrerProfile && referrerProfile.id !== user.id) {
+        await supabase
+          .from("profiles")
+          .update({ referred_by: referrerProfile.id })
+          .eq("id", user.id);
+      }
+    }
     setLoading(false);
   }, []);
 

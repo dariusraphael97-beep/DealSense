@@ -22,37 +22,88 @@ async function requireAdmin() {
   return user;
 }
 
-/** GET /api/admin — list all users with analysis counts */
+/** GET /api/admin — list users + today's operational stats */
 export async function GET() {
   const admin = await requireAdmin();
   if (!admin) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const sb = serviceClient();
-  const { data: profiles, error } = await sb
-    .from("profiles")
-    .select("id, email, credits, role, referral_code, created_at")
-    .order("created_at", { ascending: false });
+  const since24h = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  // Run all queries in parallel for speed
+  const [
+    profilesRes,
+    countsRes,
+    signupsTodayRes,
+    analysesTodayRes,
+    purchasesTodayRes,
+    recentPurchasesRes,
+    creditsFulfilledRes,
+  ] = await Promise.all([
+    sb.from("profiles")
+      .select("id, email, credits, role, referral_code, created_at")
+      .order("created_at", { ascending: false }),
 
-  // Use GROUP BY via RPC-style query to count analyses per user efficiently
-  // instead of fetching every row and counting in JS
-  const { data: counts } = await sb
-    .from("analyses")
-    .select("user_id, count:user_id.count()", { count: "exact" })
-    .not("user_id", "is", null);
+    sb.from("analyses")
+      .select("user_id, count:user_id.count()", { count: "exact" })
+      .not("user_id", "is", null),
+
+    sb.from("profiles")
+      .select("*", { count: "exact", head: true })
+      .gte("created_at", since24h),
+
+    sb.from("events")
+      .select("*", { count: "exact", head: true })
+      .eq("event_type", "analysis_used")
+      .gte("created_at", since24h),
+
+    sb.from("purchases")
+      .select("amount_cents, credits_granted")
+      .gte("created_at", since24h),
+
+    sb.from("purchases")
+      .select("id, plan_name, credits_granted, amount_cents, customer_email, user_id, created_at")
+      .order("created_at", { ascending: false })
+      .limit(25),
+
+    sb.from("events")
+      .select("*", { count: "exact", head: true })
+      .eq("event_type", "purchase_completed")
+      .gte("created_at", since24h),
+  ]);
+
+  if (profilesRes.error) return NextResponse.json({ error: profilesRes.error.message }, { status: 500 });
 
   const countMap: Record<string, number> = {};
-  (counts ?? []).forEach((r: { user_id: string; count: number }) => {
+  (countsRes.data ?? []).forEach((r: { user_id: string; count: number }) => {
     countMap[r.user_id] = r.count;
   });
 
-  const users = (profiles ?? []).map((p) => ({
+  const users = (profilesRes.data ?? []).map((p) => ({
     ...p,
     analysis_count: countMap[p.id] ?? 0,
   }));
 
-  return NextResponse.json({ users });
+  // Aggregate purchase totals for today
+  const purchasesTodayData = purchasesTodayRes.data ?? [];
+  const revenueToday = purchasesTodayData.reduce((s, p) => s + (p.amount_cents ?? 0), 0);
+  const creditsGrantedToday = purchasesTodayData.reduce((s, p) => s + (p.credits_granted ?? 0), 0);
+
+  const stats = {
+    signups_today:          signupsTodayRes.count   ?? 0,
+    analyses_today:         analysesTodayRes.count  ?? 0,
+    purchases_today:        purchasesTodayData.length,
+    revenue_today_cents:    revenueToday,
+    credits_granted_today:  creditsGrantedToday,
+    // Gap detection: if purchases_today > credits_fulfilled_today, webhook may have missed some
+    credits_fulfilled_today: creditsFulfilledRes.count ?? 0,
+  };
+
+  return NextResponse.json({
+    users,
+    stats,
+    recent_purchases: recentPurchasesRes.data ?? [],
+  });
 }
 
 /** PATCH /api/admin — update a user's role or credits */

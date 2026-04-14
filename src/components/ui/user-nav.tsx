@@ -100,7 +100,7 @@ export function UserNav() {
                     <div className="flex items-center gap-1.5">
                       <Zap className="w-3 h-3" style={{ color: zapColor }} />
                       <span className="text-xs font-semibold" style={{ color: textColor }}>
-                        {isStaff ? "∞ credits" : credits === null ? "—" : isOut ? "Out of credits" : `${credits} credit${credits !== 1 ? "s" : ""}`}
+                        {isStaff ? "Staff — unlimited" : credits === null ? "—" : isOut ? "Out of credits" : `${credits} credit${credits !== 1 ? "s" : ""}`}
                       </span>
                     </div>
                     {(isOut || isLow) && (
