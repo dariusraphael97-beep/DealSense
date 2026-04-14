@@ -684,7 +684,7 @@ const MODEL_BASE: Record<string, number> = {
   "ferrari|portofino":  220000,
   "ferrari|f8 tributo": 280000,
   "ferrari|sf90":       530000,
-  "ferrari|488":        280000,
+  "ferrari|488":        262000,  // base $242k, typical optioned transaction ~$262k
   "ferrari|812":        340000,
   "ferrari|purosangue": 400000,
 
@@ -909,11 +909,12 @@ export function getBaseFairValueRange(input: CarInput, category: VehicleCategory
   const mileDelta = input.mileage - avgMileage;
   const mileagePenalty = profile.mileagePenaltyPer1k;
 
-  // Performance/exotic cars: mileage matters less (owners drive fewer miles,
-  // value is more configuration-driven). Scale penalty down by 40–60%.
-  const mileageWeight = (category === "exotic") ? 0.4
-    : (category === "performance") ? 0.6
-    : (category === "luxury") ? 0.8
+  // Performance/exotic cars: mileage still matters significantly — especially
+  // for Ferraris/Lambos where a 10k-mile example commands a big premium over
+  // a 50k-mile one. Using higher weights so the per-model penalty translates.
+  const mileageWeight = (category === "exotic") ? 0.65
+    : (category === "performance") ? 0.70
+    : (category === "luxury") ? 0.80
     : 1.0;
 
   const mileAdj = -(mileDelta / 1000) * mileagePenalty * mileageWeight;
