@@ -7,25 +7,7 @@ import { EtherealShadow } from "@/components/ui/etheral-shadow";
 import { UserNav } from "@/components/ui/user-nav";
 import { Logo } from "@/components/ui/logo";
 import { createClient } from "@/lib/supabase/client";
-
-/**
- * Stripe Payment Link URLs (test mode).
- * Each link includes a `client_reference_id` query param with the user's
- * Supabase ID so the webhook can identify who purchased.
- * When switching to LIVE mode, replace these with live payment link URLs.
- */
-const STRIPE_LINKS = {
-  starter:  "https://buy.stripe.com/test_8x2cN64QnbvVbEWfjsaAw00",
-  standard: "https://buy.stripe.com/test_14A28s4Qn8jJ4cu1sCaAw01",
-  pro:      "https://buy.stripe.com/test_eVq4gA82z9nN38q2wGaAw02",
-};
-
-/** Append client_reference_id to a Stripe Payment Link URL */
-function buildStripeLink(baseUrl: string, userId: string | null): string {
-  if (!userId) return baseUrl;
-  const separator = baseUrl.includes("?") ? "&" : "?";
-  return `${baseUrl}${separator}client_reference_id=${userId}`;
-}
+import { STRIPE_LINKS, buildStripeLink } from "@/lib/stripe-config";
 
 /* ── Easing ── */
 const ease = [0.22, 1, 0.36, 1] as const;

@@ -3,18 +3,13 @@
 import { useEffect, useRef, useCallback, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { createClient } from "@/lib/supabase/client";
+import { STRIPE_LINKS, buildStripeLink } from "@/lib/stripe-config";
 
 const PLANS = [
-  { key: "starter",  label: "Starter",  price: "$6.99",  credits: 3,  href: "https://buy.stripe.com/test_8x2cN64QnbvVbEWfjsaAw00" },
-  { key: "standard", label: "Standard", price: "$14.99", credits: 10, href: "https://buy.stripe.com/test_14A28s4Qn8jJ4cu1sCaAw01", popular: true },
-  { key: "pro",      label: "Pro",      price: "$29.99", credits: 25, href: "https://buy.stripe.com/test_eVq4gA82z9nN38q2wGaAw02" },
+  { key: "starter",  label: "Starter",  price: "$6.99",  credits: 3,  href: STRIPE_LINKS.starter  },
+  { key: "standard", label: "Standard", price: "$14.99", credits: 10, href: STRIPE_LINKS.standard, popular: true },
+  { key: "pro",      label: "Pro",      price: "$29.99", credits: 25, href: STRIPE_LINKS.pro       },
 ];
-
-function buildStripeLink(baseUrl: string, userId: string | null): string {
-  if (!userId) return baseUrl;
-  const sep = baseUrl.includes("?") ? "&" : "?";
-  return `${baseUrl}${sep}client_reference_id=${userId}`;
-}
 
 interface PaywallModalProps {
   open: boolean;

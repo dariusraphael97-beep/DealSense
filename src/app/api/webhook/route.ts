@@ -46,13 +46,18 @@ export const runtime = "nodejs";
 
 /** GET /api/webhook — env var health check (safe: shows presence, not values) */
 export async function GET() {
+  const keyPrefix = process.env.STRIPE_SECRET_KEY?.slice(0, 7) ?? "missing";
+  const mode = keyPrefix === "sk_live" ? "LIVE ✅" : keyPrefix === "sk_test" ? "TEST ⚠️" : "UNKNOWN ❌";
   return NextResponse.json({
+    stripe_mode:            mode,
     STRIPE_SECRET_KEY:      !!process.env.STRIPE_SECRET_KEY,
     STRIPE_WEBHOOK_SECRET:  !!process.env.STRIPE_WEBHOOK_SECRET,
+    STRIPE_LINK_STARTER:    !!process.env.NEXT_PUBLIC_STRIPE_LINK_STARTER,
+    STRIPE_LINK_STANDARD:   !!process.env.NEXT_PUBLIC_STRIPE_LINK_STANDARD,
+    STRIPE_LINK_PRO:        !!process.env.NEXT_PUBLIC_STRIPE_LINK_PRO,
     SUPABASE_URL:           !!process.env.NEXT_PUBLIC_SUPABASE_URL,
     SUPABASE_SERVICE_KEY:   !!process.env.SUPABASE_SERVICE_ROLE_KEY,
-    // Partial key prefix to confirm it's the right account (safe to expose)
-    KEY_PREFIX: process.env.STRIPE_SECRET_KEY?.slice(0, 14) ?? "missing",
+    KEY_PREFIX:             keyPrefix,
   });
 }
 
@@ -83,6 +88,9 @@ export async function POST(req: NextRequest) {
   if (event.type !== "checkout.session.completed") {
     return NextResponse.json({ ok: true });
   }
+
+  // ── Log live vs test mode (safe — no secrets exposed) ──────────────────
+  console.log(`Webhook: event ${event.id} | livemode=${event.livemode} | type=${event.type}`);
 
   const session = event.data.object as Stripe.Checkout.Session;
 
