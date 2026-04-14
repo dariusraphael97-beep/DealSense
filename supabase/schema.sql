@@ -5,7 +5,7 @@
 create table if not exists public.profiles (
   id              uuid primary key references auth.users(id) on delete cascade,
   email           text not null,
-  credits         int not null default 5,
+  credits         int not null default 1,
   role            text not null default 'user' check (role in ('user', 'staff', 'admin')),
   referral_code   text unique,
   total_purchased int not null default 0,

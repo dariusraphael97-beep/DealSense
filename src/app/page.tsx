@@ -287,7 +287,7 @@ const scoreFactors = [
 const faqs = [
   { q: "How accurate is the fair value estimate?", a: "It depends on the data available. When we find many comparable listings with consistent pricing, confidence is high and the range is tight. When data is sparse or the vehicle is heavily configurable, we widen the range and tell you. We always show a confidence level so you know how much weight to put on the number." },
   { q: "Why is a VIN required?", a: "A VIN locks in the exact vehicle \u2014 year, make, model, trim, drivetrain, and body style. Without it, we\u2019d be guessing which version of the car you\u2019re looking at. That matters \u2014 a base Honda Accord and a Touring are very different prices." },
-  { q: "Is it really free?", a: "Yes. During early access, founding members get free analyses. We\u2019re prioritizing real user feedback over revenue right now. When paid plans launch, founders keep special perks." },
+  { q: "Do I need a credit card to try it?", a: "No. Every new account includes one free analysis — no card required. After that, credits are available in packs starting at $6.99. Early access pricing is lower than what we plan to charge as the product grows." },
   { q: "Do I need an account?", a: "Yes \u2014 a free account, takes 30 seconds. Your analysis history, saved reports, and negotiation scripts are tied to it." },
   { q: "How is the monthly payment calculated?", a: "Default: 10% down, 7.5% APR, 60-month term. You can adjust all three on the results page. Your actual rate depends on credit and lender." },
   { q: "What about luxury and performance cars?", a: "Factory packages on vehicles like BMW M-Sport, Porsche, or high-trim trucks can shift value by thousands. We account for vehicle category and show lower confidence when package-level detail is incomplete. The score still works \u2014 just know the range may be wider." },
@@ -370,7 +370,7 @@ export default function HomePage() {
               color: "var(--ds-text-3)",
             }}>
             <IconShield />
-            Free during early access &mdash; no credit card needed
+            Early access &mdash; first analysis free, no credit card needed
           </motion.div>
 
           {/* Headline */}
@@ -727,74 +727,19 @@ export default function HomePage() {
       {/* ── Pricing ── */}
       <section id="pricing" className="py-14 transition-colors" style={{ borderTop: "1px solid var(--ds-divider)" }}>
         <div className="mx-auto max-w-6xl px-4">
-          <ScrollSection className="text-center mb-4">
+          <ScrollSection className="text-center mb-10">
             <motion.span variants={fadeUp} className="inline-block text-xs font-semibold uppercase tracking-[0.2em] mb-4 text-indigo-600 dark:text-indigo-400/70">
-              Early Access
+              Early Access Pricing
             </motion.span>
             <motion.h2 variants={fadeUp} className="font-heading text-3xl sm:text-4xl font-bold mb-3">
-              <GlassHeading>Free while we build it.</GlassHeading>
+              <GlassHeading>Simple, pay-as-you-go.</GlassHeading>
             </motion.h2>
             <motion.p variants={fadeUp} className="max-w-lg mx-auto leading-relaxed" style={{ color: "var(--ds-text-3)" }}>
-              We&apos;re giving early users free access in exchange for honest feedback. Sign up, analyze cars, and help us make it better. Founding members keep special perks when paid plans launch.
+              Your first analysis is on us. After that, grab a credit pack — no subscription, no recurring charges.
             </motion.p>
           </ScrollSection>
 
-          {/* ── Founders Deal card ── */}
-          <ScrollSection className="max-w-lg mx-auto mt-10 mb-10">
-            <motion.div variants={cardVariant} className="relative rounded-2xl p-7 flex flex-col items-center text-center overflow-hidden"
-              style={{ background: "rgba(99,102,241,0.06)", border: "1px solid rgba(99,102,241,0.22)", boxShadow: "0 0 60px rgba(99,102,241,0.12)" }}>
-              <div className="absolute -top-px left-0 right-0 h-[2px]" style={{ background: "linear-gradient(90deg, transparent, #6366f1, transparent)" }} />
-              <div className="inline-flex items-center gap-1.5 rounded-full px-3.5 py-1 text-xs font-semibold mb-5"
-                style={{ background: "linear-gradient(135deg,#4f46e5,#6366f1)", color: "white", boxShadow: "0 0 20px var(--ds-accent-glow)" }}>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3" aria-hidden="true">
-                  <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-                </svg>
-                Founders Deal
-              </div>
-              <div className="flex items-baseline gap-1 mb-1">
-                <span className="font-heading text-5xl font-extrabold bg-clip-text text-transparent bg-gradient-to-b from-slate-800 to-slate-600 dark:from-white dark:to-white/70">Free</span>
-              </div>
-              <p className="text-sm mb-6" style={{ color: "var(--ds-text-3)" }}>
-                Full access during early access &mdash; no catch
-              </p>
-              <ul className="space-y-2.5 mb-7 text-left w-full max-w-xs">
-                {[
-                  "Deal Score + clear verdict",
-                  "Fair value range from listing data",
-                  "Ready-to-use negotiation script",
-                  "Score breakdown with every factor explained",
-                  "Risk flags and confidence level",
-                  "Save & compare reports",
-                  "Founding member perks \u2014 forever",
-                ].map(item => (
-                  <li key={item} className="flex items-center gap-2.5 text-sm" style={{ color: "var(--ds-text-2)" }}>
-                    <span className="w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0 text-indigo-500 dark:text-indigo-300"
-                      style={{ background:"rgba(99,102,241,0.10)", border:"1px solid rgba(99,102,241,0.22)" }}>
-                      <IconCheck />
-                    </span>
-                    {item}
-                  </li>
-                ))}
-              </ul>
-              <a href="/analyze"
-                className="w-full max-w-xs py-3 rounded-xl text-sm font-semibold text-center transition-all hover:brightness-110 active:scale-[0.98] text-white block"
-                style={{ background:"linear-gradient(135deg, #4f46e5, #6366f1)", boxShadow:"0 0 24px var(--ds-accent-glow)" }}>
-                Analyze a car free
-              </a>
-              <p className="text-xs mt-3" style={{ color: "var(--ds-text-4)" }}>
-                No credit card &middot; Early access won&apos;t stay free forever
-              </p>
-            </motion.div>
-          </ScrollSection>
-
-          {/* ── Future pricing (coming soon) ── */}
-          <ScrollSection>
-            <motion.p variants={fadeIn} className="text-center text-xs mb-8 tracking-wide" style={{ color: "var(--ds-text-4)" }}>
-              Paid plans launching soon &mdash; founding members keep their perks
-            </motion.p>
-          </ScrollSection>
-
-          <ScrollSection className="hidden sm:grid sm:grid-cols-3 gap-4 max-w-4xl mx-auto">
+          <ScrollSection className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-4xl mx-auto">
             {/* Starter */}
             <motion.div variants={cardVariant} className="rounded-2xl p-6 flex flex-col"
               style={{ background: "var(--ds-card-bg)", border: "1px solid var(--ds-card-border)", boxShadow: "var(--ds-card-shadow)" }}>
@@ -893,8 +838,8 @@ export default function HomePage() {
               {[
                 { emoji: "\u23F0", label: "Credits never expire" },
                 { emoji: "\uD83D\uDC41", label: "No dealer affiliation \u2014 ever" },
-                { emoji: "\uD83C\uDF81", label: "Free while in early access" },
-                { emoji: "\uD83D\uDC8E", label: "Founders keep perks when pricing launches" },
+                { emoji: "\uD83D\uDD12", label: "Secure checkout via Stripe" },
+                { emoji: "\uD83D\uDCC8", label: "Early access pricing \u2014 may increase as we grow" },
               ].map(({ emoji, label }) => (
                 <span key={label}
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-colors"
@@ -908,6 +853,12 @@ export default function HomePage() {
                 </span>
               ))}
             </motion.div>
+          </ScrollSection>
+
+          <ScrollSection>
+            <motion.p variants={fadeIn} className="text-center text-xs mt-4" style={{ color: "var(--ds-text-4)" }}>
+              Early access pricing &mdash; founding users keep today&apos;s rates as features expand. Prices may increase in the future.
+            </motion.p>
           </ScrollSection>
         </div>
       </section>
