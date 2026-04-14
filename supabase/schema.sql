@@ -122,6 +122,7 @@ alter table public.profiles enable row level security;
 alter table public.analyses enable row level security;
 alter table public.pricing_cache enable row level security;
 alter table public.feedback enable row level security;
+alter table public.purchases enable row level security;
 
 -- Policies: users can only see their own data
 create policy "Users see own profile"
@@ -145,3 +146,11 @@ create policy "Users can insert feedback"
 create policy "Users see own feedback"
   on public.feedback for select
   using (auth.uid() = user_id);
+
+create policy "Users see own purchases"
+  on public.purchases for select
+  using (auth.uid() = user_id);
+
+create policy "Service role can insert purchases"
+  on public.purchases for insert
+  with check (true);

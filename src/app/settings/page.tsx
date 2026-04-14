@@ -124,7 +124,8 @@ function IconUser() {
 
 export default function SettingsPage() {
   const { settings, update } = useSettings();
-  const { referralCode } = useCredits();
+  const useCreditsValue = useCredits();
+  const { referralCode } = useCreditsValue;
   const [email, setEmail] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [refCopied, setRefCopied] = useState(false);
@@ -298,10 +299,10 @@ export default function SettingsPage() {
                 <SectionHeader
                   icon={<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>}
                   title="Referral"
-                  subtitle="Invite friends and you both get 3 free analyses as founding members."
+                  subtitle="Invite friends to DealSense."
                 />
 
-                <Row label="Your referral link" hint="Share this link — you both earn 3 free analyses when they join.">
+                <Row label="Your referral link" hint="Share your link with friends.">
                   <div className="flex items-center gap-2">
                     <span className="text-xs font-mono truncate max-w-[140px]" style={{ color: "var(--ds-text-3)" }}>
                       /ref/{referralCode}
@@ -320,6 +321,34 @@ export default function SettingsPage() {
                 </Row>
               </motion.div>
             )}
+
+            {/* ── Credits & Billing ── */}
+            <motion.div variants={fadeUp} className="rounded-2xl p-6" style={{ background: "var(--ds-card-bg)", border: "1px solid var(--ds-card-border)", boxShadow: "var(--ds-card-shadow)" }}>
+              <SectionHeader
+                icon={<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>}
+                title="Credits & Billing"
+                subtitle="Your current credit balance and purchase history"
+              />
+              <Row label="Credit balance" hint="Credits are used for car analyses. They never expire.">
+                <div className="flex items-center gap-3">
+                  <span className="text-lg font-extrabold font-heading" style={{ color: "var(--ds-text-1)" }}>
+                    {useCreditsValue.isStaff ? "∞" : (useCreditsValue.credits ?? "—")}
+                  </span>
+                  <Link href="/#pricing"
+                    className="text-xs px-3 py-1.5 rounded-lg font-semibold text-white"
+                    style={{ background: "linear-gradient(135deg,#4f46e5,#6366f1)" }}>
+                    Buy more
+                  </Link>
+                </div>
+              </Row>
+              <div className="pt-2" style={{ borderTop: "1px solid var(--ds-divider)", marginTop: "4px" }}>
+                <Link href="/history"
+                  className="inline-flex items-center gap-1.5 text-xs font-medium transition-colors hover:opacity-80"
+                  style={{ color: "var(--ds-text-3)" }}>
+                  View purchase history →
+                </Link>
+              </div>
+            </motion.div>
 
             {/* ── Account ── */}
             <motion.div variants={fadeUp} className="rounded-2xl p-6" style={{ background: "var(--ds-card-bg)", border: "1px solid var(--ds-card-border)", boxShadow: "var(--ds-card-shadow)" }}>

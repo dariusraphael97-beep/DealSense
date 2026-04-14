@@ -5,14 +5,14 @@ import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { motion, AnimatePresence } from "framer-motion"
-import { LogOut, ChevronDown, Settings, Clock, Shield, Bookmark, BarChart3 } from "lucide-react"
+import { LogOut, ChevronDown, Settings, Clock, Shield, Bookmark, BarChart3, Zap } from "lucide-react"
 import { useCredits } from "@/contexts/credits-context"
 
 export function UserNav() {
   const [email, setEmail] = useState<string | null>(null)
   const [open, setOpen] = useState(false)
   const [signingOut, setSigningOut] = useState(false)
-  const { role } = useCredits()
+  const { role, credits, isStaff } = useCredits()
   const router = useRouter()
   const menuRef = useRef<HTMLDivElement>(null)
 
@@ -84,10 +84,26 @@ export function UserNav() {
               boxShadow: "0 8px 30px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.08), 0 0 0 1px rgba(99,102,241,0.06)",
             }}
           >
-            {/* Account info */}
+            {/* Account info + credit balance */}
             <div className="px-4 py-3" style={{ borderBottom: "1px solid var(--ds-divider)" }}>
               <p className="text-xs font-medium mb-0.5" style={{ color: "var(--ds-text-4)" }}>Signed in as</p>
-              <p className="text-sm font-semibold truncate" style={{ color: "var(--ds-text-1)" }}>{email}</p>
+              <p className="text-sm font-semibold truncate mb-2" style={{ color: "var(--ds-text-1)" }}>{email}</p>
+              <div className="flex items-center justify-between rounded-lg px-2.5 py-1.5"
+                style={{ background: "var(--ds-badge-bg)", border: "1px solid var(--ds-badge-border)" }}>
+                <div className="flex items-center gap-1.5">
+                  <Zap className="w-3 h-3" style={{ color: credits === 0 ? "var(--ds-danger)" : "#818cf8" }} />
+                  <span className="text-xs font-semibold" style={{ color: credits === 0 ? "var(--ds-danger)" : "var(--ds-text-2)" }}>
+                    {isStaff ? "∞ credits" : credits === null ? "—" : credits === 0 ? "Out of credits" : `${credits} credit${credits !== 1 ? "s" : ""}`}
+                  </span>
+                </div>
+                {!isStaff && credits === 0 && (
+                  <Link href="/#pricing" onClick={() => setOpen(false)}
+                    className="text-[10px] font-semibold px-2 py-0.5 rounded-md text-white"
+                    style={{ background: "linear-gradient(135deg,#4f46e5,#6366f1)" }}>
+                    Buy
+                  </Link>
+                )}
+              </div>
             </div>
 
             {/* Menu items */}
