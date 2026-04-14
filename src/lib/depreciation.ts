@@ -466,6 +466,60 @@ const PROFILES: Record<string, DepreciationProfile> = {
   "maserati|quattroporte":    { fiveYear: 0.28, tenYear: 0.12, mileagePenaltyPer1k: 90 },
   "maserati|mc20":            { fiveYear: 0.55, tenYear: 0.35, mileagePenaltyPer1k: 95, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
 
+  // ── FERRARI ───────────────────────────────────────────────────────────────
+  // Ferraris hold value far better than generic exotics — many appreciate.
+  // 488 GTB/Spider: ~80-88% retention at 5yr (real sales data 2020-2025)
+  // Pista variants command collector premiums — often trade above MSRP
+  "ferrari|488":              { fiveYear: 0.84, tenYear: 0.72, mileagePenaltyPer1k: 30, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "ferrari|488 gtb":          { fiveYear: 0.84, tenYear: 0.72, mileagePenaltyPer1k: 30, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "ferrari|488 spider":       { fiveYear: 0.86, tenYear: 0.74, mileagePenaltyPer1k: 28, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "ferrari|488 pista":        { fiveYear: 0.95, tenYear: 0.85, mileagePenaltyPer1k: 22, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "ferrari|488 pista spider": { fiveYear: 0.98, tenYear: 0.90, mileagePenaltyPer1k: 20, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "ferrari|f8 tributo":       { fiveYear: 0.88, tenYear: 0.76, mileagePenaltyPer1k: 28, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "ferrari|f8 spider":        { fiveYear: 0.90, tenYear: 0.78, mileagePenaltyPer1k: 26, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "ferrari|roma":             { fiveYear: 0.82, tenYear: 0.68, mileagePenaltyPer1k: 32, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "ferrari|portofino":        { fiveYear: 0.78, tenYear: 0.62, mileagePenaltyPer1k: 34, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "ferrari|portofino m":      { fiveYear: 0.80, tenYear: 0.65, mileagePenaltyPer1k: 32, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "ferrari|sf90":             { fiveYear: 1.00, tenYear: 0.90, mileagePenaltyPer1k: 18, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "ferrari|sf90 stradale":    { fiveYear: 1.00, tenYear: 0.90, mileagePenaltyPer1k: 18, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "ferrari|sf90 spider":      { fiveYear: 1.05, tenYear: 0.95, mileagePenaltyPer1k: 16, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "ferrari|812":              { fiveYear: 0.86, tenYear: 0.74, mileagePenaltyPer1k: 28, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "ferrari|812 superfast":    { fiveYear: 0.86, tenYear: 0.74, mileagePenaltyPer1k: 28, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "ferrari|812 gts":          { fiveYear: 0.90, tenYear: 0.78, mileagePenaltyPer1k: 26, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "ferrari|812 competizione": { fiveYear: 1.10, tenYear: 1.00, mileagePenaltyPer1k: 15, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "ferrari|purosangue":       { fiveYear: 0.92, tenYear: 0.80, mileagePenaltyPer1k: 25, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "ferrari|296 gtb":          { fiveYear: 0.88, tenYear: 0.76, mileagePenaltyPer1k: 26, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "ferrari|296 gts":          { fiveYear: 0.90, tenYear: 0.78, mileagePenaltyPer1k: 24, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+
+  // ── LAMBORGHINI ───────────────────────────────────────────────────────────
+  "lamborghini|huracan":      { fiveYear: 0.80, tenYear: 0.65, mileagePenaltyPer1k: 35, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "lamborghini|huracan evo":  { fiveYear: 0.82, tenYear: 0.68, mileagePenaltyPer1k: 32, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "lamborghini|huracan sterrato": { fiveYear: 0.90, tenYear: 0.78, mileagePenaltyPer1k: 28, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "lamborghini|urus":         { fiveYear: 0.72, tenYear: 0.55, mileagePenaltyPer1k: 40, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "lamborghini|urus performante": { fiveYear: 0.76, tenYear: 0.60, mileagePenaltyPer1k: 38, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "lamborghini|revuelto":     { fiveYear: 0.98, tenYear: 0.88, mileagePenaltyPer1k: 20, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+
+  // ── MCLAREN ───────────────────────────────────────────────────────────────
+  "mclaren|artura":           { fiveYear: 0.72, tenYear: 0.54, mileagePenaltyPer1k: 42, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "mclaren|720s":             { fiveYear: 0.78, tenYear: 0.62, mileagePenaltyPer1k: 38, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "mclaren|765lt":            { fiveYear: 0.92, tenYear: 0.80, mileagePenaltyPer1k: 28, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "mclaren|gt":               { fiveYear: 0.70, tenYear: 0.52, mileagePenaltyPer1k: 42, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "mclaren|570s":             { fiveYear: 0.68, tenYear: 0.50, mileagePenaltyPer1k: 44, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "mclaren|600lt":            { fiveYear: 0.80, tenYear: 0.65, mileagePenaltyPer1k: 36, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+
+  // ── BENTLEY ───────────────────────────────────────────────────────────────
+  "bentley|continental gt":   { fiveYear: 0.58, tenYear: 0.38, mileagePenaltyPer1k: 65, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "bentley|bentayga":         { fiveYear: 0.60, tenYear: 0.40, mileagePenaltyPer1k: 68 },
+  "bentley|flying spur":      { fiveYear: 0.52, tenYear: 0.32, mileagePenaltyPer1k: 75 },
+
+  // ── ROLLS-ROYCE ───────────────────────────────────────────────────────────
+  "rolls-royce|ghost":        { fiveYear: 0.62, tenYear: 0.42, mileagePenaltyPer1k: 70 },
+  "rolls-royce|wraith":       { fiveYear: 0.60, tenYear: 0.40, mileagePenaltyPer1k: 68 },
+  "rolls-royce|dawn":         { fiveYear: 0.64, tenYear: 0.44, mileagePenaltyPer1k: 65 },
+  "rolls-royce|cullinan":     { fiveYear: 0.70, tenYear: 0.52, mileagePenaltyPer1k: 65 },
+  "rolls-royce|spectre":      { fiveYear: 0.72, tenYear: 0.54, mileagePenaltyPer1k: 60 },
+  "rolls-royce|phantom":      { fiveYear: 0.65, tenYear: 0.45, mileagePenaltyPer1k: 70 },
+
   // ── FIAT ──────────────────────────────────────────────────────────────────
   "fiat|500":                 { fiveYear: 0.38, tenYear: 0.16, mileagePenaltyPer1k: 40 },
   "fiat|500x":                { fiveYear: 0.36, tenYear: 0.14, mileagePenaltyPer1k: 42 },
@@ -500,7 +554,7 @@ const CLASS_DEFAULTS: Record<string, DepreciationProfile> = {
   korean:        { fiveYear: 0.56, tenYear: 0.32, mileagePenaltyPer1k: 48 },
   american:      { fiveYear: 0.52, tenYear: 0.28, mileagePenaltyPer1k: 50 },
   ev:            { fiveYear: 0.46, tenYear: 0.22, mileagePenaltyPer1k: 42 },
-  exotic:        { fiveYear: 0.36, tenYear: 0.16, mileagePenaltyPer1k: 85 },
+  exotic:        { fiveYear: 0.70, tenYear: 0.50, mileagePenaltyPer1k: 45 },
   default:       { fiveYear: 0.56, tenYear: 0.30, mileagePenaltyPer1k: 52 },
 };
 
