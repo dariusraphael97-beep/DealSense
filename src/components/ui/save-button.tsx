@@ -46,19 +46,23 @@ export function SaveButton({ analysisId, result, variant = "default" }: SaveButt
           headers: { "content-type": "application/json" },
           body: JSON.stringify({
             analysisId,
-            vin: result.input?.vin,
-            year: result.input?.year,
-            make: result.input?.make,
-            model: result.input?.model,
-            trim: result.input?.trim,
-            mileage: result.input?.mileage,
-            askingPrice: result.input?.askingPrice,
-            dealScore: result.score,
-            verdict: result.verdict,
-            priceDelta: result.priceDelta,
-            fairValueMid: result.fairValueRange?.midpoint,
+            vin:             result.input?.vin,
+            year:            result.input?.year,
+            make:            result.input?.make,
+            model:           result.input?.model,
+            trim:            result.input?.trim,
+            mileage:         result.input?.mileage,
+            askingPrice:     result.input?.askingPrice,
+            zipCode:         result.input?.zipCode,
+            dealScore:       result.score,
+            verdict:         result.verdict,
+            priceDelta:      result.priceDelta,
+            fairValueMid:    result.fairValueRange?.midpoint,
+            fairValueLow:    result.fairValueRange?.low,
+            fairValueHigh:   result.fairValueRange?.high,
             confidenceLevel: result.confidenceLevel,
-            resultJson: result,
+            vehicleCategory: result.vehicleCategory,
+            resultJson:      result,
           }),
         });
         const data = await res.json();
@@ -95,7 +99,7 @@ export function SaveButton({ analysisId, result, variant = "default" }: SaveButt
           <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
         </svg>
       )}
-      {!isCompact && (saved ? "Saved" : "Save Car")}
+      {!isCompact && (saved ? "Tracking" : "Track Price")}
     </button>
   );
 }

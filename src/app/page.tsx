@@ -202,16 +202,16 @@ function SampleAnalysisCard({ vehicle, askingPrice, fairValueLow, fairValueHigh,
 }
 
 const features = [
-  { icon: <IconTarget />, title: "Deal Score (0\u2013100)", desc: "One number that tells you if this car is fairly priced, overpriced, or a deal. Buy, negotiate, or walk away." },
-  { icon: <IconBarChart />, title: "Fair value range", desc: "We compare the asking price to what similar cars actually sell for near your ZIP. You see the range, not just one number." },
-  { icon: <IconChat />, title: "Negotiation script", desc: "A word-for-word script built from your specific deal. Copy it and use it at the dealership or in your message to the seller." },
+  { icon: <IconTarget />, title: "Deal Score (0\u2013100)", desc: "One number: Buy, Negotiate, or Walk Away." },
+  { icon: <IconBarChart />, title: "Fair value range", desc: "Asking price vs. what similar cars sell for near your ZIP." },
+  { icon: <IconChat />, title: "Negotiation script", desc: "Word-for-word script built from your specific deal." },
 ];
 
 const steps = [
-  ["Paste the VIN", "Grab it from the listing page \u2014 17 characters, usually in the details section. We decode year, make, model, trim, and drivetrain instantly."],
-  ["Enter the asking price", "Add the listed price, current mileage, and your ZIP code. Takes about 10 seconds."],
-  ["Get your deal score", "We compare the asking price to an estimated fair value range. You get a score out of 100, a clear verdict, and key risk flags."],
-  ["Negotiate or walk", "If the price needs work, use the negotiation script. If it\u2019s already fair, we\u2019ll tell you to move fast instead."],
+  ["Paste the VIN", "17 characters from the listing. We decode make, model, trim, and drivetrain instantly."],
+  ["Enter the asking price", "Add the listed price, mileage, and ZIP. About 10 seconds."],
+  ["Get your deal score", "Score out of 100, a verdict, and key risk flags."],
+  ["Negotiate or walk", "Use the negotiation script if needed — or buy with confidence."],
 ];
 
 const trustSources = [
@@ -703,7 +703,7 @@ export default function HomePage() {
             <motion.div variants={fadeUp} className="rounded-2xl p-5 text-center"
               style={{ background: "rgba(99,102,241,0.04)", border: "1px solid rgba(99,102,241,0.12)" }}>
               <p className="text-xs leading-relaxed" style={{ color: "var(--ds-text-3)" }}>
-                <strong className="font-semibold" style={{ color: "var(--ds-text-2)" }}>A note on confidence:</strong> Not every analysis is equally precise. When we find many similar listings with tight pricing, the estimate is strong. When the vehicle is rare or heavily configurable (luxury, performance, exotic), the range is wider and the confidence score is lower. We always show you which it is.
+                <strong className="font-semibold" style={{ color: "var(--ds-text-2)" }}>Confidence:</strong> More comps = tighter range. Rare or heavily configurable vehicles (luxury, performance) get wider ranges and a lower confidence score. We always show you which it is.
               </p>
             </motion.div>
           </ScrollSection>
@@ -749,8 +749,8 @@ export default function HomePage() {
 
           {/* Additional trust callout */}
           <ScrollSection className="mt-6">
-            <motion.p variants={fadeIn} className="text-[11px] text-center leading-relaxed max-w-md mx-auto" style={{ color: "var(--ds-text-4)" }}>
-              Fair value estimates are not certified appraisals. Confidence may be lower on highly configurable luxury and performance vehicles where factory packages materially affect value.
+            <motion.p variants={fadeIn} className="text-[11px] text-center max-w-md mx-auto" style={{ color: "var(--ds-text-4)" }}>
+              Estimates, not certified appraisals. Confidence varies — especially on luxury and performance vehicles.
             </motion.p>
           </ScrollSection>
         </div>

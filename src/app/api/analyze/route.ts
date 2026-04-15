@@ -48,8 +48,8 @@ async function generateAiContent(
   const currentYear = new Date().getFullYear();
   const carAge = Math.max(1, currentYear - year);
   const milesPerYear = Math.round(mileage / carAge);
-  const mileageContext = mileage > carAge * 15000 * 1.3 ? "higher than average"
-    : mileage < carAge * 15000 * 0.7 ? "lower than average"
+  const mileageContext = mileage > carAge * 13500 * 1.3 ? "higher than average"
+    : mileage < carAge * 13500 * 0.7 ? "lower than average"
     : "typical";
 
   const isClosingDeal = verdict === "Buy" || verdict === "Fair Deal";

@@ -217,6 +217,7 @@ const MODEL_BASE: Record<string, number> = {
   "gmc|yukon":        57000,
   "gmc|yukon xl":     62000,
   "gmc|canyon":       32000,
+  "gmc|hummer ev":    105000,  // Edition 1/3X are volume sellers; base 2X is $80k
   "gmc|canyon at4x":  50000,
 
   // ── RAM ─────────────────────────────────────────────────────────────────
@@ -279,6 +280,7 @@ const MODEL_BASE: Record<string, number> = {
   "hyundai|tucson sel": 32000,
   "hyundai|tucson limited": 38000,
   "hyundai|tucson n line": 34000,
+  "hyundai|santa cruz":  35000,  // pickup/crossover, SEL Premium is the volume seller
   "hyundai|santa fe":   32000,
   "hyundai|palisade":   36000,
   "hyundai|kona":       24000,
@@ -314,6 +316,7 @@ const MODEL_BASE: Record<string, number> = {
   "kia|carnival":    34000,
   "kia|ev6":         42000,
   "kia|ev6 gt":      62000,
+  "kia|ev9":         60000,
   "kia|stinger":     38000,
   "kia|stinger gt":  44000,
 
@@ -354,6 +357,7 @@ const MODEL_BASE: Record<string, number> = {
   "volkswagen|golf gti":  32000,
   "volkswagen|golf r":    45000,
   "volkswagen|id.4":      42000,
+  "volkswagen|id. buzz":  61000,  // electric van, starts $61k
   "volkswagen|taos":      26000,
   "volkswagen|arteon":    40000,
 
@@ -541,6 +545,7 @@ const MODEL_BASE: Record<string, number> = {
   "dodge|durango":                   40000,
   "dodge|durango srt 392":           68000,
   "dodge|durango srt hellcat":       90000,
+  "dodge|hornet":                    30000,
   "dodge|grand caravan":             28000,
 
   // ── Buick ───────────────────────────────────────────────────────────────

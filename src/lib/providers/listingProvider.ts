@@ -182,6 +182,164 @@ function extractCarGurusData(html: string): Partial<ListingExtraction> {
   return result;
 }
 
+// ── Site-specific: CARFAX ─────────────────────────────────────────────
+//
+// CARFAX pages have two sources of vehicle data that conflict:
+//
+//   A) <title> / og:description / meta tags — server-rendered, reflects the
+//      CURRENT DEALER LISTING ("27,555 miles near Whippany, NJ")
+//
+//   B) JSON-LD / __NEXT_DATA__ — reflects CARFAX's vehicle history database,
+//      which can lag behind (e.g. last service record was 23,184 miles)
+//
+// We always trust source A for mileage and ZIP.
+// We use source B only for VIN and price, which don't change between sources.
+
+function extractCarfaxData(html: string): Partial<ListingExtraction> {
+  const result: Partial<ListingExtraction> = {};
+
+  // ── 1. <title> and meta tags — primary source for listing mileage/ZIP ──
+  //
+  // CARFAX title format:
+  //   "Used 2023 BMW X3 xDrive30i - $34,900 - 27,555 miles near Whippany, NJ | CARFAX"
+  // og:description format:
+  //   "Find a used 2023 BMW X3 xDrive30i... $34,900, 27,555 miles... Whippany, NJ"
+
+  const titleM = html.match(/<title[^>]*>([^<]+)<\/title>/i);
+  const ogDescM =
+    html.match(/<meta[^>]+property=["']og:description["'][^>]+content=["']([^"']+)["']/i) ??
+    html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:description["']/i);
+  const descM =
+    html.match(/<meta[^>]+name=["']description["'][^>]+content=["']([^"']+)["']/i) ??
+    html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+name=["']description["']/i);
+
+  const metaSources = [
+    titleM?.[1] ?? "",
+    ogDescM?.[1] ?? "",
+    descM?.[1] ?? "",
+  ];
+
+  for (const src of metaSources) {
+    if (!src) continue;
+
+    // Mileage: "27,555 miles" or "27,555 mi" or "27555 miles"
+    if (!result.mileage) {
+      const milM = src.match(/([\d,]+)\s*miles?/i);
+      if (milM) {
+        const n = parseFloat(milM[1].replace(/,/g, ""));
+        if (n > 100 && n < 1_000_000) result.mileage = Math.round(n);
+      }
+    }
+
+    // ZIP: require a 2-letter US state abbreviation before the 5-digit code
+    // e.g. "Whippany, NJ 07981" or "near Whippany, NJ"
+    // This prevents mileage numbers ("23,184 mi") from matching as ZIPs.
+    if (!result.zipCode) {
+      const zipM = src.match(/\b[A-Z]{2}\s+(\d{5})\b/);
+      if (zipM) result.zipCode = zipM[1];
+    }
+
+    // Price from meta
+    if (!result.price) {
+      const priceM = src.match(/\$\s?([\d,]+)/);
+      if (priceM) {
+        const n = parseFloat(priceM[1].replace(/,/g, ""));
+        if (n > 500 && n < 500_000) result.price = Math.round(n);
+      }
+    }
+
+    if (result.mileage && result.zipCode) break;
+  }
+
+  // ── 2. JSON-LD — use ONLY for VIN (stable) and price refinement ──
+  //    Do NOT use for mileage: CARFAX JSON-LD reflects their history database,
+  //    which may show a stale odometer reading from a prior service record.
+  const jsonLdData = parseJsonLd(html);
+  for (const obj of jsonLdData) {
+    const rec = obj as Record<string, unknown>;
+
+    if (!result.vin && typeof rec.vehicleIdentificationNumber === "string") {
+      const v = rec.vehicleIdentificationNumber.trim().toUpperCase();
+      if (/^[A-HJ-NPR-Z0-9]{17}$/.test(v)) result.vin = v;
+    }
+
+    if (!result.price) {
+      const offers = rec.offers as Record<string, unknown> | undefined;
+      if (offers) {
+        const p = toNumber(offers.price ?? offers.lowPrice);
+        if (p && p > 500 && p < 500_000) result.price = Math.round(p);
+      }
+    }
+
+    // ZIP from structured address (dealer address is reliable)
+    if (!result.zipCode) {
+      const zip = extractNestedAddress(obj);
+      if (zip) result.zipCode = zip;
+    }
+  }
+
+  // ── 3. __NEXT_DATA__ — VIN and price only ──
+  const nextData = parseNextData(html);
+  if (nextData) {
+    if (!result.vin) {
+      for (const v of deepFindAll(nextData, "vin")) {
+        if (typeof v === "string" && /^[A-HJ-NPR-Z0-9]{17}$/i.test(v)) {
+          result.vin = v.toUpperCase();
+          break;
+        }
+      }
+    }
+
+    if (!result.price) {
+      for (const pk of ["price", "listPrice", "askingPrice", "salePrice"]) {
+        for (const v of deepFindAll(nextData, pk)) {
+          const n = toNumber(v);
+          if (n && n > 500 && n < 500_000) { result.price = Math.round(n); break; }
+        }
+        if (result.price) break;
+      }
+    }
+
+    // ZIP from NEXT_DATA — only accept if it looks like a real ZIP
+    // (guard: reject any value that equals the mileage we already found)
+    if (!result.zipCode) {
+      for (const key of ["zip", "zipCode", "postalCode", "dealerZip"]) {
+        for (const v of deepFindAll(nextData, key)) {
+          const m = String(v).match(/\b(\d{5})\b/);
+          if (m && m[1] !== String(result.mileage)) {
+            result.zipCode = m[1];
+            break;
+          }
+        }
+        if (result.zipCode) break;
+      }
+    }
+  }
+
+  // ── 4. HTML regex fallback for mileage ──
+  //    Collect ALL "X,XXX mi/miles" patterns and take the largest.
+  //    Only runs if meta tags didn't give us a mileage.
+  if (!result.mileage) {
+    const mileageRe = /([\d]{1,3}(?:,\d{3})+|[\d]{4,6})\s*(?:mi(?:les)?)\b/gi;
+    const candidates: number[] = [];
+    let mm;
+    while ((mm = mileageRe.exec(html)) !== null) {
+      const n = parseFloat(mm[1].replace(/,/g, ""));
+      if (n > 100 && n < 500_000) candidates.push(n);
+    }
+    if (candidates.length > 0) result.mileage = Math.round(Math.max(...candidates));
+  }
+
+  // ── 5. ZIP regex fallback — require state abbreviation context ──
+  if (!result.zipCode) {
+    // "City, ST 07981" or "ST 07981" patterns — state abbrev required
+    const zipCtx = html.match(/\b[A-Z]{2}\s+(\d{5})\b/);
+    if (zipCtx?.[1]) result.zipCode = zipCtx[1];
+  }
+
+  return result;
+}
+
 // ── Site-specific: AutoTrader ─────────────────────────────────────────
 
 function extractAutoTraderData(html: string): Partial<ListingExtraction> {
@@ -470,18 +628,33 @@ function extractMileageFromHtml(
     if (parsed > 0 && parsed < 1_000_000) return Math.round(parsed);
   }
 
-  // 4. Regex patterns — "XX,XXX miles" or "XX,XXX mi"
-  const milePatterns = [
-    /(?:mileage|odometer)[^0-9]{1,30}([\d,]+)\s*(?:mi|miles)/i,
-    /([\d]{1,3}(?:,\d{3})+)\s*(?:mi(?:les)?)\b/i,
-    /([\d]{4,6})\s*(?:mi(?:les)?)\b/i,
-  ];
+  // 4. Regex patterns — collect ALL "XX,XXX mi" matches, take the largest.
+  //    First-match-wins misses the odometer when ancillary figures appear
+  //    earlier in the HTML (e.g. "2,274 mi/yr" average on CARFAX).
+  {
+    const candidates: number[] = [];
 
-  for (const re of milePatterns) {
-    const m = html.match(re);
-    if (m?.[1]) {
-      const parsed = parseFloat(m[1].replace(/,/g, ""));
-      if (parsed > 0 && parsed < 1_000_000) return Math.round(parsed);
+    // Contextual: "mileage: 27,555 miles" — high confidence, add first
+    const ctxRe = /(?:mileage|odometer)[^0-9]{1,30}([\d,]+)\s*(?:mi|miles)/gi;
+    let cm;
+    while ((cm = ctxRe.exec(html)) !== null) {
+      const n = parseFloat(cm[1].replace(/,/g, ""));
+      if (n > 100 && n < 1_000_000) candidates.push(n);
+    }
+
+    // Generic: any "X,XXX mi" or "XXXXX mi" pattern
+    const genericRe = /([\d]{1,3}(?:,\d{3})+|[\d]{4,6})\s*(?:mi(?:les)?)\b/gi;
+    let gm;
+    while ((gm = genericRe.exec(html)) !== null) {
+      const n = parseFloat(gm[1].replace(/,/g, ""));
+      if (n > 100 && n < 1_000_000) candidates.push(n);
+    }
+
+    if (candidates.length > 0) {
+      // The actual odometer reading is almost always the largest mileage
+      // figure on a listing page — larger than annual averages, service
+      // intervals, or other incidental mileage numbers.
+      return Math.round(Math.max(...candidates));
     }
   }
 
@@ -601,6 +774,8 @@ export function extractFromHtml(
     siteData = extractCarGurusData(html);
   } else if (sourceHost.includes("autotrader")) {
     siteData = extractAutoTraderData(html);
+  } else if (sourceHost.includes("carfax")) {
+    siteData = extractCarfaxData(html);
   }
 
   // Generic extraction as fallback for any missing fields

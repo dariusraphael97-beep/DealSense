@@ -57,12 +57,12 @@ export function extractScoreBreakdown(result: ScoreResult): ScoreBreakdown {
 
   // ── 2. Mileage Impact ──
   const mileage = input?.mileage ?? 0;
-  const avgMileage = Math.max(ageYears * 13500, 1);
+  const avgMileage = Math.max(ageYears * 13500, 6750);
   const mileageRatio = mileage / avgMileage;
 
-  const catWeight = result.vehicleCategory === "exotic" ? 0.5
-    : result.vehicleCategory === "performance" ? 0.65
-    : result.vehicleCategory === "luxury" ? 0.8
+  const catWeight = result.vehicleCategory === "exotic" ? 0.65
+    : result.vehicleCategory === "performance" ? 0.70
+    : result.vehicleCategory === "luxury" ? 0.80
     : 1.0;
 
   let mileDelta = 0;

@@ -18,7 +18,7 @@ interface Analysis {
   mileage: number;
   asking_price: number;
   deal_score: number;
-  verdict: "Buy" | "Negotiate" | "Walk Away";
+  verdict: "Buy" | "Fair Deal" | "Negotiate" | "Needs Option Review" | "Possibly Overpriced" | "Walk Away";
   price_delta: number;
   vin: string | null;
   created_at: string;
@@ -33,10 +33,13 @@ interface Purchase {
   stripe_session_id: string;
 }
 
-const VERDICT_STYLE = {
-  "Buy":       { bg: "var(--ds-success-bg)", border: "var(--ds-success-border)", text: "var(--ds-success)" },
-  "Negotiate": { bg: "rgba(251,191,36,0.10)", border: "rgba(251,191,36,0.25)", text: "var(--ds-warn)" },
-  "Walk Away": { bg: "var(--ds-danger-bg)", border: "var(--ds-danger-border)", text: "var(--ds-danger)" },
+const VERDICT_STYLE: Record<string, { bg: string; border: string; text: string }> = {
+  "Buy":                 { bg: "var(--ds-success-bg)", border: "var(--ds-success-border)", text: "var(--ds-success)" },
+  "Fair Deal":           { bg: "var(--ds-success-bg)", border: "var(--ds-success-border)", text: "var(--ds-success)" },
+  "Negotiate":           { bg: "rgba(251,191,36,0.10)", border: "rgba(251,191,36,0.25)", text: "var(--ds-warn)" },
+  "Needs Option Review": { bg: "rgba(251,191,36,0.10)", border: "rgba(251,191,36,0.25)", text: "var(--ds-warn)" },
+  "Possibly Overpriced": { bg: "var(--ds-danger-bg)", border: "var(--ds-danger-border)", text: "var(--ds-danger)" },
+  "Walk Away":           { bg: "var(--ds-danger-bg)", border: "var(--ds-danger-border)", text: "var(--ds-danger)" },
 };
 
 export default function HistoryPage() {
@@ -243,7 +246,7 @@ export default function HistoryPage() {
           {!loading && analyses.length > 0 && (
             <div className="space-y-2">
               {analyses.map((a, i) => {
-                const vs = VERDICT_STYLE[a.verdict];
+                const vs = VERDICT_STYLE[a.verdict] ?? { bg: "var(--ds-badge-bg)", border: "var(--ds-badge-border)", text: "var(--ds-text-3)" };
                 const delta = Math.abs(a.price_delta);
                 const isOver = a.price_delta > 0;
                 const label = `${a.year} ${a.make} ${a.model}${a.trim ? ` ${a.trim}` : ""}`;

@@ -31,7 +31,7 @@ export function generateRiskFlags(result: AnalysisResult): RiskFlag[] {
 
   const currentYear = new Date().getFullYear();
   const ageYears = Math.max(0, currentYear - input.year);
-  const avgMileage = Math.max(ageYears * 13500, 1);
+  const avgMileage = Math.max(ageYears * 13500, 6750);
   const mileageRatio = input.mileage / avgMileage;
   const isHighVariance = ["exotic", "performance", "luxury"].includes(vehicleCategory);
 
@@ -39,7 +39,7 @@ export function generateRiskFlags(result: AnalysisResult): RiskFlag[] {
   if (priceDeltaPct > 0.12) {
     flags.push({
       id: "overpriced",
-      label: "Priced above estimated range",
+      label: "Priced above estimated fair value",
       description: `Asking price is ~${Math.round(priceDeltaPct * 100)}% above the estimated fair value midpoint. ${
         confidenceLevel === "High"
           ? "This gap is based on strong market data."

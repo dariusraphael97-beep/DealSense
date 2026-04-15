@@ -320,6 +320,8 @@ export default function PersistedResultPage() {
 
   // PART 3: Confidence explanation dropdown
   const [confOpen, setConfOpen] = useState(false);
+  const [summaryExpanded, setSummaryExpanded] = useState(false);
+  const [insightsExpanded, setInsightsExpanded] = useState(false);
   const confRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -531,10 +533,10 @@ export default function PersistedResultPage() {
 
         {/* ── Statistical fallback notice ── */}
         {isStatisticalFallback && (
-          <div className="flex items-start gap-3 px-4 py-3 rounded-xl text-sm"
+          <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium"
             style={{ background: "var(--ds-warn-bg)", border: "1px solid var(--ds-warn-border)", color: "var(--ds-warn)" }}>
-            <span className="mt-0.5 flex-shrink-0">⚠</span>
-            <span>Live market data was temporarily limited when this analysis ran — pricing is based on estimated data. Results may be less precise than usual.</span>
+            <span>⚠</span>
+            <span>Using estimated pricing — live market data limited</span>
           </div>
         )}
 
@@ -600,11 +602,7 @@ export default function PersistedResultPage() {
                     }}>
                       Trim: {trimValidation.trimConfidence} confidence
                     </span>
-                    {trimValidation.trimConfidence === "low" && (
-                      <span className="text-[10px]" style={{ color: "var(--ds-text-4)" }}>
-                        Trim/config may not be fully verified for this model year
-                      </span>
-                    )}
+                    {/* low trim confidence is already conveyed by the badge color */}
                   </div>
                 )}
               </div>
@@ -631,10 +629,26 @@ export default function PersistedResultPage() {
                 </div>
               </div>
 
-              {/* AI Summary */}
-              <p className="text-[15px] leading-relaxed" style={{ color: "var(--ds-text-2)", maxWidth: 460 }}>
-                {aiSummary}
-              </p>
+              {/* AI Summary — truncated by default */}
+              <div style={{ maxWidth: 460 }}>
+                <p className="text-[15px] leading-relaxed" style={{
+                  color: "var(--ds-text-2)",
+                  display: "-webkit-box",
+                  WebkitLineClamp: summaryExpanded ? "unset" : 2,
+                  WebkitBoxOrient: "vertical",
+                  overflow: summaryExpanded ? "visible" : "hidden",
+                }}>
+                  {aiSummary}
+                </p>
+                {aiSummary && aiSummary.length > 120 && (
+                  <button
+                    onClick={() => setSummaryExpanded(s => !s)}
+                    className="text-xs font-medium mt-1 transition-colors hover:opacity-80"
+                    style={{ color: "var(--ds-accent-text, #6366f1)" }}>
+                    {summaryExpanded ? "Show less" : "Show more"}
+                  </button>
+                )}
+              </div>
 
               {/* Badges — deal strength + market position + confidence + data source */}
               <div className="flex items-center gap-2 flex-wrap justify-center sm:justify-start pt-1">
@@ -777,11 +791,6 @@ export default function PersistedResultPage() {
                     ? `$${Math.abs(priceDelta).toLocaleString()} below estimated fair value`
                     : `$${priceDelta.toLocaleString()} above estimated fair value`}
                 </p>
-                <p className="text-xs mt-0.5" style={{ color: "var(--ds-text-3)" }}>
-                  {priceDelta < 0
-                    ? "This appears competitively priced based on available data."
-                    : "Consider negotiating or verifying configuration details."}
-                </p>
               </div>
             )}
           </motion.div>
@@ -872,7 +881,7 @@ export default function PersistedResultPage() {
               style={{ background: "var(--ds-card-bg)", border: "1px solid var(--ds-card-border)", boxShadow: "var(--ds-card-shadow)" }}>
               <SectionLabel>Key Insights</SectionLabel>
               <ul className="space-y-3.5">
-                {reasons.map((r, i) => (
+                {(insightsExpanded ? reasons : reasons.slice(0, 2)).map((r, i) => (
                   <li key={i} className="flex items-start gap-4">
                     <div className="flex-shrink-0 w-7 h-7 rounded-xl flex items-center justify-center font-mono text-xs font-bold text-indigo-500 dark:text-indigo-400 mt-0.5"
                       style={{ background: "rgba(99,102,241,0.10)", border: "1px solid rgba(99,102,241,0.20)" }}>
@@ -882,6 +891,18 @@ export default function PersistedResultPage() {
                   </li>
                 ))}
               </ul>
+              {reasons.length > 2 && (
+                <button
+                  onClick={() => setInsightsExpanded(s => !s)}
+                  className="mt-4 text-xs font-semibold transition-colors hover:opacity-80 flex items-center gap-1"
+                  style={{ color: "var(--ds-accent-text, #6366f1)" }}>
+                  {insightsExpanded
+                    ? "Show less"
+                    : `Show all ${reasons.length} insights`}
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+                    className={`w-3 h-3 transition-transform duration-200 ${insightsExpanded ? "rotate-180" : ""}`}><polyline points="6 9 12 15 18 9"/></svg>
+                </button>
+              )}
             </motion.div>
           </FadeSection>
         )}
@@ -1017,13 +1038,10 @@ export default function PersistedResultPage() {
 
         {/* ── Disclaimer ── */}
         <div className="text-center px-4 pt-2 pb-4">
-          <p className="text-[11px] leading-relaxed" style={{ color: "var(--ds-text-4)", maxWidth: 560, margin: "0 auto" }}>
-            All values shown are estimates based on available market data and vehicle configuration at the time of analysis.
-            Actual fair market value may differ based on condition, history, local demand, and factors not captured here.
-            {confidenceLevel !== "High" && " This analysis carries " + confidenceLevel.toLowerCase() + " confidence — treat numbers as directional guidance."}
-            {(vehicleCategory === "performance" || vehicleCategory === "exotic" || vehicleCategory === "luxury") &&
-              " Value may vary significantly based on factory options and packages."}
-            {" "}This is not financial advice.
+          <p className="text-[11px]" style={{ color: "var(--ds-text-4)", maxWidth: 480, margin: "0 auto" }}>
+            Estimates only — actual value varies by condition, history, and local demand.
+            {confidenceLevel !== "High" && ` ${confidenceLevel} confidence — treat as directional.`}
+            {" "}Not financial advice.
           </p>
         </div>
 

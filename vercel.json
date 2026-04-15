@@ -1,4 +1,10 @@
 {
   "framework": "nextjs",
-  "outputDirectory": ".next"
+  "outputDirectory": ".next",
+  "crons": [
+    {
+      "path": "/api/cron/refresh-tracked-cars",
+      "schedule": "0 9 * * *"
+    }
+  ]
 }
