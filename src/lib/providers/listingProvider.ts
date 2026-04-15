@@ -187,23 +187,51 @@ function extractCarGurusData(html: string): Partial<ListingExtraction> {
 // CARFAX pages have two sources of vehicle data that conflict:
 //
 //   A) <title> / og:description / meta tags — server-rendered, reflects the
-//      CURRENT DEALER LISTING ("27,555 miles near Whippany, NJ")
+//      CURRENT DEALER LISTING ("27,555 mi near Whippany, NJ")
 //
 //   B) JSON-LD / __NEXT_DATA__ — reflects CARFAX's vehicle history database,
 //      which can lag behind (e.g. last service record was 23,184 miles)
 //
 // We always trust source A for mileage and ZIP.
 // We use source B only for VIN and price, which don't change between sources.
+//
+// Known failure modes fixed here:
+//   1. CARFAX titles use "mi" not "miles" — regex must match both
+//   2. HTML-encoded commas: "27&#44;555" or "&amp;#44;" in attributes
+//   3. Non-breaking spaces: "&nbsp;" between number and unit
+//   4. Bare mileage figures in body (near icon, no "mi" text) — targeted patterns
+
+/** Decode common HTML character entities so regexes match consistently */
+function decodeEntities(s: string): string {
+  return s
+    .replace(/&#44;|&#x2[Cc];/g, ",")        // comma
+    .replace(/&nbsp;|&#160;|&#xA0;/gi, " ")   // non-breaking space
+    .replace(/&#(\d+);/g, (_, n: string) => String.fromCharCode(parseInt(n, 10)))
+    .replace(/&#x([0-9a-f]+);/gi, (_, h: string) => String.fromCharCode(parseInt(h, 16)))
+    .replace(/&amp;/gi, "&")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">");
+}
+
+/** Extract a mileage value from a short string like "27,555 mi" or "27555 miles" */
+function parseMileageStr(s: string): number | null {
+  // Match "27,555 mi", "27,555 miles", "27555 mi.", "27,555 mi " etc.
+  const m = s.match(/([\d,]+)\s*(?:miles?|mi)[\s.,;|<]/i)
+    ?? s.match(/([\d,]+)\s*(?:miles?|mi)$/i);
+  if (!m) return null;
+  const n = parseFloat(m[1].replace(/,/g, ""));
+  return n > 100 && n < 1_000_000 ? Math.round(n) : null;
+}
 
 function extractCarfaxData(html: string): Partial<ListingExtraction> {
   const result: Partial<ListingExtraction> = {};
 
   // ── 1. <title> and meta tags — primary source for listing mileage/ZIP ──
   //
-  // CARFAX title format:
-  //   "Used 2023 BMW X3 xDrive30i - $34,900 - 27,555 miles near Whippany, NJ | CARFAX"
-  // og:description format:
-  //   "Find a used 2023 BMW X3 xDrive30i... $34,900, 27,555 miles... Whippany, NJ"
+  // Typical CARFAX title:
+  //   "Used 2023 BMW X3 xDrive30i - $34,900 - 27,555 mi near Whippany, NJ | CARFAX"
+  // og:description:
+  //   "Find a used 2023 BMW X3 xDrive30i... $34,900, 27,555 mi... Whippany, NJ"
 
   const titleM = html.match(/<title[^>]*>([^<]+)<\/title>/i);
   const ogDescM =
@@ -217,23 +245,19 @@ function extractCarfaxData(html: string): Partial<ListingExtraction> {
     titleM?.[1] ?? "",
     ogDescM?.[1] ?? "",
     descM?.[1] ?? "",
-  ];
+  ].map(decodeEntities);  // decode HTML entities before matching
 
   for (const src of metaSources) {
     if (!src) continue;
 
-    // Mileage: "27,555 miles" or "27,555 mi" or "27555 miles"
+    // Mileage: handles "27,555 mi", "27,555 miles", "27555 mi", "27,555 mi."
     if (!result.mileage) {
-      const milM = src.match(/([\d,]+)\s*miles?/i);
-      if (milM) {
-        const n = parseFloat(milM[1].replace(/,/g, ""));
-        if (n > 100 && n < 1_000_000) result.mileage = Math.round(n);
-      }
+      const n = parseMileageStr(src + " ");  // append space so end-of-string variant works
+      if (n) result.mileage = n;
     }
 
     // ZIP: require a 2-letter US state abbreviation before the 5-digit code
-    // e.g. "Whippany, NJ 07981" or "near Whippany, NJ"
-    // This prevents mileage numbers ("23,184 mi") from matching as ZIPs.
+    // e.g. "Whippany, NJ 07981" — prevents mileage like "23184" matching as ZIP
     if (!result.zipCode) {
       const zipM = src.match(/\b[A-Z]{2}\s+(\d{5})\b/);
       if (zipM) result.zipCode = zipM[1];
@@ -249,6 +273,31 @@ function extractCarfaxData(html: string): Partial<ListingExtraction> {
     }
 
     if (result.mileage && result.zipCode) break;
+  }
+
+  // ── 1b. CARFAX-specific body patterns — targeted DOM structures ──
+  //    Runs only when meta didn't yield mileage. CARFAX renders the listing
+  //    odometer in specific elements we can target before the broad fallback.
+  if (!result.mileage) {
+    const bodyPatterns = [
+      // data-qa / data-testid attribute on an element containing mileage
+      /data-(?:qa|testid)=["'][^"']*(?:odometer|mileage)[^"']*["'][^>]*>\s*<[^>]*>\s*([\d,]+)/i,
+      // aria-label with "mileage" or "odometer"
+      /aria-label=["'][^"']*(?:odometer|mileage)[^"']*["'][^>]*>([\d,]+)/i,
+      // JSON-like "odometer" key in page JS (not inside script tags that hold history)
+      /"(?:odometer|mileage)"\s*:\s*"?([\d,]+)"?/,
+      // CARFAX listing detail rows: number immediately before or after "mi" in small context
+      />\s*([\d,]+)\s*mi\s*</i,
+    ];
+
+    for (const pat of bodyPatterns) {
+      const m = html.match(pat);
+      if (m) {
+        const raw = (m[1] ?? "").replace(/,/g, "");
+        const n = parseFloat(raw);
+        if (n > 100 && n < 500_000) { result.mileage = Math.round(n); break; }
+      }
+    }
   }
 
   // ── 2. JSON-LD — use ONLY for VIN (stable) and price refinement ──
@@ -279,6 +328,8 @@ function extractCarfaxData(html: string): Partial<ListingExtraction> {
   }
 
   // ── 3. __NEXT_DATA__ — VIN and price only ──
+  //    Mileage is deliberately NOT extracted here — NEXT_DATA holds the
+  //    vehicle history database odometer, not the current dealer listing.
   const nextData = parseNextData(html);
   if (nextData) {
     if (!result.vin) {
@@ -300,8 +351,7 @@ function extractCarfaxData(html: string): Partial<ListingExtraction> {
       }
     }
 
-    // ZIP from NEXT_DATA — only accept if it looks like a real ZIP
-    // (guard: reject any value that equals the mileage we already found)
+    // ZIP from NEXT_DATA — reject if it equals the mileage (common false positive)
     if (!result.zipCode) {
       for (const key of ["zip", "zipCode", "postalCode", "dealerZip"]) {
         for (const v of deepFindAll(nextData, key)) {
@@ -317,13 +367,16 @@ function extractCarfaxData(html: string): Partial<ListingExtraction> {
   }
 
   // ── 4. HTML regex fallback for mileage ──
-  //    Collect ALL "X,XXX mi/miles" patterns and take the largest.
-  //    Only runs if meta tags didn't give us a mileage.
+  //    Collect ALL "X,XXX mi/miles" patterns from the full HTML and take
+  //    the largest. The listing odometer is almost always the biggest.
+  //    Only runs if all prior steps failed.
   if (!result.mileage) {
-    const mileageRe = /([\d]{1,3}(?:,\d{3})+|[\d]{4,6})\s*(?:mi(?:les)?)\b/gi;
+    // Also handles entity-encoded commas (&#44;) and nbsp before unit
+    const decoded = decodeEntities(html);
+    const mileageRe = /([\d]{1,3}(?:,\d{3})+|[\d]{4,6})[\s\u00a0]*(?:miles?|mi)[\s.,;|<\b]/gi;
     const candidates: number[] = [];
     let mm;
-    while ((mm = mileageRe.exec(html)) !== null) {
+    while ((mm = mileageRe.exec(decoded)) !== null) {
       const n = parseFloat(mm[1].replace(/,/g, ""));
       if (n > 100 && n < 500_000) candidates.push(n);
     }
@@ -332,7 +385,6 @@ function extractCarfaxData(html: string): Partial<ListingExtraction> {
 
   // ── 5. ZIP regex fallback — require state abbreviation context ──
   if (!result.zipCode) {
-    // "City, ST 07981" or "ST 07981" patterns — state abbrev required
     const zipCtx = html.match(/\b[A-Z]{2}\s+(\d{5})\b/);
     if (zipCtx?.[1]) result.zipCode = zipCtx[1];
   }
