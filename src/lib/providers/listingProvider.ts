@@ -334,7 +334,7 @@ function extractCarfaxData(html: string): Partial<ListingExtraction> {
     // to discover if the correct mileage exists under an unexpected key name.
     {
       const numPaths: Array<{ path: string; val: number }> = [];
-      function scanNums(obj: unknown, path: string): void {
+      const scanNums = (obj: unknown, path: string): void => {
         if (!obj || typeof obj !== "object") return;
         if (Array.isArray(obj)) {
           (obj as unknown[]).forEach((item, i) => scanNums(item, `${path}[${i}]`));
