@@ -347,9 +347,7 @@ function extractCarfaxData(html: string): Partial<ListingExtraction> {
         }
       }
       scanNums(nextData, "");
-      // Deduplicate by value and show unique ones
-      const unique = [...new Map(numPaths.map(x => [x.val, x])).values()];
-      console.log("[carfax-debug] unique nums 5k-200k in NEXT_DATA:", JSON.stringify(unique.slice(0, 30)));
+      console.log("[carfax-debug] nums 5k-200k in NEXT_DATA:", JSON.stringify(numPaths.slice(0, 50)));
     }
 
     if (!result.zipCode) {
