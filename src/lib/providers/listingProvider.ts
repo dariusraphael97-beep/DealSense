@@ -247,6 +247,8 @@ function extractCarfaxData(html: string): Partial<ListingExtraction> {
     descM?.[1] ?? "",
   ].map(decodeEntities);  // decode HTML entities before matching
 
+  console.log("[carfax] meta sources:", metaSources.map(s => s.slice(0, 120)));
+
   for (const src of metaSources) {
     if (!src) continue;
 
@@ -363,15 +365,19 @@ function extractCarfaxData(html: string): Partial<ListingExtraction> {
     if (!result.mileage) {
       const mileageCandidates: number[] = [];
       for (const mk of ["mileage", "odometer", "mileageFromOdometer", "miles", "currentMileage", "listingMileage"]) {
-        for (const v of deepFindAll(nextData, mk)) {
+        const found = deepFindAll(nextData, mk);
+        if (found.length) console.log(`[carfax] NEXT_DATA key="${mk}" values=`, found.slice(0, 5));
+        for (const v of found) {
           const n = toNumber(v);
           if (n && n > 100 && n < 500_000) mileageCandidates.push(Math.round(n));
         }
       }
+      console.log("[carfax] mileage candidates from NEXT_DATA:", mileageCandidates);
       if (mileageCandidates.length > 0) {
         result.mileage = Math.max(...mileageCandidates);
       }
     }
+    console.log("[carfax] final result:", result);
 
     // ZIP from NEXT_DATA — reject if it equals the mileage (common false positive)
     if (!result.zipCode) {
