@@ -226,13 +226,16 @@ function parseMileageStr(s: string): number | null {
 function extractCarfaxData(html: string): Partial<ListingExtraction> {
   const result: Partial<ListingExtraction> = {};
 
-  // ── 1. <title> and meta tags — primary source for listing mileage/ZIP ──
+  // CARFAX has two conflicting mileage sources:
+  //   - Meta tags / JSON-LD: may reflect stale history DB odometer (e.g. last service record)
+  //   - NEXT_DATA / HTML body: contains BOTH current listing AND historical readings
   //
-  // Typical CARFAX title:
-  //   "Used 2023 BMW X3 xDrive30i - $34,900 - 27,555 mi near Whippany, NJ | CARFAX"
-  // og:description:
-  //   "Find a used 2023 BMW X3 xDrive30i... $34,900, 27,555 mi... Whippany, NJ"
+  // Strategy: collect ALL mileage candidates from every source and take the MAX.
+  // The current listing odometer is always >= any historical service record reading,
+  // so MAX reliably picks the right value regardless of which source is stale.
+  const allMileageCandidates: number[] = [];
 
+  // ── 1. <title> and meta tags ──────────────────────────────────────────
   const titleM = html.match(/<title[^>]*>([^<]+)<\/title>/i);
   const ogDescM =
     html.match(/<meta[^>]+property=["']og:description["'][^>]+content=["']([^"']+)["']/i) ??
@@ -245,21 +248,16 @@ function extractCarfaxData(html: string): Partial<ListingExtraction> {
     titleM?.[1] ?? "",
     ogDescM?.[1] ?? "",
     descM?.[1] ?? "",
-  ].map(decodeEntities);  // decode HTML entities before matching
-
-  console.log("[carfax] meta sources:", metaSources.map(s => s.slice(0, 120)));
+  ].map(decodeEntities);
 
   for (const src of metaSources) {
     if (!src) continue;
 
-    // Mileage: handles "27,555 mi", "27,555 miles", "27555 mi", "27,555 mi."
-    if (!result.mileage) {
-      const n = parseMileageStr(src + " ");  // append space so end-of-string variant works
-      if (n) result.mileage = n;
-    }
+    // Mileage candidate from meta (may be stale — collected for MAX comparison)
+    const n = parseMileageStr(src + " ");
+    if (n) allMileageCandidates.push(n);
 
     // ZIP: require a 2-letter US state abbreviation before the 5-digit code
-    // e.g. "Whippany, NJ 07981" — prevents mileage like "23184" matching as ZIP
     if (!result.zipCode) {
       const zipM = src.match(/\b[A-Z]{2}\s+(\d{5})\b/);
       if (zipM) result.zipCode = zipM[1];
@@ -269,42 +267,13 @@ function extractCarfaxData(html: string): Partial<ListingExtraction> {
     if (!result.price) {
       const priceM = src.match(/\$\s?([\d,]+)/);
       if (priceM) {
-        const n = parseFloat(priceM[1].replace(/,/g, ""));
-        if (n > 500 && n < 500_000) result.price = Math.round(n);
-      }
-    }
-
-    if (result.mileage && result.zipCode) break;
-  }
-
-  // ── 1b. CARFAX-specific body patterns — targeted DOM structures ──
-  //    Runs only when meta didn't yield mileage. CARFAX renders the listing
-  //    odometer in specific elements we can target before the broad fallback.
-  if (!result.mileage) {
-    const bodyPatterns = [
-      // data-qa / data-testid attribute on an element containing mileage
-      /data-(?:qa|testid)=["'][^"']*(?:odometer|mileage)[^"']*["'][^>]*>\s*<[^>]*>\s*([\d,]+)/i,
-      // aria-label with "mileage" or "odometer"
-      /aria-label=["'][^"']*(?:odometer|mileage)[^"']*["'][^>]*>([\d,]+)/i,
-      // JSON-like "odometer" key in page JS (not inside script tags that hold history)
-      /"(?:odometer|mileage)"\s*:\s*"?([\d,]+)"?/,
-      // CARFAX listing detail rows: number immediately before or after "mi" in small context
-      />\s*([\d,]+)\s*mi\s*</i,
-    ];
-
-    for (const pat of bodyPatterns) {
-      const m = html.match(pat);
-      if (m) {
-        const raw = (m[1] ?? "").replace(/,/g, "");
-        const n = parseFloat(raw);
-        if (n > 100 && n < 500_000) { result.mileage = Math.round(n); break; }
+        const p = parseFloat(priceM[1].replace(/,/g, ""));
+        if (p > 500 && p < 500_000) result.price = Math.round(p);
       }
     }
   }
 
-  // ── 2. JSON-LD — use ONLY for VIN (stable) and price refinement ──
-  //    Do NOT use for mileage: CARFAX JSON-LD reflects their history database,
-  //    which may show a stale odometer reading from a prior service record.
+  // ── 2. JSON-LD — VIN and price only (mileage excluded — stale history DB) ──
   const jsonLdData = parseJsonLd(html);
   for (const obj of jsonLdData) {
     const rec = obj as Record<string, unknown>;
@@ -322,23 +291,17 @@ function extractCarfaxData(html: string): Partial<ListingExtraction> {
       }
     }
 
-    // ZIP from structured address (dealer address is reliable)
     if (!result.zipCode) {
       const zip = extractNestedAddress(obj);
       if (zip) result.zipCode = zip;
     }
   }
 
-  // ── 3. __NEXT_DATA__ — VIN, price, and mileage (MAX strategy) ──
+  // ── 3. __NEXT_DATA__ — VIN, price, and mileage candidates ──────────────
   //
-  // CARFAX NEXT_DATA contains BOTH the current dealer listing mileage AND
-  // historical odometer readings from service records. We can't distinguish
-  // them by key name alone. However, the current listing odometer is always
-  // >= any past service record, so taking the MAX of all mileage-like values
-  // reliably gives us the current listing mileage.
-  //
-  // Example: listing says 27,555 mi; last service record was at 23,184 mi.
-  //   deepFindAll finds both → Math.max → 27,555 ✓
+  // NEXT_DATA contains both the current dealer listing odometer AND historical
+  // service record readings. We collect all and add to allMileageCandidates;
+  // the global MAX at the end picks the current listing value.
   const nextData = parseNextData(html);
   if (nextData) {
     if (!result.vin) {
@@ -360,58 +323,40 @@ function extractCarfaxData(html: string): Partial<ListingExtraction> {
       }
     }
 
-    // Mileage: take MAX across all odometer-like keys.
-    // Current listing mileage ≥ any historical service record odometer.
-    if (!result.mileage) {
-      const mileageCandidates: number[] = [];
-      for (const mk of ["mileage", "odometer", "mileageFromOdometer", "miles", "currentMileage", "listingMileage"]) {
-        const found = deepFindAll(nextData, mk);
-        if (found.length) console.log(`[carfax] NEXT_DATA key="${mk}" values=`, found.slice(0, 5));
-        for (const v of found) {
-          const n = toNumber(v);
-          if (n && n > 100 && n < 500_000) mileageCandidates.push(Math.round(n));
-        }
-      }
-      console.log("[carfax] mileage candidates from NEXT_DATA:", mileageCandidates);
-      if (mileageCandidates.length > 0) {
-        result.mileage = Math.max(...mileageCandidates);
+    for (const mk of ["mileage", "odometer", "mileageFromOdometer", "miles", "currentMileage", "listingMileage"]) {
+      for (const v of deepFindAll(nextData, mk)) {
+        const n = toNumber(v);
+        if (n && n > 100 && n < 500_000) allMileageCandidates.push(Math.round(n));
       }
     }
-    console.log("[carfax] final result:", result);
 
-    // ZIP from NEXT_DATA — reject if it equals the mileage (common false positive)
     if (!result.zipCode) {
       for (const key of ["zip", "zipCode", "postalCode", "dealerZip"]) {
         for (const v of deepFindAll(nextData, key)) {
           const m = String(v).match(/\b(\d{5})\b/);
-          if (m && m[1] !== String(result.mileage)) {
-            result.zipCode = m[1];
-            break;
-          }
+          if (m) { result.zipCode = m[1]; break; }
         }
         if (result.zipCode) break;
       }
     }
   }
 
-  // ── 4. HTML regex fallback for mileage ──
-  //    Collect ALL "X,XXX mi/miles" patterns from the full HTML and take
-  //    the largest. The listing odometer is almost always the biggest.
-  //    Only runs if all prior steps failed.
-  if (!result.mileage) {
-    // Also handles entity-encoded commas (&#44;) and nbsp before unit
-    const decoded = decodeEntities(html);
-    const mileageRe = /([\d]{1,3}(?:,\d{3})+|[\d]{4,6})[\s\u00a0]*(?:miles?|mi)[\s.,;|<\b]/gi;
-    const candidates: number[] = [];
-    let mm;
-    while ((mm = mileageRe.exec(decoded)) !== null) {
-      const n = parseFloat(mm[1].replace(/,/g, ""));
-      if (n > 100 && n < 500_000) candidates.push(n);
-    }
-    if (candidates.length > 0) result.mileage = Math.round(Math.max(...candidates));
+  // ── 4. HTML regex — collect all "X,XXX mi/miles" from decoded body ──────
+  const decoded = decodeEntities(html);
+  const mileageRe = /([\d]{1,3}(?:,\d{3})+|[\d]{4,6})[\s\u00a0]*(?:miles?|mi)[\s.,;|<\b]/gi;
+  let mm;
+  while ((mm = mileageRe.exec(decoded)) !== null) {
+    const n = parseFloat(mm[1].replace(/,/g, ""));
+    if (n > 100 && n < 500_000) allMileageCandidates.push(n);
   }
 
-  // ── 5. ZIP regex fallback — require state abbreviation context ──
+  // ── Final: take MAX of all mileage candidates ────────────────────────────
+  // Current listing odometer ≥ any historical service record → MAX is correct.
+  if (allMileageCandidates.length > 0) {
+    result.mileage = Math.round(Math.max(...allMileageCandidates));
+  }
+
+  // ── 5. ZIP regex fallback ────────────────────────────────────────────────
   if (!result.zipCode) {
     const zipCtx = html.match(/\b[A-Z]{2}\s+(\d{5})\b/);
     if (zipCtx?.[1]) result.zipCode = zipCtx[1];
