@@ -327,9 +327,16 @@ function extractCarfaxData(html: string): Partial<ListingExtraction> {
     }
   }
 
-  // ── 3. __NEXT_DATA__ — VIN and price only ──
-  //    Mileage is deliberately NOT extracted here — NEXT_DATA holds the
-  //    vehicle history database odometer, not the current dealer listing.
+  // ── 3. __NEXT_DATA__ — VIN, price, and mileage (MAX strategy) ──
+  //
+  // CARFAX NEXT_DATA contains BOTH the current dealer listing mileage AND
+  // historical odometer readings from service records. We can't distinguish
+  // them by key name alone. However, the current listing odometer is always
+  // >= any past service record, so taking the MAX of all mileage-like values
+  // reliably gives us the current listing mileage.
+  //
+  // Example: listing says 27,555 mi; last service record was at 23,184 mi.
+  //   deepFindAll finds both → Math.max → 27,555 ✓
   const nextData = parseNextData(html);
   if (nextData) {
     if (!result.vin) {
@@ -348,6 +355,21 @@ function extractCarfaxData(html: string): Partial<ListingExtraction> {
           if (n && n > 500 && n < 500_000) { result.price = Math.round(n); break; }
         }
         if (result.price) break;
+      }
+    }
+
+    // Mileage: take MAX across all odometer-like keys.
+    // Current listing mileage ≥ any historical service record odometer.
+    if (!result.mileage) {
+      const mileageCandidates: number[] = [];
+      for (const mk of ["mileage", "odometer", "mileageFromOdometer", "miles", "currentMileage", "listingMileage"]) {
+        for (const v of deepFindAll(nextData, mk)) {
+          const n = toNumber(v);
+          if (n && n > 100 && n < 500_000) mileageCandidates.push(Math.round(n));
+        }
+      }
+      if (mileageCandidates.length > 0) {
+        result.mileage = Math.max(...mileageCandidates);
       }
     }
 

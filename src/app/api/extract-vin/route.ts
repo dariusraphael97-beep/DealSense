@@ -39,7 +39,9 @@ function isAllowedHost(hostname: string): boolean {
 }
 
 // ─── Sites that need a search-engine UA to get SSR content ──────────────────
-const BOT_UA_DOMAINS = ["autotrader.com"];
+// carfax.com: bot UA gets a fully server-rendered listing page with mileage
+// in the title; default browser UA may get a JS shell with only history data.
+const BOT_UA_DOMAINS = ["autotrader.com", "carfax.com"];
 
 function needsBotUA(hostname: string): boolean {
   return BOT_UA_DOMAINS.some(
