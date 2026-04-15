@@ -323,31 +323,17 @@ function extractCarfaxData(html: string): Partial<ListingExtraction> {
       }
     }
 
+    // CARFAX NEXT_DATA stores mileage as {label:"27,555", value:27555} — unwrap it.
     for (const mk of ["mileage", "odometer", "mileageFromOdometer", "miles", "currentMileage", "listingMileage"]) {
       for (const v of deepFindAll(nextData, mk)) {
-        const n = toNumber(v);
+        // Plain number or numeric string
+        let n = toNumber(v);
+        // Nested object like {value: 27555, label: "27,555"}
+        if (!n && v && typeof v === "object" && !Array.isArray(v)) {
+          n = toNumber((v as Record<string, unknown>).value);
+        }
         if (n && n > 100 && n < 500_000) allMileageCandidates.push(Math.round(n));
       }
-    }
-
-    // Debug: find ALL numeric values in NEXT_DATA in plausible mileage range
-    // to discover if the correct mileage exists under an unexpected key name.
-    {
-      const numPaths: Array<{ path: string; val: number }> = [];
-      const scanNums = (obj: unknown, path: string): void => {
-        if (!obj || typeof obj !== "object") return;
-        if (Array.isArray(obj)) {
-          (obj as unknown[]).forEach((item, i) => scanNums(item, `${path}[${i}]`));
-        } else {
-          for (const [k, v] of Object.entries(obj as Record<string, unknown>)) {
-            const n = toNumber(v);
-            if (n && n > 5_000 && n < 200_000) numPaths.push({ path: `${path}.${k}`, val: Math.round(n) });
-            if (v && typeof v === "object") scanNums(v, `${path}.${k}`);
-          }
-        }
-      }
-      scanNums(nextData, "");
-      console.log("[carfax-debug] nums 5k-200k in NEXT_DATA:", JSON.stringify(numPaths.slice(0, 50)));
     }
 
     if (!result.zipCode) {
@@ -362,7 +348,9 @@ function extractCarfaxData(html: string): Partial<ListingExtraction> {
   }
 
   // ── 4. HTML regex — collect all "X,XXX mi/miles" from decoded body ──────
-  const decoded = decodeEntities(html);
+  // Strip HTML comments first: CARFAX emits "27,555<!-- --> mi" which breaks
+  // the regex because <!-- --> sits between the number and the unit.
+  const decoded = decodeEntities(html).replace(/<!--[\s\S]*?-->/g, " ");
   const mileageRe = /([\d]{1,3}(?:,\d{3})+|[\d]{4,6})[\s\u00a0]*(?:miles?|mi)[\s.,;|<\b]/gi;
   let mm;
   while ((mm = mileageRe.exec(decoded)) !== null) {
