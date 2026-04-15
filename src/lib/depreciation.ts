@@ -495,20 +495,26 @@ const PROFILES: Record<string, DepreciationProfile> = {
   "ferrari|296 gts":          { fiveYear: 0.90, tenYear: 0.78, mileagePenaltyPer1k: 120, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
 
   // ── LAMBORGHINI ───────────────────────────────────────────────────────────
-  "lamborghini|huracan":      { fiveYear: 0.80, tenYear: 0.65, mileagePenaltyPer1k: 35, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
-  "lamborghini|huracan evo":  { fiveYear: 0.82, tenYear: 0.68, mileagePenaltyPer1k: 32, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
-  "lamborghini|huracan sterrato": { fiveYear: 0.90, tenYear: 0.78, mileagePenaltyPer1k: 28, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
-  "lamborghini|urus":         { fiveYear: 0.72, tenYear: 0.55, mileagePenaltyPer1k: 40, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
-  "lamborghini|urus performante": { fiveYear: 0.76, tenYear: 0.60, mileagePenaltyPer1k: 38, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
-  "lamborghini|revuelto":     { fiveYear: 0.98, tenYear: 0.88, mileagePenaltyPer1k: 20, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  // Mileage penalty raised to reflect real exotic market: low-mileage exotics
+  // command significant premiums. Similar logic to Ferrari fix (was ~35, raised
+  // to ~95–105 so combined with exotic weight 0.65 = ~$62–68 effective/1k mi).
+  "lamborghini|huracan":      { fiveYear: 0.80, tenYear: 0.65, mileagePenaltyPer1k: 100, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "lamborghini|huracan evo":  { fiveYear: 0.82, tenYear: 0.68, mileagePenaltyPer1k: 100, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "lamborghini|huracan sterrato": { fiveYear: 0.90, tenYear: 0.78, mileagePenaltyPer1k: 90, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "lamborghini|urus":         { fiveYear: 0.72, tenYear: 0.55, mileagePenaltyPer1k: 80, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "lamborghini|urus performante": { fiveYear: 0.76, tenYear: 0.60, mileagePenaltyPer1k: 85, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "lamborghini|revuelto":     { fiveYear: 0.98, tenYear: 0.88, mileagePenaltyPer1k: 85, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
 
   // ── MCLAREN ───────────────────────────────────────────────────────────────
-  "mclaren|artura":           { fiveYear: 0.72, tenYear: 0.54, mileagePenaltyPer1k: 42, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
-  "mclaren|720s":             { fiveYear: 0.78, tenYear: 0.62, mileagePenaltyPer1k: 38, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
-  "mclaren|765lt":            { fiveYear: 0.92, tenYear: 0.80, mileagePenaltyPer1k: 28, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
-  "mclaren|gt":               { fiveYear: 0.70, tenYear: 0.52, mileagePenaltyPer1k: 42, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
-  "mclaren|570s":             { fiveYear: 0.68, tenYear: 0.50, mileagePenaltyPer1k: 44, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
-  "mclaren|600lt":            { fiveYear: 0.80, tenYear: 0.65, mileagePenaltyPer1k: 36, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  // Same mileage penalty correction as Lamborghini — was set at old pre-fix
+  // Ferrari levels (28–44). Raised to ~90–105 for consistent exotic treatment.
+  "mclaren|570s":             { fiveYear: 0.68, tenYear: 0.50, mileagePenaltyPer1k: 90, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "mclaren|570gt":            { fiveYear: 0.66, tenYear: 0.48, mileagePenaltyPer1k: 85, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "mclaren|600lt":            { fiveYear: 0.80, tenYear: 0.65, mileagePenaltyPer1k: 95, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "mclaren|artura":           { fiveYear: 0.72, tenYear: 0.54, mileagePenaltyPer1k: 88, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "mclaren|720s":             { fiveYear: 0.78, tenYear: 0.62, mileagePenaltyPer1k: 105, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "mclaren|765lt":            { fiveYear: 0.92, tenYear: 0.80, mileagePenaltyPer1k: 90, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
+  "mclaren|gt":               { fiveYear: 0.70, tenYear: 0.52, mileagePenaltyPer1k: 82, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
 
   // ── BENTLEY ───────────────────────────────────────────────────────────────
   "bentley|continental gt":   { fiveYear: 0.58, tenYear: 0.38, mileagePenaltyPer1k: 65, yearWeights: YEAR_WEIGHTS_ENTHUSIAST },
@@ -540,11 +546,18 @@ const PROFILES: Record<string, DepreciationProfile> = {
   "tesla|model y":            { fiveYear: 0.52, tenYear: 0.26, mileagePenaltyPer1k: 44 },
   "tesla|model s":            { fiveYear: 0.42, tenYear: 0.20, mileagePenaltyPer1k: 50 },
   "tesla|model x":            { fiveYear: 0.42, tenYear: 0.20, mileagePenaltyPer1k: 50 },
+  // Cybertruck: early reliability concerns + initial hype = moderate depreciation trajectory
+  "tesla|cybertruck":         { fiveYear: 0.52, tenYear: 0.28, mileagePenaltyPer1k: 48 },
   "rivian|r1t":               { fiveYear: 0.55, tenYear: 0.28, mileagePenaltyPer1k: 46 },
-  "rivian|r1s":               { fiveYear: 0.55, tenYear: 0.28, mileagePenaltyPer1k: 48 },
+  "rivian|r1s":               { fiveYear: 0.57, tenYear: 0.30, mileagePenaltyPer1k: 48 },
+  "rivian|r2":                { fiveYear: 0.50, tenYear: 0.26, mileagePenaltyPer1k: 44 },
+  // Lucid: very fast depreciation — niche brand, limited resale market
   "lucid|air":                { fiveYear: 0.38, tenYear: 0.16, mileagePenaltyPer1k: 60 },
+  "lucid|air grand touring":  { fiveYear: 0.38, tenYear: 0.16, mileagePenaltyPer1k: 62 },
+  "lucid|air sapphire":       { fiveYear: 0.52, tenYear: 0.32, mileagePenaltyPer1k: 80 },
   "polestar|2":               { fiveYear: 0.44, tenYear: 0.20, mileagePenaltyPer1k: 50 },
   "polestar|3":               { fiveYear: 0.46, tenYear: 0.22, mileagePenaltyPer1k: 55 },
+  "polestar|4":               { fiveYear: 0.46, tenYear: 0.22, mileagePenaltyPer1k: 52 },
 };
 
 /** Default profiles by vehicle class when model not found */

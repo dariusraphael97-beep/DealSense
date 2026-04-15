@@ -680,26 +680,49 @@ const MODEL_BASE: Record<string, number> = {
   "maserati|mc20":     220000,
 
   // ── Ferrari ─────────────────────────────────────────────────────────────
-  "ferrari|roma":       230000,
-  "ferrari|portofino":  220000,
-  "ferrari|f8 tributo": 280000,
-  "ferrari|sf90":       530000,
-  "ferrari|488":        262000,  // base $242k, typical optioned transaction ~$262k
-  "ferrari|812":        340000,
-  "ferrari|purosangue": 400000,
+  "ferrari|488":              262000,  // base $242k, typical optioned transaction ~$262k
+  "ferrari|488 gtb":          245000,
+  "ferrari|488 spider":       270000,
+  "ferrari|488 pista":        330000,
+  "ferrari|488 pista spider": 350000,
+  "ferrari|f8 tributo":       280000,
+  "ferrari|f8 spider":        295000,
+  "ferrari|roma":             230000,
+  "ferrari|roma spider":      252000,
+  "ferrari|portofino":        220000,
+  "ferrari|portofino m":      235000,
+  "ferrari|sf90":             530000,
+  "ferrari|sf90 stradale":    530000,
+  "ferrari|sf90 spider":      575000,
+  "ferrari|812":              340000,
+  "ferrari|812 superfast":    340000,
+  "ferrari|812 gts":          360000,
+  "ferrari|812 competizione": 500000,
+  "ferrari|purosangue":       400000,
+  "ferrari|296 gtb":          330000,
+  "ferrari|296 gts":          360000,
 
   // ── Lamborghini ─────────────────────────────────────────────────────────
-  "lamborghini|huracan":       220000,
-  "lamborghini|huracan evo":   200000,
-  "lamborghini|urus":          230000,
-  "lamborghini|urus performante":260000,
-  "lamborghini|revuelto":      500000,
+  "lamborghini|huracan":            220000,
+  "lamborghini|huracan lp 610-4":   220000,
+  "lamborghini|huracan lp 580-2":   200000,
+  "lamborghini|huracan evo":        261000,
+  "lamborghini|huracan evo spyder": 287000,
+  "lamborghini|huracan sterrato":   274000,
+  "lamborghini|urus":               230000,
+  "lamborghini|urus performante":   260000,
+  "lamborghini|urus s":             240000,
+  "lamborghini|revuelto":           500000,
 
   // ── McLaren ─────────────────────────────────────────────────────────────
-  "mclaren|artura":   225000,
-  "mclaren|720s":     300000,
-  "mclaren|765lt":    358000,
-  "mclaren|gt":       210000,
+  "mclaren|570s":    185000,
+  "mclaren|570gt":   198000,
+  "mclaren|600lt":   242000,
+  "mclaren|720s":    300000,
+  "mclaren|720s spider": 335000,
+  "mclaren|765lt":   358000,
+  "mclaren|artura":  225000,
+  "mclaren|gt":      210000,
 
   // ── Bentley ─────────────────────────────────────────────────────────────
   "bentley|continental gt":  230000,
@@ -713,6 +736,28 @@ const MODEL_BASE: Record<string, number> = {
   "rolls-royce|cullinan":    340000,
   "rolls-royce|spectre":     420000,
   "rolls-royce|phantom":     460000,
+
+  // ── Rivian ──────────────────────────────────────────────────────────────
+  "rivian|r1t":              67500,
+  "rivian|r1t adventure":    75000,
+  "rivian|r1t launch edition":72000,
+  "rivian|r1s":              78000,
+  "rivian|r1s adventure":    85000,
+  "rivian|r1s launch edition":84000,
+  "rivian|r2":               45000,
+
+  // ── Lucid ───────────────────────────────────────────────────────────────
+  "lucid|air":               70000,
+  "lucid|air pure":          70000,
+  "lucid|air touring":       88000,
+  "lucid|air grand touring": 96000,
+  "lucid|air sapphire":      250000,
+
+  // ── Polestar ────────────────────────────────────────────────────────────
+  "polestar|2":              46000,
+  "polestar|3":              60000,
+  "polestar|4":              56000,
+  "polestar|6":              200000,
 };
 
 // Make-level fallbacks when model isn't in the table above
@@ -725,9 +770,11 @@ const MAKE_BASE: Record<string, number> = {
   "nissan": 30000, "hyundai": 28000, "kia": 27000, "subaru": 30000,
   "mazda": 29000, "volkswagen": 31000, "dodge": 34000, "chrysler": 33000,
   "buick": 36000, "mitsubishi": 25000, "tesla": 58000,
+  "rivian": 72000, "lucid": 88000, "polestar": 50000,
   "ferrari": 300000, "lamborghini": 250000, "mclaren": 250000,
   "bentley": 220000, "rolls-royce": 380000, "maserati": 90000,
   "alfa romeo": 50000, "aston martin": 180000, "lotus": 100000,
+  "mini": 34000, "fiat": 26000, "scout": 52000,
   "default": 32000,
 };
 
