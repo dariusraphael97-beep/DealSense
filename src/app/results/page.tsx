@@ -342,7 +342,6 @@ function ResultsContent() {
 
   // PART 3: Confidence explanation dropdown
   const [confOpen, setConfOpen] = useState(false);
-  const [summaryExpanded, setSummaryExpanded] = useState(false);
   const [insightsExpanded, setInsightsExpanded] = useState(false);
   const confRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -589,26 +588,10 @@ function ResultsContent() {
                 </div>
               </div>
 
-              {/* AI Summary — truncated by default */}
-              <div style={{ maxWidth: 460 }}>
-                <p className="text-[15px] leading-relaxed" style={{
-                  color: "var(--ds-text-2)",
-                  display: "-webkit-box",
-                  WebkitLineClamp: summaryExpanded ? "unset" : 2,
-                  WebkitBoxOrient: "vertical",
-                  overflow: summaryExpanded ? "visible" : "hidden",
-                }}>
-                  {aiSummary}
-                </p>
-                {aiSummary && aiSummary.length > 120 && (
-                  <button
-                    onClick={() => setSummaryExpanded(s => !s)}
-                    className="text-xs font-medium mt-1 transition-colors hover:opacity-80"
-                    style={{ color: "var(--ds-accent-text, #6366f1)" }}>
-                    {summaryExpanded ? "Show less" : "Show more"}
-                  </button>
-                )}
-              </div>
+              {/* AI Summary */}
+              <p className="text-[15px] leading-relaxed" style={{ color: "var(--ds-text-2)", maxWidth: 460 }}>
+                {aiSummary}
+              </p>
 
               {/* Badges — deal strength + market position + confidence + data source */}
               <div className="flex items-center gap-2 flex-wrap justify-center sm:justify-start pt-1">
