@@ -39,9 +39,9 @@ function isAllowedHost(hostname: string): boolean {
 }
 
 // ─── Sites that need a search-engine UA to get SSR content ──────────────────
-// carfax.com: bot UA gets a fully server-rendered listing page with mileage
-// in the title; default browser UA may get a JS shell with only history data.
-const BOT_UA_DOMAINS = ["autotrader.com", "carfax.com"];
+// carfax.com intentionally NOT here — Googlebot UA is blocked from non-Google
+// IPs and returns 403. Regular browser UA gets enough data for our extractor.
+const BOT_UA_DOMAINS = ["autotrader.com"];
 
 function needsBotUA(hostname: string): boolean {
   return BOT_UA_DOMAINS.some(
