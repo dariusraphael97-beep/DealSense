@@ -330,6 +330,28 @@ function extractCarfaxData(html: string): Partial<ListingExtraction> {
       }
     }
 
+    // Debug: find ALL numeric values in NEXT_DATA in plausible mileage range
+    // to discover if the correct mileage exists under an unexpected key name.
+    {
+      const numPaths: Array<{ path: string; val: number }> = [];
+      function scanNums(obj: unknown, path: string): void {
+        if (!obj || typeof obj !== "object") return;
+        if (Array.isArray(obj)) {
+          (obj as unknown[]).forEach((item, i) => scanNums(item, `${path}[${i}]`));
+        } else {
+          for (const [k, v] of Object.entries(obj as Record<string, unknown>)) {
+            const n = toNumber(v);
+            if (n && n > 5_000 && n < 200_000) numPaths.push({ path: `${path}.${k}`, val: Math.round(n) });
+            if (v && typeof v === "object") scanNums(v, `${path}.${k}`);
+          }
+        }
+      }
+      scanNums(nextData, "");
+      // Deduplicate by value and show unique ones
+      const unique = [...new Map(numPaths.map(x => [x.val, x])).values()];
+      console.log("[carfax-debug] unique nums 5k-200k in NEXT_DATA:", JSON.stringify(unique.slice(0, 30)));
+    }
+
     if (!result.zipCode) {
       for (const key of ["zip", "zipCode", "postalCode", "dealerZip"]) {
         for (const v of deepFindAll(nextData, key)) {
