@@ -15,6 +15,47 @@ function cacheKey(input: CarInput): string {
 // ── Individual provider fetchers ───────────────────────────────────────
 
 /**
+ * CarsXE Market Value API — uses retail book values calibrated to real sales.
+ * Requires a VIN. Returns retail_clean/retail_avg/retail_rough as the range.
+ * Set CARSXE_API_KEY in env (carsxe.com).
+ */
+export async function fetchCarsXEValue(input: CarInput): Promise<PriceRange | null> {
+  const apiKey = process.env.CARSXE_API_KEY;
+  if (!apiKey || !input.vin) return null;
+
+  try {
+    const { nearLimit } = recordApiCall("carsxe");
+    if (nearLimit) console.warn("[valuation] carsxe quota near limit");
+
+    const params = new URLSearchParams({ key: apiKey, vin: input.vin });
+    if (input.mileage) params.set("mileage", String(input.mileage));
+
+    const res = await fetch(
+      `https://api.carsxe.com/v2/marketvalue?${params}`,
+      { signal: AbortSignal.timeout(FETCH_TIMEOUT_MS), next: { revalidate: 3600 } }
+    );
+    if (!res.ok) return null;
+    const data = await res.json();
+
+    // CarsXE returns retail values by condition. Use clean as midpoint.
+    const clean  = Number(data?.retail_clean  ?? data?.retail_avg ?? 0);
+    const avg    = Number(data?.retail_avg    ?? 0);
+    const rough  = Number(data?.retail_rough  ?? 0);
+    const xclean = Number(data?.retail_xclean ?? 0);
+
+    if (!clean || clean < 500) return null;
+
+    const midpoint = clean;
+    const low      = rough  > 500 ? rough  : Math.round(clean * 0.92);
+    const high     = xclean > 500 ? xclean : Math.round(clean * 1.06);
+
+    return { low, high, midpoint };
+  } catch {
+    return null;
+  }
+}
+
+/**
  * VinAudit Market Value API — most accurate when a VIN is provided.
  * Uses 90-day rolling window of real transaction data.
  * Sign up at vinaudit.com/market-value-api (pay-per-use, ~$0.40/lookup).
@@ -251,9 +292,10 @@ interface ValuationResult {
 /**
  * Run all valuation providers in parallel and return the first hit
  * in priority order:
- *   1. VinAudit (transaction data, most accurate)
- *   2. Auto.dev (dealer listings)
- *   3. MarketCheck (live listings)
+ *   1. CarsXE (retail book value, VIN-based — primary when key is set)
+ *   2. VinAudit (transaction data)
+ *   3. Auto.dev (dealer listings)
+ *   4. MarketCheck (live listings)
  *
  * Comp metadata is always collected from auto.dev (when available)
  * regardless of which provider wins — this feeds confidence scoring.
@@ -270,7 +312,11 @@ export async function fetchValuation(input: CarInput): Promise<ValuationResult> 
   const errors: ProviderError[] = [];
 
   // Run all providers in parallel
-  const [vinAuditValue, autoDevResult, marketCheckValue] = await Promise.all([
+  const [carsXEValue, vinAuditValue, autoDevResult, marketCheckValue] = await Promise.all([
+    fetchCarsXEValue(input).catch((err) => {
+      errors.push({ provider: "CarsXE", message: String(err), code: "unknown" });
+      return null;
+    }),
     fetchVinAuditValue(input).catch((err) => {
       errors.push({ provider: "VinAudit", message: String(err), code: "unknown" });
       return null;
@@ -291,7 +337,15 @@ export async function fetchValuation(input: CarInput): Promise<ValuationResult> 
   // Pick the first hit in priority order for the primary valuation
   let valuation: NormalizedValuation | null = null;
 
-  if (vinAuditValue) {
+  if (carsXEValue) {
+    valuation = {
+      range: carsXEValue,
+      source: "Live market data",
+      sourceType: "transaction",
+      timestamp: Date.now(),
+      compMetadata: compMetadata ?? undefined,
+    };
+  } else if (vinAuditValue) {
     valuation = {
       range: vinAuditValue,
       source: "VinAudit transaction data",
