@@ -5,7 +5,7 @@ export const runtime = "nodejs";
 
 // ── Plan definitions — amounts must match the webhook's AMOUNT_TO_PLAN map ──
 const PLANS = {
-  starter:  { amount: 699,  credits: 3,  name: "Starter — 3 DealSense Credits",   desc: "3 analysis credits · Never expire" },
+  starter:  { amount: 1000, credits: 3,  name: "Starter — 3 DealSense Credits",   desc: "3 Quick Checks · Never expire" },
   standard: { amount: 1499, credits: 10, name: "Standard — 10 DealSense Credits", desc: "10 analysis credits · Never expire" },
   pro:      { amount: 2999, credits: 25, name: "Pro — 25 DealSense Credits",       desc: "25 analysis credits · Never expire" },
 } as const;

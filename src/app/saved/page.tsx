@@ -896,7 +896,7 @@ export default function SavedCarsPage() {
                 Market Watch
               </h1>
               <p className="text-sm mt-1" style={{ color: "var(--ds-text-3)" }}>
-                Track whether the market is moving in your favor.
+                See if the market has moved since you saved.
               </p>
             </div>
 
@@ -1012,13 +1012,10 @@ export default function SavedCarsPage() {
             <div className="text-5xl mb-5">📡</div>
             <p className="font-semibold mb-1" style={{ color: "var(--ds-text-1)" }}>No tracked cars yet</p>
             <p className="text-sm mb-1.5" style={{ color: "var(--ds-text-3)" }}>
-              Analyze a car and click{" "}
-              <strong style={{ color: "var(--ds-text-2)" }}>Track Price</strong>{" "}
-              to start monitoring whether the market moves in your favor.
+              Analyze a car and click <strong style={{ color: "var(--ds-text-2)" }}>Track Price</strong> to monitor whether the market moves in your favor.
             </p>
             <p className="text-xs mb-7" style={{ color: "var(--ds-text-4)" }}>
-              We track fair value estimate movement — not live listing prices from dealers.
-              No credits used for ongoing tracking.
+              Tracks fair value estimate changes — not live dealer listing prices. No credits used for tracking.
             </p>
             <Link href="/analyze"
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white"
@@ -1064,10 +1061,7 @@ export default function SavedCarsPage() {
             className="text-center text-xs mt-8"
             style={{ color: "var(--ds-text-4)" }}
           >
-            Market estimates use VinAudit, Auto.dev, and MarketCheck data.
-            We track fair value estimate movement for your saved vehicle's specs —
-            not live listing prices from dealers. The asking price shown is the
-            original price you saved.
+            Fair value estimates from VinAudit, Auto.dev, and MarketCheck. We track estimate movement — not live dealer listing prices. Asking price shown is the original you saved.
           </motion.p>
         )}
       </div>

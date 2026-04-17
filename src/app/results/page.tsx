@@ -516,7 +516,7 @@ function ResultsContent() {
           <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium"
             style={{ background: "var(--ds-warn-bg)", border: "1px solid var(--ds-warn-border)", color: "var(--ds-warn)" }}>
             <span>⚠</span>
-            <span>Using estimated pricing — live market data limited</span>
+            <span>Limited market data — pricing based on statistical model</span>
           </div>
         )}
 
@@ -839,9 +839,16 @@ function ResultsContent() {
           </motion.div>
         </FadeSection>
 
-        {/* ── Negotiation script ── */}
+        {/* ── Negotiation script — key premium feature ── */}
         <FadeSection>
           <motion.div variants={fadeUp}>
+            <div className="mb-2 flex items-center gap-2">
+              <span className="text-[10px] font-bold uppercase tracking-[0.18em]" style={{ color: "var(--ds-text-4)" }}>Negotiation Script</span>
+              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md"
+                style={{ background: "rgba(99,102,241,0.10)", border: "1px solid rgba(99,102,241,0.20)", color: "var(--ds-accent-text, #6366f1)" }}>
+                Built for this deal
+              </span>
+            </div>
             <NegotiationScriptSection
               negotiationScripts={negotiationScripts}
               negotiationScript={negotiationScript}

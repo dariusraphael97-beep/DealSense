@@ -202,9 +202,9 @@ function SampleAnalysisCard({ vehicle, askingPrice, fairValueLow, fairValueHigh,
 }
 
 const features = [
-  { icon: <IconTarget />, title: "Deal Score (0\u2013100)", desc: "One number: Buy, Negotiate, or Walk Away." },
-  { icon: <IconBarChart />, title: "Fair value range", desc: "Asking price vs. what similar cars sell for near your ZIP." },
-  { icon: <IconChat />, title: "Negotiation script", desc: "Word-for-word script built from your specific deal." },
+  { icon: <IconTarget />, title: "Deal Score (0–100)", desc: "One number tells you: Buy, Negotiate, or Walk Away." },
+  { icon: <IconBarChart />, title: "Fair value range", desc: "Asking price vs. what comparable cars actually sell for near your ZIP." },
+  { icon: <IconChat />, title: "Negotiation script", desc: "Word-for-word lines built from your specific deal — not a template." },
 ];
 
 const steps = [
@@ -218,17 +218,17 @@ const trustSources = [
   {
     icon: <IconDatabase />,
     title: "NHTSA VIN decode",
-    desc: "Every VIN is decoded against the US government\u2019s official vehicle database. We get the exact trim, drivetrain, and body style \u2014 no guessing.",
+    desc: "Decoded against the US government's official vehicle database. Exact trim, drivetrain, and body style — no guessing.",
   },
   {
     icon: <IconTrendingUp />,
-    title: "Depreciation models",
-    desc: "Value curves calibrated by vehicle category \u2014 trucks, sedans, luxury, performance. Not a generic formula applied to everything.",
+    title: "Real market data",
+    desc: "Value estimates from active dealer listings and transaction data — calibrated by vehicle category, not a one-size-fits-all formula.",
   },
   {
     icon: <IconMapPin />,
-    title: "Regional dealer listings",
-    desc: "Pricing comes from active dealer listings near your ZIP code, not stale national averages.",
+    title: "Your ZIP code",
+    desc: "Pricing pulled from listings near you. The same car can be worth meaningfully more or less depending on regional demand.",
   },
 ];
 
@@ -266,13 +266,10 @@ const scoreFactors = [
 ];
 
 const faqs = [
-  { q: "How accurate is the fair value estimate?", a: "It depends on the data available. When we find many comparable listings with consistent pricing, confidence is high and the range is tight. When data is sparse or the vehicle is heavily configurable, we widen the range and tell you. We always show a confidence level so you know how much weight to put on the number." },
-  { q: "Why is a VIN required?", a: "A VIN locks in the exact vehicle \u2014 year, make, model, trim, drivetrain, and body style. Without it, we\u2019d be guessing which version of the car you\u2019re looking at. That matters \u2014 a base Honda Accord and a Touring are very different prices." },
-  { q: "Do I need a credit card to try it?", a: "No. Every new account includes 1 free credit — no card required. After that, buy a credit pack starting at $6.99 when you need more. Credits never expire." },
-  { q: "Do I need an account?", a: "Yes \u2014 a free account, takes 30 seconds. Your analysis history, saved reports, and negotiation scripts are tied to it." },
-  { q: "How is the monthly payment calculated?", a: "Default: 10% down, 7.5% APR, 60-month term. You can adjust all three on the results page. Your actual rate depends on credit and lender." },
-  { q: "What about luxury and performance cars?", a: "Factory packages on vehicles like BMW M-Sport, Porsche, or high-trim trucks can shift value by thousands. We account for vehicle category and show lower confidence when package-level detail is incomplete. The score still works \u2014 just know the range may be wider." },
-  { q: "Can I paste a listing URL instead?", a: "Yes \u2014 paste a link from AutoTrader, Cars.com, CarGurus, or other major sites. We\u2019ll try to extract the VIN, price, and mileage automatically. If it doesn\u2019t work, just grab the VIN from the listing and paste it in manually." },
+  { q: "How accurate is the fair value estimate?", a: "It depends on available data. More comparable listings with consistent pricing = tighter range and higher confidence. Rare or heavily configurable vehicles get wider ranges. We always show a confidence level so you know how much weight to give the number." },
+  { q: "Why is a VIN required?", a: "A VIN locks in the exact vehicle — trim, drivetrain, and body style. A base Honda Accord and a Touring are very different prices. Without a VIN, we'd be guessing which version you're looking at." },
+  { q: "Do I need an account?", a: "Yes — free, takes 30 seconds. Your analysis history, saved reports, and negotiation scripts are tied to it." },
+  { q: "Can I paste a listing URL instead of a VIN?", a: "Yes — paste a link from AutoTrader, Cars.com, CarGurus, or most major sites. We'll extract the VIN, price, and mileage automatically. If it doesn't work, grab the VIN from the listing and paste it directly." },
 ];
 
 export default function HomePage() {
@@ -344,12 +341,12 @@ export default function HomePage() {
               color: "var(--ds-text-3)",
             }}>
             <IconShield />
-            1 free credit when you sign up &mdash; no card required
+            No dealer affiliation &mdash; ever
           </motion.div>
 
           {/* Headline */}
           <h1 className="font-heading text-5xl sm:text-7xl md:text-8xl font-bold tracking-tight leading-[1.15] mb-6">
-            {[["Don\u2019t overpay for"], ["your next car."]].map((line, lineIdx) =>
+            {[["Know the deal"], ["before you sign."]].map((line, lineIdx) =>
               line.map((phrase) => (
                 <span key={lineIdx} className="block">
                   {phrase.split(" ").map((word, wordIdx) => (
@@ -383,7 +380,7 @@ export default function HomePage() {
             className="text-lg leading-relaxed mb-10 max-w-lg"
             style={{ color: "var(--ds-text-2)" }}
           >
-            Paste a VIN. Get an estimated fair value, a deal score out of 100, and a word-for-word negotiation script — in under a minute.
+            Paste a VIN. Know if the price is fair. Walk in ready to negotiate.
           </motion.p>
 
           <motion.div
@@ -467,10 +464,10 @@ export default function HomePage() {
               What you get
             </motion.span>
             <motion.h2 variants={fadeUp} className="font-heading text-3xl sm:text-4xl font-bold leading-tight mb-5">
-              <GlassHeading>You get a number, a verdict,<br />and something to say.</GlassHeading>
+              <GlassHeading>A number, a verdict,<br />and something to say.</GlassHeading>
             </motion.h2>
             <motion.p variants={fadeUp} className="text-base leading-relaxed" style={{ color: "var(--ds-text-3)" }}>
-              We compare the asking price to an estimated fair value range for the exact car you&apos;re looking at. Then we tell you what to do about it.
+              We compare the asking price to an estimated fair value range, then give you the script to act on it.
             </motion.p>
           </ScrollSection>
 
@@ -637,7 +634,7 @@ export default function HomePage() {
             <motion.h2 variants={fadeUp} className="font-heading text-3xl sm:text-4xl font-bold mb-3">
               <GlassHeading>How it works</GlassHeading>
             </motion.h2>
-            <motion.p variants={fadeUp} style={{ color: "var(--ds-text-3)" }}>Free account takes 30 seconds. After that, paste any VIN and get a full analysis in under a minute.</motion.p>
+            <motion.p variants={fadeUp} style={{ color: "var(--ds-text-3)" }}>Free account takes 30 seconds. Paste any VIN and get a full analysis in under a minute.</motion.p>
           </ScrollSection>
 
           <ScrollSection className="space-y-0">
@@ -667,49 +664,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── What Goes Into the Score ── */}
-      <section className="py-16 transition-colors" style={{ borderTop: "1px solid var(--ds-divider)" }}>
-        <div className="mx-auto max-w-6xl px-4">
-          <ScrollSection className="text-center mb-12">
-            <motion.span variants={fadeUp} className="inline-block text-xs font-semibold uppercase tracking-[0.2em] mb-4 text-indigo-600 dark:text-indigo-400/70">
-              Methodology
-            </motion.span>
-            <motion.h2 variants={fadeUp} className="font-heading text-3xl sm:text-4xl font-bold mb-3">
-              <GlassHeading>What goes into the score?</GlassHeading>
-            </motion.h2>
-            <motion.p variants={fadeUp} className="text-sm max-w-lg mx-auto leading-relaxed" style={{ color: "var(--ds-text-3)" }}>
-              The Deal Score isn&apos;t a black box. Here&apos;s what we factor in &mdash; and each analysis shows a full breakdown so you can see exactly what moved the number.
-            </motion.p>
-          </ScrollSection>
-
-          <ScrollSection className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {scoreFactors.map((f) => (
-              <motion.div key={f.label} variants={cardVariant} className="rounded-2xl p-5 flex items-start gap-4"
-                style={{ background: "var(--ds-card-bg)", border: "1px solid var(--ds-card-border)" }}>
-                <div className="w-9 h-9 rounded-xl flex items-center justify-center text-indigo-500 dark:text-indigo-300 flex-shrink-0 mt-0.5"
-                  style={{ background: "rgba(99,102,241,0.10)", border: "1px solid rgba(99,102,241,0.18)" }}>
-                  {f.icon}
-                </div>
-                <div>
-                  <p className="font-heading text-sm font-semibold mb-1" style={{ color: "var(--ds-text-1)" }}>{f.label}</p>
-                  <p className="text-xs leading-relaxed" style={{ color: "var(--ds-text-3)" }}>{f.desc}</p>
-                </div>
-              </motion.div>
-            ))}
-          </ScrollSection>
-
-          {/* Honesty callout */}
-          <ScrollSection className="mt-8 max-w-2xl mx-auto">
-            <motion.div variants={fadeUp} className="rounded-2xl p-5 text-center"
-              style={{ background: "rgba(99,102,241,0.04)", border: "1px solid rgba(99,102,241,0.12)" }}>
-              <p className="text-xs leading-relaxed" style={{ color: "var(--ds-text-3)" }}>
-                <strong className="font-semibold" style={{ color: "var(--ds-text-2)" }}>Confidence:</strong> More comps = tighter range. Rare or heavily configurable vehicles (luxury, performance) get wider ranges and a lower confidence score. We always show you which it is.
-              </p>
-            </motion.div>
-          </ScrollSection>
-        </div>
-      </section>
-
       {/* ── Built on Real Data ── */}
       <section className="py-16 transition-colors" style={{ borderTop: "1px solid var(--ds-divider)" }}>
         <div className="mx-auto max-w-6xl px-4">
@@ -719,7 +673,7 @@ export default function HomePage() {
                 <GlassHeading>Where the data comes from</GlassHeading>
               </h2>
               <p className="text-sm" style={{ color: "var(--ds-text-4)" }}>
-                Real sources. No scraped junk.
+                No dealer affiliation. No scraped junk.
               </p>
             </motion.div>
           </ScrollSection>
@@ -764,23 +718,22 @@ export default function HomePage() {
               Pricing
             </motion.span>
             <motion.h2 variants={fadeUp} className="font-heading text-3xl sm:text-4xl font-bold mb-3">
-              <GlassHeading>Simple, pay-as-you-go.</GlassHeading>
+              <GlassHeading>Pay as you go.</GlassHeading>
             </motion.h2>
-            <motion.p variants={fadeUp} className="max-w-lg mx-auto leading-relaxed" style={{ color: "var(--ds-text-3)" }}>
-              1 credit = 1 full analysis. Your first is free — no card needed. Buy more when you need them. No subscriptions, no recurring charges.
+            <motion.p variants={fadeUp} className="max-w-md mx-auto leading-relaxed" style={{ color: "var(--ds-text-3)" }}>
+              1 credit = 1 Quick Check. No subscriptions. Buy when you need them — credits don&apos;t expire.
             </motion.p>
           </ScrollSection>
 
-          <ScrollSection className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-4xl mx-auto">
+          <ScrollSection className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 max-w-5xl mx-auto">
             {/* Starter */}
             <motion.div variants={cardVariant} className="rounded-2xl p-6 flex flex-col"
               style={{ background: "var(--ds-card-bg)", border: "1px solid var(--ds-card-border)", boxShadow: "var(--ds-card-shadow)" }}>
               <p className="text-xs font-semibold uppercase tracking-[0.15em] mb-4" style={{ color: "var(--ds-text-4)" }}>Starter</p>
               <div className="flex items-baseline gap-0.5 mb-1">
-                <span className="font-heading text-4xl font-extrabold bg-clip-text text-transparent bg-gradient-to-b from-slate-800 to-slate-600 dark:from-white dark:to-white/70">$6</span>
-                <span className="text-sm font-medium" style={{ color: "var(--ds-text-4)" }}>.99</span>
+                <span className="font-heading text-4xl font-extrabold bg-clip-text text-transparent bg-gradient-to-b from-slate-800 to-slate-600 dark:from-white dark:to-white/70">$10</span>
               </div>
-              <p className="text-xs mb-6" style={{ color: "var(--ds-text-4)" }}>3 credits &middot; <span style={{ color: "var(--ds-text-3)" }}>$2.33 each</span></p>
+              <p className="text-xs mb-6" style={{ color: "var(--ds-text-4)" }}>3 Quick Checks &middot; <span style={{ color: "var(--ds-text-3)" }}>$3.33 each</span></p>
               <ul className="space-y-2.5 mb-7 flex-1">
                 {["3 credits","Deal Score + verdict","Fair value range","Negotiation script","Depreciation chart"].map(item => (
                   <li key={item} className="flex items-center gap-2.5 text-sm" style={{ color: "var(--ds-text-2)" }}>
@@ -812,9 +765,9 @@ export default function HomePage() {
                 <span className="font-heading text-4xl font-extrabold bg-clip-text text-transparent bg-gradient-to-b from-slate-800 to-slate-600 dark:from-white dark:to-white/70">$14</span>
                 <span className="text-sm font-medium" style={{ color: "var(--ds-text-4)" }}>.99</span>
               </div>
-              <p className="text-xs mb-6" style={{ color: "var(--ds-text-4)" }}>10 credits &middot; <span style={{ color: "var(--ds-text-3)" }}>$1.50 each</span></p>
+              <p className="text-xs mb-6" style={{ color: "var(--ds-text-4)" }}>10 Quick Checks &middot; <span style={{ color: "var(--ds-text-3)" }}>$1.50 each</span></p>
               <ul className="space-y-2.5 mb-7 flex-1">
-                {["10 credits","Everything in Starter","VIN-verified pricing","Save & share reports","Analysis history"].map(item => (
+                {["10 credits","Everything in Starter","VIN-verified pricing","Save & track reports","Analysis history"].map(item => (
                   <li key={item} className="flex items-center gap-2.5 text-sm" style={{ color: "var(--ds-text-2)" }}>
                     <span className="w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0 text-indigo-500 dark:text-indigo-300"
                       style={{ background:"rgba(99,102,241,0.10)", border:"1px solid rgba(99,102,241,0.22)" }}>
@@ -844,7 +797,7 @@ export default function HomePage() {
                 <span className="font-heading text-4xl font-extrabold bg-clip-text text-transparent bg-gradient-to-b from-slate-800 to-slate-600 dark:from-white dark:to-white/70">$29</span>
                 <span className="text-sm font-medium" style={{ color: "var(--ds-text-4)" }}>.99</span>
               </div>
-              <p className="text-xs mb-6" style={{ color: "var(--ds-text-4)" }}>25 credits &middot; <span style={{ color: "var(--ds-text-3)" }}>$1.20 each</span></p>
+              <p className="text-xs mb-6" style={{ color: "var(--ds-text-4)" }}>25 Quick Checks &middot; <span style={{ color: "var(--ds-text-3)" }}>$1.20 each</span></p>
               <ul className="space-y-2.5 mb-7 flex-1">
                 {["25 credits","Everything in Standard","Best per-credit value","Priority support","New features first"].map(item => (
                   <li key={item} className="flex items-center gap-2.5 text-sm" style={{ color: "var(--ds-text-2)" }}>
@@ -863,15 +816,45 @@ export default function HomePage() {
                 Buy Pro
               </button>
             </motion.div>
+
+            {/* Full Report — Coming Soon */}
+            <motion.div variants={cardVariant} className="relative rounded-2xl p-6 flex flex-col opacity-60"
+              style={{ background: "var(--ds-card-bg)", border: "1px solid var(--ds-card-border)", boxShadow: "var(--ds-card-shadow)" }}>
+              <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 rounded-full px-3 py-0.5 text-xs font-semibold whitespace-nowrap"
+                style={{ background:"rgba(99,102,241,0.12)", border:"1px solid rgba(99,102,241,0.22)", color: "var(--ds-text-4)" }}>
+                Coming Soon
+              </div>
+              <p className="text-xs font-semibold uppercase tracking-[0.15em] mb-4" style={{ color: "var(--ds-text-4)" }}>Full Report</p>
+              <div className="flex items-baseline gap-0.5 mb-1">
+                <span className="font-heading text-4xl font-extrabold bg-clip-text text-transparent bg-gradient-to-b from-slate-800 to-slate-600 dark:from-white dark:to-white/70">—</span>
+              </div>
+              <p className="text-xs mb-6" style={{ color: "var(--ds-text-4)" }}>Per vehicle report</p>
+              <ul className="space-y-2.5 mb-7 flex-1">
+                {["Everything in Pro","Vehicle history check","Title & accident records","Recall & safety data","Ownership cost estimate"].map(item => (
+                  <li key={item} className="flex items-center gap-2.5 text-sm" style={{ color: "var(--ds-text-3)" }}>
+                    <span className="w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0"
+                      style={{ background:"var(--ds-badge-bg)", border:"1px solid var(--ds-badge-border)", color: "var(--ds-text-4)" }}>
+                      <IconCheck />
+                    </span>
+                    {item}
+                  </li>
+                ))}
+              </ul>
+              <p className="text-xs italic mb-4" style={{ color: "var(--ds-text-4)" }}>Not yet available</p>
+              <button disabled
+                className="w-full py-2.5 rounded-xl text-sm font-semibold text-center cursor-not-allowed"
+                style={{ background:"var(--ds-badge-bg)", border:"1px solid var(--ds-badge-border)", color: "var(--ds-text-4)" }}>
+                Notify me
+              </button>
+            </motion.div>
           </ScrollSection>
 
           <ScrollSection>
             <motion.div variants={fadeIn} className="flex flex-wrap items-center justify-center gap-2 mt-8">
               {[
-                { emoji: "\u23F0", label: "Credits never expire" },
-                { emoji: "\uD83D\uDC41", label: "No dealer affiliation \u2014 ever" },
-                { emoji: "\uD83D\uDD12", label: "Secure checkout via Stripe" },
-                { emoji: "\uD83D\uDED1", label: "One-time purchase \u2014 no subscription" },
+                { emoji: "⏰", label: "Credits never expire" },
+                { emoji: "🔒", label: "Secure checkout via Stripe" },
+                { emoji: "🛑", label: "No subscription" },
               ].map(({ emoji, label }) => (
                 <span key={label}
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-colors"
@@ -885,12 +868,6 @@ export default function HomePage() {
                 </span>
               ))}
             </motion.div>
-          </ScrollSection>
-
-          <ScrollSection>
-            <motion.p variants={fadeIn} className="text-center text-xs mt-4" style={{ color: "var(--ds-text-4)" }}>
-              Prices are subject to change. Credits you&apos;ve already purchased never expire.
-            </motion.p>
           </ScrollSection>
         </div>
       </section>
@@ -920,10 +897,10 @@ export default function HomePage() {
       <section className="py-14 transition-colors" style={{ borderTop: "1px solid var(--ds-divider)" }}>
         <ScrollSection className="mx-auto max-w-2xl px-4 text-center">
           <motion.h2 variants={fadeUp} className="font-heading text-4xl font-bold mb-4">
-            <GlassHeading>Check the deal before you sign.</GlassHeading>
+            <GlassHeading>Know the deal before you sign.</GlassHeading>
           </motion.h2>
-          <motion.p variants={fadeUp} className="mb-8 text-lg leading-relaxed" style={{ color: "var(--ds-text-3)" }}>
-            Paste a VIN. Know if the price is fair. Walk in with something to say.
+          <motion.p variants={fadeUp} className="mb-8 text-base leading-relaxed" style={{ color: "var(--ds-text-3)" }}>
+            Paste a VIN. Get a fair value, a score, and a negotiation script in under a minute.
           </motion.p>
           <motion.div variants={fadeUp}>
             <Link href="/analyze"
@@ -932,7 +909,7 @@ export default function HomePage() {
                 background: "linear-gradient(135deg, #4f46e5, #6366f1)",
                 boxShadow: "0 0 32px var(--ds-accent-glow), 0 4px 20px var(--ds-shadow-heavy), inset 0 1px 0 rgba(255,255,255,0.12)",
               }}>
-              Paste a VIN <IconArrow />
+              Check a deal <IconArrow />
             </Link>
           </motion.div>
         </ScrollSection>
@@ -943,7 +920,7 @@ export default function HomePage() {
         <motion.footer variants={fadeIn} className="py-8 transition-colors" style={{ borderTop: "1px solid var(--ds-divider)" }}>
           <div className="mx-auto max-w-6xl px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
             <Logo variant="full" size={22} />
-            <span className="text-xs tracking-wide" style={{ color: "var(--ds-text-4)" }}>Data: NHTSA vPIC &middot; Auto.dev &middot; MarketCheck. Not financial advice.</span>
+            <span className="text-xs tracking-wide" style={{ color: "var(--ds-text-4)" }}>Data: NHTSA &middot; Auto.dev &middot; MarketCheck &middot; VinAudit. Estimates only — not financial advice.</span>
             <span className="text-xs" style={{ color: "var(--ds-text-4)" }}>&copy; {new Date().getFullYear()}</span>
           </div>
         </motion.footer>

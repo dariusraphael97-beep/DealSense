@@ -11,11 +11,11 @@ const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!
 const PLAN_INFO = {
   starter: {
     label: "Starter",
-    price: "$6.99",
+    price: "$10",
     credits: 3,
-    perCredit: "$2.33",
+    perCredit: "$3.33",
     context: "Best for checking 1–2 cars before buying",
-    socialProof: "Most users start here to test their first deal",
+    socialProof: "Start here — covers your first few deals",
   },
   standard: {
     label: "Standard",
