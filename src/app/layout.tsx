@@ -6,7 +6,7 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/next";
 
 const SITE_URL = "https://dealsense.space";
-const SITE_TITLE = "DealSense — Don't overpay for your next car";
+const SITE_TITLE = "DealSense — Know the deal before you sign";
 const SITE_DESC =
   "Paste a VIN, get a Deal Score, fair value range, and a word-for-word negotiation script. One check can save you thousands.";
 
@@ -29,7 +29,7 @@ export const metadata: Metadata = {
         url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "DealSense — Don't overpay for your next car",
+        alt: "DealSense — Know the deal before you sign",
       },
     ],
     locale: "en_US",
@@ -58,7 +58,7 @@ const jsonLd = {
     "@type": "Offer",
     "price": "0",
     "priceCurrency": "USD",
-    "description": "1 free analysis credit on sign up. Additional credits from $6.99.",
+    "description": "Quick Checks from $9.99. No subscription.",
   },
   "featureList": [
     "VIN-based vehicle analysis",

@@ -320,10 +320,10 @@ function AuthForm() {
           <motion.div key={mode} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.2 }} className="mb-6">
             <h2 className="text-2xl font-bold text-white leading-tight">
-              {mode === "signin" ? "Welcome back" : "Check your first deal free"}
+              {mode === "signin" ? "Welcome back" : "Create your account"}
             </h2>
             <p className="text-white/40 text-sm mt-1">
-              {mode === "signin" ? "Sign in to your DealSense account" : "1 free credit on signup — no card needed"}
+              {mode === "signin" ? "Sign in to your DealSense account" : "Takes 30 seconds. No card required."}
             </p>
           </motion.div>
         </AnimatePresence>
