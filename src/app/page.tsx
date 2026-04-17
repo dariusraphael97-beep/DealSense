@@ -721,7 +721,10 @@ export default function HomePage() {
               <GlassHeading>Pay as you go.</GlassHeading>
             </motion.h2>
             <motion.p variants={fadeUp} className="max-w-md mx-auto leading-relaxed" style={{ color: "var(--ds-text-3)" }}>
-              1 credit = 1 Quick Check. No subscriptions. Buy when you need them — credits don&apos;t expire.
+              1 credit = 1 Quick Check. No subscriptions. Credits never expire.
+            </motion.p>
+            <motion.p variants={fadeUp} className="text-xs mt-2" style={{ color: "var(--ds-text-4)" }}>
+              Start with a quick check. Upgrade only if you need more.
             </motion.p>
           </ScrollSection>
 
@@ -731,11 +734,12 @@ export default function HomePage() {
               style={{ background: "var(--ds-card-bg)", border: "1px solid var(--ds-card-border)", boxShadow: "var(--ds-card-shadow)" }}>
               <p className="text-xs font-semibold uppercase tracking-[0.15em] mb-4" style={{ color: "var(--ds-text-4)" }}>Starter</p>
               <div className="flex items-baseline gap-0.5 mb-1">
-                <span className="font-heading text-4xl font-extrabold bg-clip-text text-transparent bg-gradient-to-b from-slate-800 to-slate-600 dark:from-white dark:to-white/70">$10</span>
+                <span className="font-heading text-4xl font-extrabold bg-clip-text text-transparent bg-gradient-to-b from-slate-800 to-slate-600 dark:from-white dark:to-white/70">$9</span>
+                <span className="text-sm font-medium" style={{ color: "var(--ds-text-4)" }}>.99</span>
               </div>
               <p className="text-xs mb-6" style={{ color: "var(--ds-text-4)" }}>3 Quick Checks &middot; <span style={{ color: "var(--ds-text-3)" }}>$3.33 each</span></p>
               <ul className="space-y-2.5 mb-7 flex-1">
-                {["3 credits","Deal Score + verdict","Fair value range","Negotiation script","Depreciation chart"].map(item => (
+                {["Deal score & verdict","Fair value range","Negotiation script","Depreciation chart"].map(item => (
                   <li key={item} className="flex items-center gap-2.5 text-sm" style={{ color: "var(--ds-text-2)" }}>
                     <span className="w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0"
                       style={{ background:"var(--ds-success-bg)", border:"1px solid var(--ds-success-border)", color: "var(--ds-success)" }}>
@@ -749,25 +753,25 @@ export default function HomePage() {
               <button onClick={() => setCheckoutPlan("starter")}
                 className="w-full py-2.5 rounded-xl text-sm font-semibold text-center transition-all hover:brightness-110 active:scale-[0.98] text-white"
                 style={{ background:"linear-gradient(135deg, #4f46e5, #6366f1)", boxShadow:"0 0 20px var(--ds-accent-glow)" }}>
-                Buy Starter
+                Get Started
               </button>
             </motion.div>
 
             {/* Standard */}
             <motion.div variants={cardVariant} className="relative rounded-2xl p-6 flex flex-col"
-              style={{ background: "rgba(99,102,241,0.04)", border: "1px solid rgba(99,102,241,0.15)" }}>
+              style={{ background: "rgba(99,102,241,0.04)", border: "1px solid rgba(99,102,241,0.18)" }}>
               <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 rounded-full px-3 py-0.5 text-xs font-semibold whitespace-nowrap"
-                style={{ background:"rgba(99,102,241,0.15)", border:"1px solid rgba(99,102,241,0.25)", color: "var(--ds-text-4)" }}>
+                style={{ background:"rgba(99,102,241,0.15)", border:"1px solid rgba(99,102,241,0.28)", color: "var(--ds-text-4)" }}>
                 Most popular
               </div>
               <p className="text-xs font-semibold uppercase tracking-[0.15em] mb-4" style={{ color: "var(--ds-text-4)" }}>Standard</p>
               <div className="flex items-baseline gap-0.5 mb-1">
-                <span className="font-heading text-4xl font-extrabold bg-clip-text text-transparent bg-gradient-to-b from-slate-800 to-slate-600 dark:from-white dark:to-white/70">$14</span>
+                <span className="font-heading text-4xl font-extrabold bg-clip-text text-transparent bg-gradient-to-b from-slate-800 to-slate-600 dark:from-white dark:to-white/70">$19</span>
                 <span className="text-sm font-medium" style={{ color: "var(--ds-text-4)" }}>.99</span>
               </div>
-              <p className="text-xs mb-6" style={{ color: "var(--ds-text-4)" }}>10 Quick Checks &middot; <span style={{ color: "var(--ds-text-3)" }}>$1.50 each</span></p>
+              <p className="text-xs mb-6" style={{ color: "var(--ds-text-4)" }}>10 Quick Checks &middot; <span style={{ color: "var(--ds-text-3)" }}>$2.00 each</span></p>
               <ul className="space-y-2.5 mb-7 flex-1">
-                {["10 credits","Everything in Starter","VIN-verified pricing","Save & track reports","Analysis history"].map(item => (
+                {["Everything in Starter","Better value per check","Save and track cars","Analysis history"].map(item => (
                   <li key={item} className="flex items-center gap-2.5 text-sm" style={{ color: "var(--ds-text-2)" }}>
                     <span className="w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0 text-indigo-500 dark:text-indigo-300"
                       style={{ background:"rgba(99,102,241,0.10)", border:"1px solid rgba(99,102,241,0.22)" }}>
@@ -777,7 +781,7 @@ export default function HomePage() {
                   </li>
                 ))}
               </ul>
-              <p className="text-xs italic mb-4" style={{ color: "var(--ds-text-4)" }}>Best for: comparing multiple options</p>
+              <p className="text-xs italic mb-4" style={{ color: "var(--ds-text-4)" }}>Best for: comparing a few options</p>
               <button onClick={() => setCheckoutPlan("standard")}
                 className="w-full py-2.5 rounded-xl text-sm font-semibold text-center transition-all hover:brightness-110 active:scale-[0.98] text-white"
                 style={{ background:"linear-gradient(135deg, #4f46e5, #6366f1)", boxShadow:"0 0 20px var(--ds-accent-glow)" }}>
@@ -794,12 +798,12 @@ export default function HomePage() {
               </div>
               <p className="text-xs font-semibold uppercase tracking-[0.15em] mb-4" style={{ color: "var(--ds-text-4)" }}>Pro</p>
               <div className="flex items-baseline gap-0.5 mb-1">
-                <span className="font-heading text-4xl font-extrabold bg-clip-text text-transparent bg-gradient-to-b from-slate-800 to-slate-600 dark:from-white dark:to-white/70">$29</span>
+                <span className="font-heading text-4xl font-extrabold bg-clip-text text-transparent bg-gradient-to-b from-slate-800 to-slate-600 dark:from-white dark:to-white/70">$39</span>
                 <span className="text-sm font-medium" style={{ color: "var(--ds-text-4)" }}>.99</span>
               </div>
-              <p className="text-xs mb-6" style={{ color: "var(--ds-text-4)" }}>25 Quick Checks &middot; <span style={{ color: "var(--ds-text-3)" }}>$1.20 each</span></p>
+              <p className="text-xs mb-6" style={{ color: "var(--ds-text-4)" }}>25 Quick Checks &middot; <span style={{ color: "var(--ds-text-3)" }}>$1.60 each</span></p>
               <ul className="space-y-2.5 mb-7 flex-1">
-                {["25 credits","Everything in Standard","Best per-credit value","Priority support","New features first"].map(item => (
+                {["Everything in Standard","Best value per credit","Priority support","New features first"].map(item => (
                   <li key={item} className="flex items-center gap-2.5 text-sm" style={{ color: "var(--ds-text-2)" }}>
                     <span className="w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0"
                       style={{ background:"var(--ds-success-bg)", border:"1px solid var(--ds-success-border)", color: "var(--ds-success)" }}>
@@ -809,7 +813,7 @@ export default function HomePage() {
                   </li>
                 ))}
               </ul>
-              <p className="text-xs italic mb-4" style={{ color: "var(--ds-text-4)" }}>Best for: serious shoppers &amp; flippers</p>
+              <p className="text-xs italic mb-4" style={{ color: "var(--ds-text-4)" }}>Best for: actively shopping multiple cars</p>
               <button onClick={() => setCheckoutPlan("pro")}
                 className="w-full py-2.5 rounded-xl text-sm font-semibold text-center transition-all hover:brightness-110 active:scale-[0.98] text-white"
                 style={{ background:"linear-gradient(135deg, #4f46e5, #6366f1)", boxShadow:"0 0 20px var(--ds-accent-glow)" }}>
@@ -818,20 +822,21 @@ export default function HomePage() {
             </motion.div>
 
             {/* Full Report — Coming Soon */}
-            <motion.div variants={cardVariant} className="relative rounded-2xl p-6 flex flex-col opacity-60"
-              style={{ background: "var(--ds-card-bg)", border: "1px solid var(--ds-card-border)", boxShadow: "var(--ds-card-shadow)" }}>
+            <motion.div variants={cardVariant} className="relative rounded-2xl p-6 flex flex-col"
+              style={{ background: "var(--ds-card-bg)", border: "1px solid var(--ds-card-border)", boxShadow: "var(--ds-card-shadow)", opacity: 0.55 }}>
               <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 rounded-full px-3 py-0.5 text-xs font-semibold whitespace-nowrap"
-                style={{ background:"rgba(99,102,241,0.12)", border:"1px solid rgba(99,102,241,0.22)", color: "var(--ds-text-4)" }}>
+                style={{ background:"rgba(139,92,246,0.12)", border:"1px solid rgba(139,92,246,0.25)", color: "rgba(167,139,250,0.7)" }}>
                 Coming Soon
               </div>
-              <p className="text-xs font-semibold uppercase tracking-[0.15em] mb-4" style={{ color: "var(--ds-text-4)" }}>Full Report</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.15em] mb-1" style={{ color: "var(--ds-text-4)" }}>Full Report</p>
+              <p className="text-xs mb-4" style={{ color: "var(--ds-text-4)" }}>Verify the car before you buy</p>
               <div className="flex items-baseline gap-0.5 mb-1">
-                <span className="font-heading text-4xl font-extrabold bg-clip-text text-transparent bg-gradient-to-b from-slate-800 to-slate-600 dark:from-white dark:to-white/70">—</span>
+                <span className="font-heading text-4xl font-extrabold bg-clip-text text-transparent bg-gradient-to-b from-slate-700 to-slate-500 dark:from-white/40 dark:to-white/20">—</span>
               </div>
-              <p className="text-xs mb-6" style={{ color: "var(--ds-text-4)" }}>Per vehicle report</p>
+              <p className="text-xs mb-6" style={{ color: "var(--ds-text-4)" }}>Per vehicle &middot; pricing TBD</p>
               <ul className="space-y-2.5 mb-7 flex-1">
-                {["Everything in Pro","Vehicle history check","Title & accident records","Recall & safety data","Ownership cost estimate"].map(item => (
-                  <li key={item} className="flex items-center gap-2.5 text-sm" style={{ color: "var(--ds-text-3)" }}>
+                {["Accident & title history","Odometer checks","Ownership & risk signals","Verified market data"].map(item => (
+                  <li key={item} className="flex items-center gap-2.5 text-sm" style={{ color: "var(--ds-text-4)" }}>
                     <span className="w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0"
                       style={{ background:"var(--ds-badge-bg)", border:"1px solid var(--ds-badge-border)", color: "var(--ds-text-4)" }}>
                       <IconCheck />
@@ -840,9 +845,9 @@ export default function HomePage() {
                   </li>
                 ))}
               </ul>
-              <p className="text-xs italic mb-4" style={{ color: "var(--ds-text-4)" }}>Not yet available</p>
+              <p className="text-[11px] mb-4" style={{ color: "var(--ds-text-4)" }}>Not yet available</p>
               <button disabled
-                className="w-full py-2.5 rounded-xl text-sm font-semibold text-center cursor-not-allowed"
+                className="w-full py-2.5 rounded-xl text-sm font-medium text-center cursor-not-allowed"
                 style={{ background:"var(--ds-badge-bg)", border:"1px solid var(--ds-badge-border)", color: "var(--ds-text-4)" }}>
                 Notify me
               </button>

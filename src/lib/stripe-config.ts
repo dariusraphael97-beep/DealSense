@@ -5,9 +5,9 @@
  * Set the corresponding env vars in .env.local (dev) and Vercel (production).
  *
  * Required env vars:
- *   NEXT_PUBLIC_STRIPE_LINK_STARTER   — payment link for Starter ($6.99 / 3 credits)
- *   NEXT_PUBLIC_STRIPE_LINK_STANDARD  — payment link for Standard ($14.99 / 10 credits)
- *   NEXT_PUBLIC_STRIPE_LINK_PRO       — payment link for Pro ($29.99 / 25 credits)
+ *   NEXT_PUBLIC_STRIPE_LINK_STARTER   — payment link for Starter ($9.99 / 3 credits)
+ *   NEXT_PUBLIC_STRIPE_LINK_STANDARD  — payment link for Standard ($19.99 / 10 credits)
+ *   NEXT_PUBLIC_STRIPE_LINK_PRO       — payment link for Pro ($39.99 / 25 credits)
  *
  * Get these from: Stripe Dashboard → Payment Links (make sure you're in LIVE mode)
  */

@@ -14,9 +14,9 @@ import { createClient } from "@supabase/supabase-js";
  *   2. We identify the user via `client_reference_id` (their Supabase user ID)
  *      — falls back to matching customer email against the profiles table
  *   3. We determine credits from the amount paid:
- *      - $10.00 (1000 cents) → 3 credits  (Starter)
- *      - $14.99 (1499 cents) → 10 credits (Standard)
- *      - $29.99 (2999 cents) → 25 credits (Pro)
+ *      - $9.99  (999  cents) → 3 credits  (Starter)
+ *      - $19.99 (1999 cents) → 10 credits (Standard)
+ *      - $39.99 (3999 cents) → 25 credits (Pro)
  *   4. Credits are added to the user's profile
  *   5. Purchase is recorded in the `purchases` table for idempotency
  *
@@ -36,9 +36,9 @@ function getStripe() {
 
 // ── Map amount (cents) to credits and plan name ─────────────────────────
 const AMOUNT_TO_PLAN: Record<number, { credits: number; plan: string }> = {
-  1000: { credits: 3,  plan: "Starter"  },
-  1499: { credits: 10, plan: "Standard" },
-  2999: { credits: 25, plan: "Pro"      },
+  999:  { credits: 3,  plan: "Starter"  },
+  1999: { credits: 10, plan: "Standard" },
+  3999: { credits: 25, plan: "Pro"      },
 };
 
 // Disable body parsing — Stripe needs the raw body for signature verification

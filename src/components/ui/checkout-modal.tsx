@@ -11,27 +11,27 @@ const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!
 const PLAN_INFO = {
   starter: {
     label: "Starter",
-    price: "$10",
+    price: "$9.99",
     credits: 3,
     perCredit: "$3.33",
-    context: "Best for checking 1–2 cars before buying",
-    socialProof: "Start here — covers your first few deals",
+    context: "Best for checking one car",
+    socialProof: "Good starting point — no commitment",
   },
   standard: {
     label: "Standard",
-    price: "$14.99",
+    price: "$19.99",
     credits: 10,
-    perCredit: "$1.50",
-    context: "Best for comparing a few options side by side",
-    socialProof: "Most popular — covers your whole car search",
+    perCredit: "$2.00",
+    context: "Best for comparing a few options",
+    socialProof: "Most popular — covers a full car search",
   },
   pro: {
     label: "Pro",
-    price: "$29.99",
+    price: "$39.99",
     credits: 25,
-    perCredit: "$1.20",
-    context: "Best for serious shoppers or car flippers",
-    socialProof: "Best value per analysis — stock up before you shop",
+    perCredit: "$1.60",
+    context: "Best for active shoppers or car flippers",
+    socialProof: "Best value — stock up before you start shopping",
   },
 } as const;
 
@@ -57,10 +57,10 @@ function IconCheck() {
 }
 
 const FEATURES = [
-  "Deal Score + clear buy/skip verdict",
-  "Fair value range from real listings",
-  "Negotiation script you can actually use",
-  "Depreciation & risk insights",
+  "Deal score & verdict",
+  "Fair value range",
+  "Negotiation script",
+  "Depreciation chart",
 ];
 
 const TRUST_ITEMS = [
@@ -191,7 +191,7 @@ export function CheckoutModal({ plan, onClose }: Props) {
                         color: "rgba(165,180,252,0.85)",
                       }}>
                       <IconZap />
-                      1 credit = 1 full deal analysis
+                      1 credit = 1 Quick Check
                     </div>
                   </div>
 

@@ -5,9 +5,9 @@ export const runtime = "nodejs";
 
 // ── Plan definitions — amounts must match the webhook's AMOUNT_TO_PLAN map ──
 const PLANS = {
-  starter:  { amount: 1000, credits: 3,  name: "Starter — 3 DealSense Credits",   desc: "3 Quick Checks · Never expire" },
-  standard: { amount: 1499, credits: 10, name: "Standard — 10 DealSense Credits", desc: "10 analysis credits · Never expire" },
-  pro:      { amount: 2999, credits: 25, name: "Pro — 25 DealSense Credits",       desc: "25 analysis credits · Never expire" },
+  starter:  { amount: 999,  credits: 3,  name: "DealSense Starter — 3 Quick Checks",  desc: "3 Quick Checks · Credits never expire" },
+  standard: { amount: 1999, credits: 10, name: "DealSense Standard — 10 Quick Checks", desc: "10 Quick Checks · Credits never expire" },
+  pro:      { amount: 3999, credits: 25, name: "DealSense Pro — 25 Quick Checks",      desc: "25 Quick Checks · Credits never expire" },
 } as const;
 
 type PlanKey = keyof typeof PLANS;

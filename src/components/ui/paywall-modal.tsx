@@ -4,10 +4,10 @@ import { useEffect, useRef, useCallback, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { CheckoutModal, type CheckoutPlan } from "@/components/ui/checkout-modal";
 
-const PLANS: { key: CheckoutPlan; label: string; price: string; credits: number; popular?: true }[] = [
-  { key: "starter",  label: "Starter",  price: "$6.99",  credits: 3  },
-  { key: "standard", label: "Standard", price: "$14.99", credits: 10, popular: true },
-  { key: "pro",      label: "Pro",      price: "$29.99", credits: 25 },
+const PLANS: { key: CheckoutPlan; label: string; price: string; credits: number; perCredit: string; popular?: true }[] = [
+  { key: "starter",  label: "Starter",  price: "$9.99",  credits: 3,  perCredit: "$3.33" },
+  { key: "standard", label: "Standard", price: "$19.99", credits: 10, perCredit: "$2.00", popular: true },
+  { key: "pro",      label: "Pro",      price: "$39.99", credits: 25, perCredit: "$1.60" },
 ];
 
 interface PaywallModalProps {
@@ -116,7 +116,7 @@ export function PaywallModal({ open, onClose }: PaywallModalProps) {
                   You&apos;re out of credits
                 </h2>
                 <p className="text-sm" style={{ color: "rgba(255,255,255,0.45)" }}>
-                  Each credit = 1 full analysis. Pick a pack to keep going.
+                  1 credit = 1 Quick Check. Pick a pack to continue.
                 </p>
               </div>
 
@@ -147,7 +147,7 @@ export function PaywallModal({ open, onClose }: PaywallModalProps) {
                         )}
                       </div>
                       <span className="text-xs" style={{ color: "rgba(255,255,255,0.4)" }}>
-                        {plan.credits} full {plan.credits === 1 ? "analysis" : "analyses"} · never expire
+                        {plan.credits} Quick Checks · {plan.perCredit} each · never expire
                       </span>
                     </div>
                     <div className="flex items-center gap-2">
