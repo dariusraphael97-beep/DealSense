@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useRef, useEffect, useState } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { EtherealShadow } from "@/components/ui/etheral-shadow";
 import { UserNav } from "@/components/ui/user-nav";
 import { Logo } from "@/components/ui/logo";
 import { CheckoutModal, type CheckoutPlan } from "@/components/ui/checkout-modal";
@@ -525,14 +524,24 @@ export default function HomePage() {
       ══════════════════════════════════════════════════════════════════ */}
       <section className="relative overflow-hidden" style={{ minHeight: "100vh", background: H.bg }}>
 
-        {/* Animated gold ambient glow */}
-        <EtherealShadow
-          color="rgba(37, 99, 235, 0.80)"
-          animation={{ scale: 60, speed: 90 }}
-          noise={{ opacity: 0.35, scale: 1.1 }}
-          sizing="fill"
-          style={{ position: "absolute", inset: 0, zIndex: 0 }}
-        />
+        {/* Pure CSS blue ambient blobs — no JS loop, GPU compositor only */}
+        <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none" aria-hidden>
+          <div className="orb-float absolute" style={{
+            top: "-20%", left: "10%", width: "65%", height: "65%", borderRadius: "50%",
+            background: "radial-gradient(ellipse at center, rgba(37,99,235,0.28) 0%, transparent 70%)",
+            filter: "blur(80px)", willChange: "transform",
+          }} />
+          <div className="orb-float-r absolute" style={{
+            bottom: "0%", right: "-5%", width: "50%", height: "50%", borderRadius: "50%",
+            background: "radial-gradient(ellipse at center, rgba(96,165,250,0.18) 0%, transparent 70%)",
+            filter: "blur(60px)", willChange: "transform",
+          }} />
+          <div className="orb-pulse absolute" style={{
+            top: "40%", right: "20%", width: "30%", height: "30%", borderRadius: "50%",
+            background: "radial-gradient(ellipse at center, rgba(59,130,246,0.12) 0%, transparent 70%)",
+            filter: "blur(40px)",
+          }} />
+        </div>
 
         {/* Dark dot grid texture */}
         <div className="absolute inset-0 z-0 dot-grid-dark opacity-[0.04] pointer-events-none" aria-hidden />
@@ -1040,13 +1049,19 @@ export default function HomePage() {
           CTA
       ══════════════════════════════════════════════════════════════════ */}
       <section className="py-24 transition-colors relative overflow-hidden" style={{ background: H.bg }}>
-        <EtherealShadow
-          color="rgba(37, 99, 235, 0.85)"
-          animation={{ scale: 50, speed: 100 }}
-          noise={{ opacity: 0.3, scale: 1.1 }}
-          sizing="fill"
-          style={{ position: "absolute", inset: 0, zIndex: 0 }}
-        />
+        <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden>
+          <div className="orb-float absolute" style={{
+            top: "50%", left: "50%", transform: "translate(-50%, -50%)",
+            width: "70%", height: "70%", borderRadius: "50%",
+            background: "radial-gradient(ellipse at center, rgba(37,99,235,0.24) 0%, transparent 65%)",
+            filter: "blur(70px)", willChange: "transform",
+          }} />
+          <div className="orb-float-r absolute" style={{
+            top: "-10%", right: "-10%", width: "40%", height: "40%", borderRadius: "50%",
+            background: "radial-gradient(ellipse at center, rgba(96,165,250,0.14) 0%, transparent 70%)",
+            filter: "blur(50px)", willChange: "transform",
+          }} />
+        </div>
         <div className="absolute inset-0 dot-grid-dark opacity-[0.04] pointer-events-none" aria-hidden />
         <div data-g="cta-inner"
           className="relative z-10 mx-auto max-w-2xl px-6 text-center">

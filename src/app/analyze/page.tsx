@@ -12,7 +12,6 @@ import { useSettings } from "@/contexts/settings-context";
 import { useCredits } from "@/contexts/credits-context";
 import { PaywallModal } from "@/components/ui/paywall-modal";
 import { RecentlyViewed } from "@/components/ui/recently-viewed";
-import { EtherealShadow } from "@/components/ui/etheral-shadow";
 
 const CURRENT_YEAR = new Date().getFullYear();
 const YEARS = Array.from({ length: 30 }, (_, i) => CURRENT_YEAR - i);
@@ -587,16 +586,18 @@ export default function AnalyzePage() {
         {submitting && <LoadingOverlay />}
       </AnimatePresence>
 
-      {/* Background */}
+      {/* Background — pure CSS, no JS animation loop */}
       <div className="fixed inset-0 z-0 pointer-events-none" aria-hidden>
-        <EtherealShadow
-          color="rgba(37, 99, 235, 0.75)"
-          animation={{ scale: 55, speed: 80 }}
-          noise={{ opacity: 0.4, scale: 1.1 }}
-          sizing="fill"
-          style={{ position: "absolute", inset: 0 }}
-        />
-        <div className="absolute inset-0" style={{ background: "var(--ds-overlay)" }} />
+        <div className="orb-float absolute" style={{
+          top: "-10%", right: "-10%", width: "60%", height: "60%", borderRadius: "50%",
+          background: "radial-gradient(ellipse at center, rgba(37,99,235,0.12) 0%, transparent 70%)",
+          filter: "blur(80px)", willChange: "transform",
+        }} />
+        <div className="orb-float-r absolute" style={{
+          bottom: "10%", left: "-5%", width: "45%", height: "45%", borderRadius: "50%",
+          background: "radial-gradient(ellipse at center, rgba(96,165,250,0.08) 0%, transparent 70%)",
+          filter: "blur(60px)", willChange: "transform",
+        }} />
       </div>
 
       {/* Nav */}
