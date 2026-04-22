@@ -527,7 +527,7 @@ export default function HomePage() {
 
         {/* Animated gold ambient glow */}
         <EtherealShadow
-          color="rgba(200, 148, 26, 0.85)"
+          color="rgba(37, 99, 235, 0.80)"
           animation={{ scale: 60, speed: 90 }}
           noise={{ opacity: 0.35, scale: 1.1 }}
           sizing="fill"
@@ -1041,7 +1041,7 @@ export default function HomePage() {
       ══════════════════════════════════════════════════════════════════ */}
       <section className="py-24 transition-colors relative overflow-hidden" style={{ background: H.bg }}>
         <EtherealShadow
-          color="rgba(200, 148, 26, 0.9)"
+          color="rgba(37, 99, 235, 0.85)"
           animation={{ scale: 50, speed: 100 }}
           noise={{ opacity: 0.3, scale: 1.1 }}
           sizing="fill"
