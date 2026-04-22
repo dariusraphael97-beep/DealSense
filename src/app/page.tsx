@@ -2,10 +2,12 @@
 
 import Link from "next/link";
 import { motion, useInView } from "framer-motion";
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { UserNav } from "@/components/ui/user-nav";
 import { Logo } from "@/components/ui/logo";
 import { CheckoutModal, type CheckoutPlan } from "@/components/ui/checkout-modal";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 /* ── Easing ── */
 const ease = [0.22, 1, 0.36, 1] as const;
@@ -317,6 +319,66 @@ const faqs = [
 
 export default function HomePage() {
   const [checkoutPlan, setCheckoutPlan] = useState<CheckoutPlan | null>(null);
+  const heroHeadRef = useRef<HTMLHeadingElement>(null);
+  const heroSubRef  = useRef<HTMLParagraphElement>(null);
+  const heroCtaRef  = useRef<HTMLDivElement>(null);
+  const heroEyeRef  = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    gsap.registerPlugin(ScrollTrigger);
+
+    const mm = gsap.matchMedia();
+
+    mm.add("(prefers-reduced-motion: no-preference)", () => {
+      /* ── Hero entrance: eyebrow, headline words, sub, cta ── */
+      const tl = gsap.timeline({ defaults: { ease: "power3.out" } });
+
+      if (heroEyeRef.current) {
+        tl.fromTo(heroEyeRef.current,
+          { opacity: 0, x: -16 },
+          { opacity: 1, x: 0, duration: 0.55 }, 0);
+      }
+      if (heroHeadRef.current) {
+        const words = heroHeadRef.current.querySelectorAll(".hero-word");
+        tl.fromTo(words,
+          { opacity: 0, y: 48, rotationX: -30 },
+          { opacity: 1, y: 0, rotationX: 0, duration: 0.7, stagger: 0.07 }, 0.1);
+      }
+      if (heroSubRef.current) {
+        tl.fromTo(heroSubRef.current,
+          { opacity: 0, y: 20 },
+          { opacity: 1, y: 0, duration: 0.55 }, 0.5);
+      }
+      if (heroCtaRef.current) {
+        tl.fromTo(heroCtaRef.current.children,
+          { opacity: 0, y: 16 },
+          { opacity: 1, y: 0, duration: 0.45, stagger: 0.08 }, 0.65);
+      }
+
+      /* ── ScrollTrigger: section headings fade up ── */
+      gsap.utils.toArray<HTMLElement>(".gs-reveal").forEach((el) => {
+        gsap.fromTo(el,
+          { opacity: 0, y: 36 },
+          {
+            opacity: 1, y: 0, duration: 0.75, ease: "power3.out",
+            scrollTrigger: { trigger: el, start: "top 88%", toggleActions: "play none none none" },
+          });
+      });
+
+      /* ── ScrollTrigger: cards stagger ── */
+      gsap.utils.toArray<HTMLElement>(".gs-card-row").forEach((row) => {
+        const cards = row.querySelectorAll(".gs-card");
+        gsap.fromTo(cards,
+          { opacity: 0, y: 40, scale: 0.97 },
+          {
+            opacity: 1, y: 0, scale: 1, duration: 0.6, ease: "power3.out", stagger: 0.09,
+            scrollTrigger: { trigger: row, start: "top 85%", toggleActions: "play none none none" },
+          });
+      });
+    });
+
+    return () => mm.revert();
+  }, []);
 
   return (
     <div className="min-h-screen transition-colors duration-300" style={{ background: "var(--ds-bg)" }}>
@@ -380,70 +442,60 @@ export default function HomePage() {
             {/* ── Left: Text ── */}
             <div className="flex-1 flex flex-col items-start lg:pt-8">
 
-              {/* Gold eyebrow */}
-              <motion.div
-                initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.55, delay: 0.05, ease }}
-                className="flex items-center gap-2.5 mb-7">
+              {/* Gold eyebrow — GSAP target */}
+              <div ref={heroEyeRef} className="flex items-center gap-2.5 mb-7" style={{ opacity: 0 }}>
                 <span className="block w-8 h-px flex-shrink-0" style={{ background: "var(--ds-gold)" }} />
                 <span className="text-[11px] font-bold uppercase tracking-[0.25em]" style={{ color: "var(--ds-gold)" }}>
                   Deal Intelligence
                 </span>
-              </motion.div>
+              </div>
 
-              {/* Headline */}
-              <h1 className="font-editorial text-5xl sm:text-6xl lg:text-7xl font-bold tracking-tight leading-[1.05] mb-6">
-                {[
-                  { text: "Know the deal", delay: 0.1, dim: false },
-                  { text: "before you sign.", delay: 0.22, dim: true },
-                ].map(({ text, delay, dim }) => (
-                  <motion.span key={text} className="block"
-                    initial={{ opacity: 0, y: 36 }} animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.7, delay, ease: [0.22, 1, 0.36, 1] }}
-                    style={{ color: dim ? "var(--ds-text-2)" : "var(--ds-text-1)" }}>
-                    {text}
-                  </motion.span>
-                ))}
+              {/* Headline — each word is a GSAP target */}
+              <h1 ref={heroHeadRef} className="font-editorial text-5xl sm:text-6xl lg:text-7xl font-bold tracking-tight leading-[1.05] mb-6" style={{ perspective: 800 }}>
+                <span className="block">
+                  {"Know the deal".split(" ").map((w) => (
+                    <span key={w} className="hero-word inline-block mr-[0.22em] last:mr-0"
+                      style={{ opacity: 0, color: "var(--ds-text-1)" }}>{w}</span>
+                  ))}
+                </span>
+                <span className="block">
+                  {"before you sign.".split(" ").map((w) => (
+                    <span key={w} className="hero-word inline-block mr-[0.22em] last:mr-0"
+                      style={{ opacity: 0, color: "var(--ds-text-2)" }}>{w}</span>
+                  ))}
+                </span>
               </h1>
 
-              {/* Description */}
-              <motion.p
-                initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.38, ease }}
+              {/* Description — GSAP target */}
+              <p ref={heroSubRef}
                 className="text-base sm:text-lg leading-relaxed mb-10 max-w-md"
-                style={{ color: "var(--ds-text-3)" }}>
+                style={{ opacity: 0, color: "var(--ds-text-3)" }}>
                 Paste a VIN. Get a Deal Score, fair value range, and a word-for-word negotiation script — in under a minute.
-              </motion.p>
+              </p>
 
-              {/* CTAs */}
-              <motion.div
-                initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.55, delay: 0.5, ease }}
-                className="flex gap-3 flex-wrap mb-8">
+              {/* CTAs — GSAP target */}
+              <div ref={heroCtaRef} className="flex gap-3 flex-wrap mb-8">
                 <Link href="/analyze"
                   className="inline-flex items-center gap-2 px-7 py-3.5 rounded-xl text-sm font-bold transition-all duration-200 hover:-translate-y-0.5 hover:brightness-105 active:translate-y-0 cursor-pointer"
-                  style={{ background: "var(--ds-cta-bg)", color: "var(--ds-cta-text)", boxShadow: "var(--ds-cta-shadow)" }}>
+                  style={{ opacity: 0, background: "var(--ds-cta-bg)", color: "var(--ds-cta-text)", boxShadow: "var(--ds-cta-shadow)" }}>
                   Check a Deal <IconArrow />
                 </Link>
                 <a href="#sample-analyses"
                   className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl text-sm font-medium transition-all duration-200 hover:-translate-y-0.5 cursor-pointer"
-                  style={{ background: "var(--ds-badge-bg)", border: "1px solid var(--ds-badge-border)", color: "var(--ds-text-3)" }}>
+                  style={{ opacity: 0, background: "var(--ds-badge-bg)", border: "1px solid var(--ds-badge-border)", color: "var(--ds-text-3)" }}>
                   See sample results
                 </a>
-              </motion.div>
+              </div>
 
               {/* Trust signals */}
-              <motion.div
-                initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-                transition={{ duration: 0.5, delay: 0.65, ease }}
-                className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs"
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs"
                 style={{ color: "var(--ds-text-4)" }}>
                 <span className="flex items-center gap-1.5"><IconShield />VIN-verified via NHTSA</span>
                 <span className="hidden sm:inline">·</span>
                 <span>3 checks from $9.99</span>
                 <span className="hidden sm:inline">·</span>
                 <span>No subscription</span>
-              </motion.div>
+              </div>
             </div>
 
             {/* ── Right: Score ring + mini cards ── */}
@@ -535,8 +587,8 @@ export default function HomePage() {
             </motion.p>
           </ScrollSection>
 
-          <ScrollSection className="grid sm:grid-cols-3 gap-4">
-            <motion.div variants={cardVariant}>
+          <div className="grid sm:grid-cols-3 gap-4 gs-card-row">
+            <div className="gs-card" style={{ opacity: 0 }}>
               <SampleAnalysisCard
                 vehicle="2020 Honda Accord Sport &middot; 34,200 mi"
                 askingPrice="$26,500"
@@ -547,8 +599,8 @@ export default function HomePage() {
                 summary="Priced about $1,200 above the estimated fair value midpoint for this mileage. Common car with plenty of comps &mdash; the score has high confidence."
                 verdictColor="warn"
               />
-            </motion.div>
-            <motion.div variants={cardVariant}>
+            </div>
+            <div className="gs-card" style={{ opacity: 0 }}>
               <SampleAnalysisCard
                 vehicle="2021 BMW M340i xDrive &middot; 28,400 mi"
                 askingPrice="$42,500"
@@ -559,8 +611,8 @@ export default function HomePage() {
                 summary="Asking price sits in the lower half of the estimated range. Mileage is below average. M-Sport packages can shift value &mdash; verify the build sheet."
                 verdictColor="success"
               />
-            </motion.div>
-            <motion.div variants={cardVariant}>
+            </div>
+            <div className="gs-card" style={{ opacity: 0 }}>
               <SampleAnalysisCard
                 vehicle="2019 Toyota RAV4 XLE &middot; 52,100 mi"
                 askingPrice="$27,900"
@@ -571,8 +623,8 @@ export default function HomePage() {
                 summary="About $3,500 over the estimated fair value midpoint, with above-average mileage for the year. A lot of RAV4s on the market &mdash; there are better deals."
                 verdictColor="danger"
               />
-            </motion.div>
-          </ScrollSection>
+            </div>
+          </div>
 
           {/* Disclaimer */}
           <ScrollSection className="text-center mt-6">
