@@ -12,6 +12,7 @@ import { useSettings } from "@/contexts/settings-context";
 import { useCredits } from "@/contexts/credits-context";
 import { PaywallModal } from "@/components/ui/paywall-modal";
 import { RecentlyViewed } from "@/components/ui/recently-viewed";
+import { EtherealShadow } from "@/components/ui/etheral-shadow";
 
 const CURRENT_YEAR = new Date().getFullYear();
 const YEARS = Array.from({ length: 30 }, (_, i) => CURRENT_YEAR - i);
@@ -588,9 +589,14 @@ export default function AnalyzePage() {
 
       {/* Background */}
       <div className="fixed inset-0 z-0 pointer-events-none" aria-hidden>
-        <div className="absolute inset-0 dot-grid opacity-[0.025]" />
-        <div className="absolute top-[5%] right-[-10%] w-[50vw] h-[50vw] rounded-full"
-          style={{ background: `radial-gradient(circle, var(--ds-gold) 0%, transparent 65%)`, filter: "blur(110px)", opacity: 0.06 }} />
+        <EtherealShadow
+          color="rgba(200, 148, 26, 0.9)"
+          animation={{ scale: 55, speed: 80 }}
+          noise={{ opacity: 0.4, scale: 1.1 }}
+          sizing="fill"
+          style={{ position: "absolute", inset: 0 }}
+        />
+        <div className="absolute inset-0" style={{ background: "var(--ds-overlay)" }} />
       </div>
 
       {/* Nav */}

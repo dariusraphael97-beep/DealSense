@@ -71,8 +71,8 @@ const jsonLd = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" suppressHydrationWarning className="dark no-transitions">
-      <body suppressHydrationWarning className="bg-[#080807] text-white/90 antialiased font-sans">
+    <html lang="en" suppressHydrationWarning className="no-transitions">
+      <body suppressHydrationWarning className="antialiased font-sans">
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}

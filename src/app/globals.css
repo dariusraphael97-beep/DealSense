@@ -71,6 +71,21 @@
   --ds-danger-border:    rgba(220,38,38,0.22);
   --ds-danger-glow:      rgba(220,38,38,0.06);
   --ds-card-shadow-lg:   0 24px 80px rgba(0,0,0,0.10);
+
+  /* ── CTA (light mode — dark button) ── */
+  --ds-cta-bg:           #0F0F0E;
+  --ds-cta-text:         #FFFFFF;
+  --ds-cta-hover:        #1a1a19;
+  --ds-cta-shadow:       0 4px 16px rgba(0,0,0,0.18), 0 1px 3px rgba(0,0,0,0.12);
+
+  /* ── Gold accent (light mode — deeper for contrast) ── */
+  --ds-gold:             #926B00;
+  --ds-gold-bright:      #B8841A;
+  --ds-gold-bg:          rgba(146,107,0,0.08);
+  --ds-gold-border:      rgba(146,107,0,0.20);
+  --ds-gold-glow:        rgba(146,107,0,0.10);
+  --ds-accent-glow:      rgba(146,107,0,0.08);
+  --ds-accent-text:      #926B00;
 }
 
 .dark {
