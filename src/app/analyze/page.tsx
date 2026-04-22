@@ -8,7 +8,6 @@ import { ALL_MAKES, getModels, getTrims } from "@/lib/carData";
 import Link from "next/link";
 import { UserNav } from "@/components/ui/user-nav";
 import { Logo } from "@/components/ui/logo";
-import { EtherealShadow } from "@/components/ui/etheral-shadow";
 import { useSettings } from "@/contexts/settings-context";
 import { useCredits } from "@/contexts/credits-context";
 import { PaywallModal } from "@/components/ui/paywall-modal";
@@ -135,9 +134,9 @@ function Combobox({ value, onChange, options, placeholder, disabled = false, id 
               onMouseDown={(e) => { e.preventDefault(); select(opt); }}
               onMouseEnter={() => setHighlighted(i)}
               className="flex items-center justify-between px-3.5 py-2.5 text-sm cursor-pointer select-none transition-colors"
-              style={{ color: i === highlighted || opt === value ? "var(--ds-text-1)" : "var(--ds-text-2)", fontWeight: opt === value ? 600 : undefined, background: i === highlighted ? "rgba(99,102,241,0.12)" : undefined }}>
+              style={{ color: i === highlighted || opt === value ? "var(--ds-text-1)" : "var(--ds-text-2)", fontWeight: opt === value ? 600 : undefined, background: i === highlighted ? "var(--ds-gold-bg)" : undefined }}>
               {opt}
-              {opt === value && <span className="text-indigo-500 flex-shrink-0"><IconCheck /></span>}
+              {opt === value && <span style={{ color: "var(--ds-gold)" }} className="flex-shrink-0"><IconCheck /></span>}
             </li>
           ))}
         </ul>
@@ -175,7 +174,7 @@ function HowToFindVin() {
         style={{ background: "var(--ds-badge-bg)", color: "var(--ds-text-3)" }}
       >
         <span className="flex items-center gap-1.5">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5 text-indigo-400"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5" style={{ color: "var(--ds-text-3)" }}><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
           How to find your VIN
         </span>
         <IconChevron open={open} />
@@ -273,9 +272,9 @@ function LoadingOverlay() {
           <svg className="w-20 h-20 -rotate-90" viewBox="0 0 64 64" overflow="visible">
             <defs>
               <linearGradient id="progressGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#818cf8"/>
-                <stop offset="50%" stopColor="#6366f1"/>
-                <stop offset="100%" stopColor="#4f46e5"/>
+                <stop offset="0%" stopColor="#E8AA20"/>
+                <stop offset="50%" stopColor="#C8941A"/>
+                <stop offset="100%" stopColor="#A87810"/>
               </linearGradient>
               <filter id="arcGlow" x="-50%" y="-50%" width="200%" height="200%">
                 <feGaussianBlur in="SourceGraphic" stdDeviation="3" result="blur"/>
@@ -286,7 +285,7 @@ function LoadingOverlay() {
               </filter>
             </defs>
             {/* Track */}
-            <circle cx="32" cy="32" r="26" fill="none" stroke="rgba(99,102,241,0.1)" strokeWidth="4"/>
+            <circle cx="32" cy="32" r="26" fill="none" stroke="var(--ds-divider)" strokeWidth="4"/>
             {/* Progress arc — smoothly sweeps around */}
             <motion.circle
               cx="32" cy="32" r="26" fill="none"
@@ -313,8 +312,8 @@ function LoadingOverlay() {
               className="absolute rounded-full"
               style={{
                 width: 8, height: 8, top: 2, left: "50%", marginLeft: -4,
-                background: "#818cf8",
-                boxShadow: "0 0 12px 3px rgba(99,102,241,0.7)",
+                background: "#E8AA20",
+                boxShadow: "0 0 12px 3px rgba(200,148,26,0.7)",
                 opacity: progress > 2 && progress < 98 ? 1 : 0,
                 transition: "opacity 0.3s",
               }}
@@ -339,8 +338,8 @@ function LoadingOverlay() {
               >
                 <div className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-500"
                   style={{
-                    background: isDone ? "var(--ds-success-bg)" : isActive ? "rgba(99,102,241,0.15)" : "var(--ds-badge-bg)",
-                    border: `1px solid ${isDone ? "var(--ds-success-border)" : isActive ? "rgba(99,102,241,0.4)" : "var(--ds-badge-border)"}`,
+                    background: isDone ? "var(--ds-success-bg)" : isActive ? "var(--ds-gold-bg)" : "var(--ds-badge-bg)",
+                    border: `1px solid ${isDone ? "var(--ds-success-border)" : isActive ? "var(--ds-gold-border)" : "var(--ds-badge-border)"}`,
                     transform: isActive ? "scale(1.1)" : "scale(1)",
                   }}>
                   {isDone ? (
@@ -350,7 +349,7 @@ function LoadingOverlay() {
                       viewBox="0 0 24 24" fill="none" stroke="var(--ds-success)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="w-2.5 h-2.5"
                     ><polyline points="20 6 9 17 4 12"/></motion.svg>
                   ) : isActive ? (
-                    <div className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-pulse"/>
+                    <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: "var(--ds-gold)" }}/>
                   ) : null}
                 </div>
                 <span className="text-xs transition-all duration-300"
@@ -588,8 +587,11 @@ export default function AnalyzePage() {
       </AnimatePresence>
 
       {/* Background */}
-      <EtherealShadow color="rgba(79, 70, 229, 1)" animation={{ scale: 60, speed: 90 }} noise={{ opacity: 0.6, scale: 1.2 }} sizing="fill" style={{ position: "fixed", inset: 0, zIndex: 0 }} />
-      <div className="fixed inset-0 z-0" style={{ background: "var(--ds-overlay)" }} />
+      <div className="fixed inset-0 z-0 pointer-events-none" aria-hidden>
+        <div className="absolute inset-0 dot-grid opacity-[0.025]" />
+        <div className="absolute top-[5%] right-[-10%] w-[50vw] h-[50vw] rounded-full"
+          style={{ background: `radial-gradient(circle, var(--ds-gold) 0%, transparent 65%)`, filter: "blur(110px)", opacity: 0.06 }} />
+      </div>
 
       {/* Nav */}
       <nav className="sticky top-0 z-50" style={{ background: "var(--ds-nav-bg)", borderBottom: "1px solid var(--ds-nav-border)", backdropFilter: "blur(20px)" }}>
@@ -616,7 +618,7 @@ export default function AnalyzePage() {
               {!isStaff && credits === 0 && (
                 <button onClick={() => setShowPaywall(true)}
                   className="px-3 py-1.5 rounded-xl text-xs font-semibold text-white transition-all hover:brightness-110"
-                  style={{ background: "linear-gradient(135deg,#4f46e5,#6366f1)", boxShadow: "0 0 12px rgba(99,102,241,0.4)" }}>
+                  style={{ background: "var(--ds-cta-bg)", color: "var(--ds-cta-text)", boxShadow: "var(--ds-cta-shadow)" }}>
                   Buy Credits
                 </button>
               )}
@@ -646,8 +648,8 @@ export default function AnalyzePage() {
               transition={{ duration: 0.4, ease }}
               className="mb-6 rounded-2xl p-5 relative overflow-hidden"
               style={{
-                background: "linear-gradient(135deg, rgba(99,102,241,0.10), rgba(139,92,246,0.08))",
-                border: "1px solid rgba(99,102,241,0.20)",
+                background: "var(--ds-gold-bg)",
+                border: "1px solid var(--ds-gold-border)",
               }}
             >
               <button
@@ -660,8 +662,8 @@ export default function AnalyzePage() {
               </button>
               <div className="flex items-start gap-3">
                 <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
-                  style={{ background: "rgba(99,102,241,0.15)", border: "1px solid rgba(99,102,241,0.25)" }}>
-                  <svg viewBox="0 0 24 24" fill="none" stroke="var(--ds-accent-text)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4" aria-hidden="true">
+                  style={{ background: "var(--ds-gold-bg)", border: "1px solid var(--ds-gold-border)" }}>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="var(--ds-gold)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4" aria-hidden="true">
                     <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
                   </svg>
                 </div>
@@ -708,14 +710,14 @@ export default function AnalyzePage() {
                   <div className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold"
                     style={vinSuccess
                       ? { background: "var(--ds-success-bg)", border: "1px solid var(--ds-success-border)", color: "var(--ds-success)" }
-                      : { background: "rgba(99,102,241,0.15)", border: "1px solid rgba(99,102,241,0.3)", color: "var(--ds-accent-text)" }}>
+                      : { background: "var(--ds-gold-bg)", border: "1px solid var(--ds-gold-border)", color: "var(--ds-gold)" }}>
                     {vinSuccess ? <IconCheck /> : "1"}
                   </div>
                   <span className="text-sm font-semibold" style={{ color: "var(--ds-text-1)" }}>
                     Enter VIN
                   </span>
                   <span className="text-xs px-2 py-0.5 rounded-md font-medium"
-                    style={{ background: "rgba(99,102,241,0.1)", color: "var(--ds-accent-text)", border: "1px solid rgba(99,102,241,0.2)" }}>
+                    style={{ background: "var(--ds-gold-bg)", color: "var(--ds-gold)", border: "1px solid var(--ds-gold-border)" }}>
                     Required
                   </span>
                 </div>
@@ -754,7 +756,7 @@ export default function AnalyzePage() {
                   disabled={vinLoading || vinInput.trim().length < 11}
                   className="flex-shrink-0 px-5 py-3 rounded-xl text-sm font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                   style={vinInput.trim().length >= 11 && !vinSuccess
-                    ? { background: "linear-gradient(135deg,#4f46e5,#6366f1)", color: "#fff", boxShadow: "0 0 16px rgba(99,102,241,0.3)", border: "none" }
+                    ? { background: "var(--ds-cta-bg)", color: "var(--ds-cta-text)", boxShadow: "var(--ds-cta-shadow)", border: "none" }
                     : { background: "var(--ds-badge-bg)", border: "1px solid var(--ds-badge-border)", color: "var(--ds-text-2)" }}>
                   {vinLoading ? <span className="flex items-center gap-2"><IconSpinner />Decoding…</span> : "Decode"}
                 </button>
@@ -791,7 +793,7 @@ export default function AnalyzePage() {
             {/* Listing link card */}
             <div className="rounded-2xl p-4" style={glassCard}>
               <div className="flex items-center gap-2 text-xs font-medium mb-3" style={{ color: "var(--ds-text-3)" }}>
-                <span className="text-indigo-400"><IconLink /></span>
+                <span style={{ color: "var(--ds-text-3)" }}><IconLink /></span>
                 Paste a listing link
                 <span style={{ color: "var(--ds-text-4)" }}>— we&apos;ll autofill the details when available</span>
               </div>
@@ -838,7 +840,7 @@ export default function AnalyzePage() {
               {/* Step label */}
               <div className="flex items-center gap-2.5 -mb-2">
                 <div className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold"
-                  style={{ background: "rgba(99,102,241,0.15)", border: "1px solid rgba(99,102,241,0.3)", color: "var(--ds-accent-text)" }}>
+                  style={{ background: "var(--ds-gold-bg)", border: "1px solid var(--ds-gold-border)", color: "var(--ds-gold)" }}>
                   2
                 </div>
                 <span className="text-sm font-semibold" style={{ color: "var(--ds-text-1)" }}>Confirm details</span>
@@ -927,7 +929,7 @@ export default function AnalyzePage() {
               ) : (
                 <button type="submit" disabled={submitting}
                   className="w-full py-3.5 rounded-xl text-sm font-semibold text-white flex items-center justify-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:brightness-110 active:scale-[0.99]"
-                  style={{ background: "linear-gradient(135deg, #4f46e5, #6366f1)", boxShadow: "0 0 24px var(--ds-accent-glow), 0 4px 16px var(--ds-shadow-heavy), inset 0 1px 0 rgba(255,255,255,0.12)" }}>
+                  style={{ background: "var(--ds-cta-bg)", color: "var(--ds-cta-text)", boxShadow: "var(--ds-cta-shadow)" }}>
                   Get my Deal Score <IconArrow />
                 </button>
               )}

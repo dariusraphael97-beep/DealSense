@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { motion, useInView } from "framer-motion";
 import { useRef, useState } from "react";
-import { EtherealShadow } from "@/components/ui/etheral-shadow";
 import { UserNav } from "@/components/ui/user-nav";
 import { Logo } from "@/components/ui/logo";
 import { CheckoutModal, type CheckoutPlan } from "@/components/ui/checkout-modal";
@@ -201,6 +200,50 @@ function SampleAnalysisCard({ vehicle, askingPrice, fairValueLow, fairValueHigh,
   );
 }
 
+/* ── Large animated score ring for hero ── */
+function HeroScoreRing({ score, verdict, car, delta }: { score: number; verdict: string; car: string; delta: string }) {
+  const circum = 2 * Math.PI * 54;
+  const offset = circum - (score / 100) * circum;
+  const verdictColors = {
+    "Buy":        { stroke: "var(--ds-success)", bg: "var(--ds-success-bg)", border: "var(--ds-success-border)", text: "var(--ds-success)" },
+    "Negotiate":  { stroke: "var(--ds-warn)",    bg: "var(--ds-warn-bg)",    border: "var(--ds-warn-border)",    text: "var(--ds-warn)"    },
+    "Walk Away":  { stroke: "var(--ds-danger)",  bg: "var(--ds-danger-bg)",  border: "var(--ds-danger-border)",  text: "var(--ds-danger)"  },
+  } as const;
+  const c = verdictColors[verdict as keyof typeof verdictColors] ?? verdictColors["Negotiate"];
+  return (
+    <div className="rounded-3xl p-6 flex flex-col items-center"
+      style={{ background: "var(--ds-card-bg)", border: `1px solid ${c.border}`, boxShadow: `var(--ds-card-shadow), 0 0 50px ${c.bg}`, width: 280 }}>
+      <span className="text-[10px] font-bold uppercase tracking-[0.2em] mb-4" style={{ color: "var(--ds-text-4)" }}>Sample Analysis</span>
+      <div className="relative w-36 h-36 mb-4">
+        <svg viewBox="0 0 128 128" className="w-full h-full -rotate-90">
+          <defs>
+            <filter id="ringGlow"><feGaussianBlur in="SourceGraphic" stdDeviation="3" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+          </defs>
+          <circle cx="64" cy="64" r="54" fill="none" stroke="var(--ds-divider)" strokeWidth="6"/>
+          <motion.circle cx="64" cy="64" r="54" fill="none" stroke={c.stroke} strokeWidth="7" strokeLinecap="round"
+            strokeDasharray={circum}
+            initial={{ strokeDashoffset: circum }}
+            animate={{ strokeDashoffset: offset }}
+            transition={{ duration: 1.8, delay: 0.5, ease: [0.22, 1, 0.36, 1] }}
+            filter="url(#ringGlow)" />
+        </svg>
+        <div className="absolute inset-0 flex flex-col items-center justify-center">
+          <motion.span className="font-editorial text-5xl font-bold tabular-nums" style={{ color: "var(--ds-text-1)" }}
+            initial={{ opacity: 0, scale: 0.6 }} animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.55, delay: 1.1, ease: [0.22, 1, 0.36, 1] }}>
+            {score}
+          </motion.span>
+          <span className="text-[10px] uppercase tracking-[0.12em] mt-0.5" style={{ color: "var(--ds-text-4)" }}>Score</span>
+        </div>
+      </div>
+      <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold mb-3"
+        style={{ background: c.bg, border: `1px solid ${c.border}`, color: c.text }}>{verdict}</span>
+      <p className="text-sm font-semibold mb-1 text-center" style={{ color: "var(--ds-text-1)" }}>{car}</p>
+      <p className="text-xs text-center" style={{ color: "var(--ds-text-4)" }}>{delta}</p>
+    </div>
+  );
+}
+
 const features = [
   { icon: <IconTarget />, title: "Deal Score (0–100)", desc: "One number tells you: Buy, Negotiate, or Walk Away." },
   { icon: <IconBarChart />, title: "Fair value range", desc: "Asking price vs. what comparable cars actually sell for near your ZIP." },
@@ -318,121 +361,104 @@ export default function HomePage() {
       </motion.nav>
 
       {/* ── Hero ── */}
-      <section className="relative min-h-[92vh] flex flex-col items-center justify-center overflow-hidden"
-        style={{ background: "var(--ds-bg)" }}>
+      <section className="relative overflow-hidden" style={{ minHeight: "92vh", background: "var(--ds-bg)" }}>
 
-        {/* Subtle warm ambient glow — not indigo */}
+        {/* Background layers */}
         <div className="absolute inset-0 pointer-events-none" aria-hidden>
-          <div className="absolute top-[-20%] left-[10%] w-[60vw] h-[60vw] rounded-full opacity-[0.07]"
-            style={{ background: "radial-gradient(circle, rgba(240,238,232,1) 0%, transparent 70%)", filter: "blur(80px)" }} />
-          <div className="absolute bottom-[-10%] right-[-5%] w-[40vw] h-[40vw] rounded-full opacity-[0.04]"
-            style={{ background: "radial-gradient(circle, rgba(52,211,153,1) 0%, transparent 70%)", filter: "blur(100px)" }} />
+          <div className="absolute inset-0 dot-grid opacity-[0.03]" />
+          <div className="orb-float absolute top-[10%] right-[-8%] w-[60vw] h-[60vw] rounded-full"
+            style={{ background: `radial-gradient(circle, var(--ds-gold) 0%, transparent 65%)`, filter: "blur(100px)", opacity: 0.08 }} />
+          <div className="orb-float-r absolute bottom-[5%] left-[-12%] w-[50vw] h-[50vw] rounded-full"
+            style={{ background: "radial-gradient(circle, rgba(52,211,153,1) 0%, transparent 65%)", filter: "blur(110px)", opacity: 0.05 }} />
+          <div className="absolute bottom-0 inset-x-0 h-32" style={{ background: "linear-gradient(to bottom, transparent, var(--ds-bg))" }} />
         </div>
 
-        {/* Content */}
-        <div className="relative z-10 mx-auto max-w-5xl px-4 w-full py-20 flex flex-col items-center text-center">
+        <div className="relative z-10 mx-auto max-w-6xl px-6"
+          style={{ paddingTop: "12vh", paddingBottom: "10vh" }}>
+          <div className="flex flex-col lg:flex-row items-center lg:items-start gap-14 lg:gap-8">
 
-          {/* Overline — minimal, no pill badge */}
-          <motion.p
-            initial={{ opacity: 0, y: -8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.55, delay: 0.05, ease }}
-            className="text-[11px] font-semibold uppercase tracking-[0.22em] mb-8"
-            style={{ color: "var(--ds-text-4)" }}
-          >
-            No dealer affiliation &nbsp;·&nbsp; AI-powered analysis
-          </motion.p>
+            {/* ── Left: Text ── */}
+            <div className="flex-1 flex flex-col items-start lg:pt-8">
 
-          {/* Headline — clean, no colorful gradient */}
-          <h1 className="font-heading text-5xl sm:text-7xl md:text-[88px] font-bold tracking-[-0.03em] leading-[1.1] mb-7">
-            {[["Know the deal"], ["before you sign."]].map((line, lineIdx) =>
-              line.map((phrase) => (
-                <span key={lineIdx} className="block">
-                  {phrase.split(" ").map((word, wordIdx) => (
-                    <motion.span
-                      key={`${lineIdx}-${wordIdx}`}
-                      initial={{ y: 70, opacity: 0 }}
-                      animate={{ y: 0, opacity: 1 }}
-                      transition={{
-                        delay: lineIdx * 0.18 + wordIdx * 0.07,
-                        type: "spring",
-                        stiffness: 180,
-                        damping: 24,
-                      }}
-                      className="inline-block mr-[0.22em] last:mr-0 pb-[0.12em] bg-clip-text text-transparent"
-                      style={{
-                        backgroundImage: lineIdx === 0
-                          ? "linear-gradient(180deg, rgba(242,240,235,0.95) 0%, rgba(242,240,235,0.68) 100%)"
-                          : "linear-gradient(180deg, rgba(242,240,235,0.95) 30%, rgba(242,240,235,0.45) 100%)",
-                      }}
-                    >
-                      {word}
-                    </motion.span>
-                  ))}
+              {/* Gold eyebrow */}
+              <motion.div
+                initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.55, delay: 0.05, ease }}
+                className="flex items-center gap-2.5 mb-7">
+                <span className="block w-8 h-px flex-shrink-0" style={{ background: "var(--ds-gold)" }} />
+                <span className="text-[11px] font-bold uppercase tracking-[0.25em]" style={{ color: "var(--ds-gold)" }}>
+                  Deal Intelligence
                 </span>
-              ))
-            )}
-          </h1>
-
-          <motion.p
-            initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.62, ease }}
-            className="text-lg leading-relaxed mb-10 max-w-md"
-            style={{ color: "var(--ds-text-3)" }}
-          >
-            Paste a VIN. Know if the price is fair. Walk in ready to negotiate.
-          </motion.p>
-
-          <motion.div
-            initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.55, delay: 0.76, ease }}
-            className="flex gap-3 flex-col sm:flex-row mb-16"
-          >
-            {/* Primary CTA — warm white, not indigo */}
-            <Link href="/analyze"
-              className="inline-flex items-center gap-2 px-7 py-3.5 rounded-2xl text-sm font-semibold transition-all duration-200 hover:-translate-y-0.5 hover:brightness-105 active:translate-y-0 cursor-pointer"
-              style={{
-                background: "var(--ds-cta-bg)",
-                color: "var(--ds-cta-text)",
-                boxShadow: "var(--ds-cta-shadow)",
-              }}>
-              Paste a VIN <IconArrow />
-            </Link>
-            <a href="#sample-analyses"
-              className="inline-flex items-center justify-center px-7 py-3.5 rounded-2xl text-sm font-medium transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 cursor-pointer"
-              style={{
-                background: "var(--ds-badge-bg)",
-                border: "1px solid var(--ds-badge-border)",
-                color: "var(--ds-text-3)",
-              }}>
-              See sample results
-            </a>
-          </motion.div>
-
-          {/* Score cards */}
-          <motion.p
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-            transition={{ duration: 0.4, delay: 0.9, ease }}
-            className="text-[10px] uppercase tracking-[0.22em] font-medium mb-4"
-            style={{ color: "var(--ds-text-4)" }}
-          >
-            Illustrative examples
-          </motion.p>
-          <motion.div
-            className="grid grid-cols-3 gap-3 w-full max-w-xl"
-            initial="hidden" animate="show"
-            variants={staggerContainer(0.1, 0.95)}
-          >
-            {[
-              { score: 83, verdict: "Buy",        car: "2020 Honda Civic EX",  delta: "$1.2k under est. fair value" },
-              { score: 55, verdict: "Negotiate",  car: "2019 Toyota Camry SE", delta: "$1.4k over est. fair value" },
-              { score: 26, verdict: "Walk Away",  car: "2018 BMW 3 Series",    delta: "$6.2k over est. fair value" },
-            ].map((card) => (
-              <motion.div key={card.car} variants={cardVariant}>
-                <MiniScoreCard {...card} />
               </motion.div>
-            ))}
-          </motion.div>
+
+              {/* Headline */}
+              <h1 className="font-editorial text-5xl sm:text-6xl lg:text-7xl font-bold tracking-tight leading-[1.05] mb-6">
+                {[
+                  { text: "Know the deal", delay: 0.1, dim: false },
+                  { text: "before you sign.", delay: 0.22, dim: true },
+                ].map(({ text, delay, dim }) => (
+                  <motion.span key={text} className="block"
+                    initial={{ opacity: 0, y: 36 }} animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.7, delay, ease: [0.22, 1, 0.36, 1] }}
+                    style={{ color: dim ? "var(--ds-text-2)" : "var(--ds-text-1)" }}>
+                    {text}
+                  </motion.span>
+                ))}
+              </h1>
+
+              {/* Description */}
+              <motion.p
+                initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.38, ease }}
+                className="text-base sm:text-lg leading-relaxed mb-10 max-w-md"
+                style={{ color: "var(--ds-text-3)" }}>
+                Paste a VIN. Get a Deal Score, fair value range, and a word-for-word negotiation script — in under a minute.
+              </motion.p>
+
+              {/* CTAs */}
+              <motion.div
+                initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.55, delay: 0.5, ease }}
+                className="flex gap-3 flex-wrap mb-8">
+                <Link href="/analyze"
+                  className="inline-flex items-center gap-2 px-7 py-3.5 rounded-xl text-sm font-bold transition-all duration-200 hover:-translate-y-0.5 hover:brightness-105 active:translate-y-0 cursor-pointer"
+                  style={{ background: "var(--ds-cta-bg)", color: "var(--ds-cta-text)", boxShadow: "var(--ds-cta-shadow)" }}>
+                  Check a Deal <IconArrow />
+                </Link>
+                <a href="#sample-analyses"
+                  className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl text-sm font-medium transition-all duration-200 hover:-translate-y-0.5 cursor-pointer"
+                  style={{ background: "var(--ds-badge-bg)", border: "1px solid var(--ds-badge-border)", color: "var(--ds-text-3)" }}>
+                  See sample results
+                </a>
+              </motion.div>
+
+              {/* Trust signals */}
+              <motion.div
+                initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+                transition={{ duration: 0.5, delay: 0.65, ease }}
+                className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs"
+                style={{ color: "var(--ds-text-4)" }}>
+                <span className="flex items-center gap-1.5"><IconShield />VIN-verified via NHTSA</span>
+                <span className="hidden sm:inline">·</span>
+                <span>3 checks from $9.99</span>
+                <span className="hidden sm:inline">·</span>
+                <span>No subscription</span>
+              </motion.div>
+            </div>
+
+            {/* ── Right: Score ring + mini cards ── */}
+            <motion.div
+              initial={{ opacity: 0, x: 30, scale: 0.95 }} animate={{ opacity: 1, x: 0, scale: 1 }}
+              transition={{ duration: 0.8, delay: 0.25, ease: [0.22, 1, 0.36, 1] }}
+              className="flex-shrink-0 flex flex-col items-center gap-3 w-full lg:w-auto">
+              <HeroScoreRing score={73} verdict="Negotiate" car="2019 Toyota Camry SE" delta="$1,400 over est. fair value" />
+              <div className="grid grid-cols-2 gap-3 w-full" style={{ maxWidth: 280 }}>
+                <MiniScoreCard score={83} verdict="Buy" car="2020 Honda Civic EX" delta="$1.2k under fair value" />
+                <MiniScoreCard score={26} verdict="Walk Away" car="2018 BMW 3 Series" delta="$6.2k over fair value" />
+              </div>
+            </motion.div>
+
+          </div>
         </div>
       </section>
 
@@ -453,65 +479,59 @@ export default function HomePage() {
       </ScrollSection>
 
       {/* ── Features ── */}
-      <section className="mx-auto max-w-6xl px-4 py-14">
-        <div className="grid lg:grid-cols-[1fr_1.4fr] gap-16 items-center">
-          {/* Left — statement */}
-          <ScrollSection>
-            <motion.span variants={fadeUp} className="inline-block text-[11px] font-semibold uppercase tracking-[0.22em] mb-5"
-              style={{ color: "var(--ds-text-4)" }}>
-              What you get
-            </motion.span>
-            <motion.h2 variants={fadeUp} className="font-heading text-3xl sm:text-4xl font-bold leading-tight mb-5">
-              <GlassHeading>A number, a verdict,<br />and something to say.</GlassHeading>
-            </motion.h2>
-            <motion.p variants={fadeUp} className="text-base leading-relaxed" style={{ color: "var(--ds-text-3)" }}>
-              We compare the asking price to an estimated fair value range, then give you the script to act on it.
-            </motion.p>
-          </ScrollSection>
-
-          {/* Right — feature rows */}
-          <ScrollSection className="space-y-0">
-            {features.map((f, i) => (
-              <motion.div
-                key={f.title}
-                variants={cardVariant}
-                className="flex items-start gap-5 py-6 transition-colors"
-                style={{
-                  borderTop: i === 0 ? "1px solid var(--ds-divider)" : undefined,
-                  borderBottom: "1px solid var(--ds-divider)",
-                }}>
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5"
-                  style={{
-                    background: "var(--ds-badge-bg)",
-                    border: "1px solid var(--ds-badge-border)",
-                    color: "var(--ds-text-2)",
-                  }}>
-                  {f.icon}
-                </div>
-                <div>
-                  <h3 className="font-heading text-base font-semibold mb-1">
-                    <GlassHeading>{f.title}</GlassHeading>
-                  </h3>
-                  <p className="text-sm leading-relaxed" style={{ color: "var(--ds-text-3)" }}>{f.desc}</p>
-                </div>
+      <section className="py-16 transition-colors" style={{ borderTop: "1px solid var(--ds-divider)" }}>
+        <div className="mx-auto max-w-6xl px-6">
+          <div className="grid lg:grid-cols-[1fr_1.5fr] gap-16 items-start">
+            {/* Left — statement */}
+            <ScrollSection className="lg:sticky lg:top-28">
+              <motion.div variants={fadeUp} className="flex items-center gap-2.5 mb-5">
+                <span className="block w-6 h-px flex-shrink-0" style={{ background: "var(--ds-gold)" }} />
+                <span className="text-[11px] font-bold uppercase tracking-[0.25em]" style={{ color: "var(--ds-gold)" }}>What you get</span>
               </motion.div>
-            ))}
-          </ScrollSection>
+              <motion.h2 variants={fadeUp} className="font-editorial text-4xl sm:text-5xl font-bold leading-[1.08] tracking-tight mb-5"
+                style={{ color: "var(--ds-text-1)" }}>
+                A number, a verdict, and something to say.
+              </motion.h2>
+              <motion.p variants={fadeUp} className="text-base leading-relaxed" style={{ color: "var(--ds-text-3)" }}>
+                We compare the asking price to an estimated fair value range, then give you the script to act on it.
+              </motion.p>
+            </ScrollSection>
+
+            {/* Right — feature rows */}
+            <ScrollSection className="space-y-0">
+              {features.map((f, i) => (
+                <motion.div key={f.title} variants={cardVariant}
+                  className="flex items-start gap-5 py-7 transition-colors"
+                  style={{ borderTop: "1px solid var(--ds-divider)" }}>
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5 flex-shrink-0"
+                    style={{ background: "var(--ds-gold-bg)", border: "1px solid var(--ds-gold-border)", color: "var(--ds-gold)" }}>
+                    {f.icon}
+                  </div>
+                  <div>
+                    <h3 className="font-heading text-base font-semibold mb-1.5" style={{ color: "var(--ds-text-1)" }}>{f.title}</h3>
+                    <p className="text-sm leading-relaxed" style={{ color: "var(--ds-text-3)" }}>{f.desc}</p>
+                  </div>
+                </motion.div>
+              ))}
+            </ScrollSection>
+          </div>
         </div>
       </section>
 
-      {/* ── Sample Analyses — replaces testimonials ── */}
-      <section id="sample-analyses" className="py-14 transition-colors" style={{ borderTop: "1px solid var(--ds-divider)" }}>
-        <div className="mx-auto max-w-6xl px-4">
-          <ScrollSection className="text-center mb-12">
-            <motion.span variants={fadeUp} className="inline-block text-[11px] font-semibold uppercase tracking-[0.22em] mb-4" style={{ color: "var(--ds-text-4)" }}>
-              Example Results
-            </motion.span>
-            <motion.h2 variants={fadeUp} className="font-heading text-3xl sm:text-4xl font-bold mb-3">
-              <GlassHeading>Here&apos;s what a result looks like</GlassHeading>
+      {/* ── Sample Analyses ── */}
+      <section id="sample-analyses" className="py-16 transition-colors" style={{ borderTop: "1px solid var(--ds-divider)" }}>
+        <div className="mx-auto max-w-6xl px-6">
+          <ScrollSection className="mb-12">
+            <motion.div variants={fadeUp} className="flex items-center gap-2.5 mb-5">
+              <span className="block w-6 h-px flex-shrink-0" style={{ background: "var(--ds-gold)" }} />
+              <span className="text-[11px] font-bold uppercase tracking-[0.25em]" style={{ color: "var(--ds-gold)" }}>Example results</span>
+            </motion.div>
+            <motion.h2 variants={fadeUp} className="font-editorial text-4xl sm:text-5xl font-bold tracking-tight mb-4"
+              style={{ color: "var(--ds-text-1)" }}>
+              Here&apos;s what a result looks like
             </motion.h2>
-            <motion.p variants={fadeUp} className="text-sm max-w-lg mx-auto" style={{ color: "var(--ds-text-3)" }}>
-              These are illustrative examples showing the type of output you get. They are not real analyses of live vehicles.
+            <motion.p variants={fadeUp} className="text-sm max-w-lg" style={{ color: "var(--ds-text-3)" }}>
+              Illustrative examples — not real vehicles. Actual results depend on the specific VIN and current market data.
             </motion.p>
           </ScrollSection>
 
@@ -624,25 +644,28 @@ export default function HomePage() {
       </section>
 
       {/* ── How it works ── */}
-      <section id="how-it-works" className="py-14 transition-colors" style={{ borderTop: "1px solid var(--ds-divider)" }}>
-        <div className="mx-auto max-w-2xl px-4">
-          <ScrollSection className="text-center mb-14">
-            <motion.span variants={fadeUp} className="inline-block text-[11px] font-semibold uppercase tracking-[0.22em] mb-4" style={{ color: "var(--ds-text-4)" }}>
-              4 steps, under a minute
-            </motion.span>
-            <motion.h2 variants={fadeUp} className="font-heading text-3xl sm:text-4xl font-bold mb-3">
-              <GlassHeading>How it works</GlassHeading>
+      <section id="how-it-works" className="py-16 transition-colors" style={{ borderTop: "1px solid var(--ds-divider)" }}>
+        <div className="mx-auto max-w-2xl px-6">
+          <ScrollSection className="mb-14">
+            <motion.div variants={fadeUp} className="flex items-center gap-2.5 mb-5">
+              <span className="block w-6 h-px flex-shrink-0" style={{ background: "var(--ds-gold)" }} />
+              <span className="text-[11px] font-bold uppercase tracking-[0.25em]" style={{ color: "var(--ds-gold)" }}>4 steps, under a minute</span>
+            </motion.div>
+            <motion.h2 variants={fadeUp} className="font-editorial text-4xl sm:text-5xl font-bold tracking-tight mb-4"
+              style={{ color: "var(--ds-text-1)" }}>
+              How it works
             </motion.h2>
-            <motion.p variants={fadeUp} style={{ color: "var(--ds-text-3)" }}>Free account takes 30 seconds. Paste any VIN and get a full analysis in under a minute.</motion.p>
+            <motion.p variants={fadeUp} className="text-base leading-relaxed" style={{ color: "var(--ds-text-3)" }}>
+              Free account takes 30 seconds. Paste any VIN and get a full analysis in under a minute.
+            </motion.p>
           </ScrollSection>
 
           <ScrollSection className="space-y-0">
             {steps.map(([title, desc], i) => (
               <motion.li key={i} variants={slideLeft} className="flex gap-5 items-start list-none relative">
-                {/* Connecting line */}
                 <div className="flex flex-col items-center flex-shrink-0">
-                  <div className="w-10 h-10 rounded-xl flex items-center justify-center text-base font-extrabold"
-                    style={{ background: "var(--ds-badge-bg)", border: "1px solid var(--ds-badge-border)", color: "var(--ds-text-1)" }}>
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center text-sm font-extrabold"
+                    style={{ background: "var(--ds-gold-bg)", border: "1px solid var(--ds-gold-border)", color: "var(--ds-gold)" }}>
                     {i + 1}
                   </div>
                   {i < steps.length - 1 && (
@@ -653,8 +676,8 @@ export default function HomePage() {
                     </div>
                   )}
                 </div>
-                <div className="pt-2 pb-6">
-                  <p className="font-semibold mb-1" style={{ color: "var(--ds-text-1)" }}>{title}</p>
+                <div className="pt-2 pb-7">
+                  <p className="font-heading font-semibold mb-1.5" style={{ color: "var(--ds-text-1)" }}>{title}</p>
                   <p className="text-sm leading-relaxed" style={{ color: "var(--ds-text-3)" }}>{desc}</p>
                 </div>
               </motion.li>
@@ -665,12 +688,18 @@ export default function HomePage() {
 
       {/* ── Built on Real Data ── */}
       <section className="py-16 transition-colors" style={{ borderTop: "1px solid var(--ds-divider)" }}>
-        <div className="mx-auto max-w-6xl px-4">
+        <div className="mx-auto max-w-6xl px-6">
           <ScrollSection className="mb-10">
-            <motion.div variants={fadeUp} className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
-              <h2 className="font-heading text-2xl sm:text-3xl font-bold">
-                <GlassHeading>Where the data comes from</GlassHeading>
-              </h2>
+            <motion.div variants={fadeUp} className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+              <div>
+                <div className="flex items-center gap-2.5 mb-4">
+                  <span className="block w-6 h-px flex-shrink-0" style={{ background: "var(--ds-gold)" }} />
+                  <span className="text-[11px] font-bold uppercase tracking-[0.25em]" style={{ color: "var(--ds-gold)" }}>Data sources</span>
+                </div>
+                <h2 className="font-editorial text-4xl sm:text-5xl font-bold tracking-tight" style={{ color: "var(--ds-text-1)" }}>
+                  Where the numbers come from
+                </h2>
+              </div>
               <p className="text-sm" style={{ color: "var(--ds-text-4)" }}>
                 No dealer affiliation. No scraped junk.
               </p>
@@ -711,20 +740,19 @@ export default function HomePage() {
       </section>
 
       {/* ── Pricing ── */}
-      <section id="pricing" className="py-14 transition-colors" style={{ borderTop: "1px solid var(--ds-divider)" }}>
-        <div className="mx-auto max-w-6xl px-4">
-          <ScrollSection className="text-center mb-10">
-            <motion.span variants={fadeUp} className="inline-block text-[11px] font-semibold uppercase tracking-[0.22em] mb-4" style={{ color: "var(--ds-text-4)" }}>
-              Pricing
-            </motion.span>
-            <motion.h2 variants={fadeUp} className="font-heading text-3xl sm:text-4xl font-bold mb-3">
-              <GlassHeading>Pay as you go.</GlassHeading>
+      <section id="pricing" className="py-16 transition-colors" style={{ borderTop: "1px solid var(--ds-divider)" }}>
+        <div className="mx-auto max-w-6xl px-6">
+          <ScrollSection className="mb-12">
+            <motion.div variants={fadeUp} className="flex items-center gap-2.5 mb-5">
+              <span className="block w-6 h-px flex-shrink-0" style={{ background: "var(--ds-gold)" }} />
+              <span className="text-[11px] font-bold uppercase tracking-[0.25em]" style={{ color: "var(--ds-gold)" }}>Pricing</span>
+            </motion.div>
+            <motion.h2 variants={fadeUp} className="font-editorial text-4xl sm:text-5xl font-bold tracking-tight mb-4"
+              style={{ color: "var(--ds-text-1)" }}>
+              Pay as you go.
             </motion.h2>
-            <motion.p variants={fadeUp} className="max-w-md mx-auto leading-relaxed" style={{ color: "var(--ds-text-3)" }}>
+            <motion.p variants={fadeUp} className="max-w-md leading-relaxed" style={{ color: "var(--ds-text-3)" }}>
               1 credit = 1 Quick Check. No subscriptions. Credits never expire.
-            </motion.p>
-            <motion.p variants={fadeUp} className="text-xs mt-2" style={{ color: "var(--ds-text-4)" }}>
-              Start with a quick check. Upgrade only if you need more.
             </motion.p>
           </ScrollSection>
 
@@ -878,12 +906,16 @@ export default function HomePage() {
       </section>
 
       {/* ── FAQ ── */}
-      <section id="faq" className="py-14 transition-colors" style={{ borderTop: "1px solid var(--ds-divider)" }}>
-        <div className="mx-auto max-w-2xl px-4">
-          <ScrollSection className="text-center mb-12">
-            <motion.span variants={fadeUp} className="inline-block text-[11px] font-semibold uppercase tracking-[0.22em] mb-4" style={{ color: "var(--ds-text-4)" }}>FAQ</motion.span>
-            <motion.h2 variants={fadeUp} className="font-heading text-3xl font-bold">
-              <GlassHeading>Common questions</GlassHeading>
+      <section id="faq" className="py-16 transition-colors" style={{ borderTop: "1px solid var(--ds-divider)" }}>
+        <div className="mx-auto max-w-2xl px-6">
+          <ScrollSection className="mb-12">
+            <motion.div variants={fadeUp} className="flex items-center gap-2.5 mb-5">
+              <span className="block w-6 h-px flex-shrink-0" style={{ background: "var(--ds-gold)" }} />
+              <span className="text-[11px] font-bold uppercase tracking-[0.25em]" style={{ color: "var(--ds-gold)" }}>FAQ</span>
+            </motion.div>
+            <motion.h2 variants={fadeUp} className="font-editorial text-4xl sm:text-5xl font-bold tracking-tight"
+              style={{ color: "var(--ds-text-1)" }}>
+              Common questions
             </motion.h2>
           </ScrollSection>
           <ScrollSection className="space-y-3">
@@ -899,22 +931,26 @@ export default function HomePage() {
       </section>
 
       {/* ── CTA ── */}
-      <section className="py-14 transition-colors" style={{ borderTop: "1px solid var(--ds-divider)" }}>
-        <ScrollSection className="mx-auto max-w-2xl px-4 text-center">
-          <motion.h2 variants={fadeUp} className="font-heading text-4xl font-bold mb-4">
-            <GlassHeading>Know the deal before you sign.</GlassHeading>
+      <section className="py-20 transition-colors relative overflow-hidden" style={{ borderTop: "1px solid var(--ds-divider)" }}>
+        <div className="absolute inset-0 pointer-events-none" aria-hidden>
+          <div className="absolute inset-0 dot-grid opacity-[0.025]" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[60vw] h-[40vw] rounded-full"
+            style={{ background: `radial-gradient(ellipse, var(--ds-gold) 0%, transparent 65%)`, filter: "blur(100px)", opacity: 0.07 }} />
+        </div>
+        <ScrollSection className="relative z-10 mx-auto max-w-2xl px-6 text-center">
+          <motion.p variants={fadeUp} className="text-[11px] font-bold uppercase tracking-[0.25em] mb-5"
+            style={{ color: "var(--ds-gold)" }}>One check can save you thousands</motion.p>
+          <motion.h2 variants={fadeUp} className="font-editorial text-5xl sm:text-6xl font-bold tracking-tight mb-5"
+            style={{ color: "var(--ds-text-1)" }}>
+            Know the deal<br />before you sign.
           </motion.h2>
-          <motion.p variants={fadeUp} className="mb-8 text-base leading-relaxed" style={{ color: "var(--ds-text-3)" }}>
+          <motion.p variants={fadeUp} className="mb-10 text-base leading-relaxed max-w-sm mx-auto" style={{ color: "var(--ds-text-3)" }}>
             Paste a VIN. Get a fair value, a score, and a negotiation script in under a minute.
           </motion.p>
           <motion.div variants={fadeUp}>
             <Link href="/analyze"
-              className="inline-flex items-center gap-2 rounded-xl px-8 py-4 text-base font-semibold text-white transition-all hover:brightness-110 active:scale-[0.98]"
-              style={{
-                background: "var(--ds-cta-bg)",
-                color: "var(--ds-cta-text)",
-                boxShadow: "var(--ds-cta-shadow)",
-              }}>
+              className="inline-flex items-center gap-2 rounded-xl px-9 py-4 text-base font-bold transition-all hover:brightness-110 hover:-translate-y-0.5 active:scale-[0.98] cursor-pointer"
+              style={{ background: "var(--ds-cta-bg)", color: "var(--ds-cta-text)", boxShadow: "var(--ds-cta-shadow)" }}>
               Check a deal <IconArrow />
             </Link>
           </motion.div>

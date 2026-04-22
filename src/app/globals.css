@@ -119,13 +119,20 @@
   --ds-glass-bg:         rgba(255,255,255,0.04);
   --ds-shadow-heavy:     rgba(0,0,0,0.35);
 
-  /* ── CTA — warm white, not indigo ── */
+  /* ── CTA — warm white ── */
   --ds-cta-bg:           #F0EEE8;
   --ds-cta-text:         #080807;
   --ds-cta-hover:        #FFFFFF;
   --ds-cta-shadow:       0 0 28px rgba(240,238,232,0.12), 0 4px 16px rgba(0,0,0,0.3);
-  --ds-accent-glow:      rgba(240,238,232,0.08);
-  --ds-accent-text:      rgba(242,240,235,0.9);
+
+  /* ── Gold accent (money / automotive luxury) ── */
+  --ds-gold:             #C8941A;
+  --ds-gold-bright:      #E8AA20;
+  --ds-gold-bg:          rgba(200,148,26,0.09);
+  --ds-gold-border:      rgba(200,148,26,0.22);
+  --ds-gold-glow:        rgba(200,148,26,0.14);
+  --ds-accent-glow:      rgba(200,148,26,0.10);
+  --ds-accent-text:      #C8941A;
 
   /* ── Semantic colors ── */
   --ds-success:          #34d399;
@@ -271,4 +278,38 @@
 html.no-transitions * {
   transition: none !important;
 }
+
+/* ── Hero background animations ── */
+@keyframes float-slow {
+  0%, 100% { transform: translateY(0px) scale(1); }
+  50% { transform: translateY(-24px) scale(1.04); }
+}
+@keyframes float-slow-r {
+  0%, 100% { transform: translateY(0px) scale(1); }
+  50% { transform: translateY(18px) scale(0.97); }
+}
+@keyframes pulse-glow {
+  0%, 100% { opacity: 0.06; }
+  50% { opacity: 0.11; }
+}
+@keyframes score-draw {
+  from { stroke-dashoffset: var(--full-circ); }
+  to   { stroke-dashoffset: var(--target-offset); }
+}
+.orb-float     { animation: float-slow 12s ease-in-out infinite; }
+.orb-float-r   { animation: float-slow-r 15s ease-in-out infinite; }
+.orb-pulse     { animation: pulse-glow 8s ease-in-out infinite; }
+
+/* ── Dot grid pattern ── */
+.dot-grid {
+  background-image: radial-gradient(circle, rgba(255,255,255,0.55) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+
+/* ── Gold glow utility ── */
+.text-gold { color: var(--ds-gold); }
+.border-gold { border-color: var(--ds-gold-border); }
+
+/* ── Section divider line ── */
+.section-rule { border-top: 1px solid var(--ds-divider); }
 
