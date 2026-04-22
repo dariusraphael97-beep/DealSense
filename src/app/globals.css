@@ -329,3 +329,22 @@ html.no-transitions * {
 /* ── Section divider line ── */
 .section-rule { border-top: 1px solid var(--ds-divider); }
 
+/* ── Hero dark-section dot grid (white dots for dark bg) ── */
+.dot-grid-dark {
+  background-image: radial-gradient(circle, rgba(255,255,255,0.18) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+/* ── GSAP initial visibility helpers — elements hidden until GSAP picks them up ── */
+[data-gsap] { will-change: transform, opacity; }
+
+/* ── Ring draw via CSS custom props ── */
+.ring-draw {
+  animation: score-draw 1.8s 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ring-draw { animation: none; stroke-dashoffset: var(--target-offset) !important; }
+  .orb-float, .orb-float-r, .orb-pulse { animation: none !important; }
+}
+
