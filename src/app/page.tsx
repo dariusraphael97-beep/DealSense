@@ -65,7 +65,7 @@ function CyclingWord() {
     <span
       ref={ref}
       className="font-heading font-black"
-      style={{ display: "inline-block", color: H.blue }}
+      style={{ display: "inline-block", color: "var(--ds-gold)" }}
     >
       {word}
     </span>
@@ -516,7 +516,7 @@ export default function HomePage() {
           <div className="flex items-center gap-3">
             <Link href="/analyze"
               className="px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200 hover:-translate-y-px active:translate-y-0 cursor-pointer"
-              style={{ background: H.ctaBg, color: H.ctaText, boxShadow: H.ctaShadow }}>
+              style={{ background: "var(--ds-cta-bg)", color: "var(--ds-cta-text)", boxShadow: "var(--ds-cta-shadow)" }}>
               Check a Deal
             </Link>
             <UserNav />
@@ -527,19 +527,34 @@ export default function HomePage() {
       {/* ══════════════════════════════════════════════════════════════════
           HERO — Spotify-style dark, cycling headline
       ══════════════════════════════════════════════════════════════════ */}
-      <section className="relative overflow-hidden" style={{ minHeight: "100vh", background: H.bg }}>
+      <section className="relative overflow-hidden" style={{ minHeight: "100vh", background: "var(--ds-bg)" }}>
 
-        {/* Animated gold ambient glow */}
-        <EtherealShadow
-          color="rgba(37, 99, 235, 0.80)"
-          animation={{ scale: 60, speed: 90 }}
-          noise={{ opacity: 0.35, scale: 1.1 }}
-          sizing="fill"
-          style={{ position: "absolute", inset: 0, zIndex: 0 }}
-        />
+        {/* Dark mode only — dark bg + EtherealShadow */}
+        <div className="absolute inset-0 z-0 hidden dark:block" style={{ background: H.bg }} aria-hidden />
+        <div className="absolute inset-0 z-0 hidden dark:block" aria-hidden>
+          <EtherealShadow
+            color="rgba(37, 99, 235, 0.80)"
+            animation={{ scale: 60, speed: 90 }}
+            noise={{ opacity: 0.35, scale: 1.1 }}
+            sizing="fill"
+            style={{ position: "absolute", inset: 0 }}
+          />
+        </div>
+        <div className="absolute inset-0 z-0 dot-grid-dark opacity-[0.04] pointer-events-none hidden dark:block" aria-hidden />
 
-        {/* Dark dot grid texture */}
-        <div className="absolute inset-0 z-0 dot-grid-dark opacity-[0.04] pointer-events-none" aria-hidden />
+        {/* Light mode only — soft blue gradient blobs */}
+        <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none block dark:hidden" aria-hidden>
+          <div className="orb-float absolute" style={{
+            top: "-20%", left: "10%", width: "65%", height: "65%", borderRadius: "50%",
+            background: "radial-gradient(ellipse at center, rgba(37,99,235,0.09) 0%, transparent 70%)",
+            filter: "blur(80px)", willChange: "transform",
+          }} />
+          <div className="orb-float-r absolute" style={{
+            bottom: "0%", right: "-5%", width: "50%", height: "50%", borderRadius: "50%",
+            background: "radial-gradient(ellipse at center, rgba(96,165,250,0.07) 0%, transparent 70%)",
+            filter: "blur(60px)", willChange: "transform",
+          }} />
+        </div>
 
         <div className="relative z-10 mx-auto max-w-6xl px-6" style={{ paddingTop: "14vh", paddingBottom: "12vh" }}>
           <div className="flex flex-col lg:flex-row items-center lg:items-start gap-14 lg:gap-8">
@@ -547,10 +562,10 @@ export default function HomePage() {
             {/* ── Left: Text ── */}
             <div className="flex-1 flex flex-col items-start lg:pt-6">
 
-              {/* Gold eyebrow */}
+              {/* Eyebrow */}
               <div data-g="eyebrow" className="flex items-center gap-2.5 mb-8">
-                <span className="block w-8 h-px flex-shrink-0" style={{ background: H.blue }} />
-                <span className="text-[11px] font-bold uppercase tracking-[0.28em]" style={{ color: H.blue }}>
+                <span className="block w-8 h-px flex-shrink-0" style={{ background: "var(--ds-gold)" }} />
+                <span className="text-[11px] font-bold uppercase tracking-[0.28em]" style={{ color: "var(--ds-gold)" }}>
                   Deal Intelligence
                 </span>
               </div>
@@ -558,8 +573,8 @@ export default function HomePage() {
               {/* Headline — massive, Spotify-scale */}
               <h1 className="font-heading font-bold tracking-tight leading-[1.02] mb-2"
                 style={{ fontSize: "clamp(3.2rem, 8vw, 7rem)" }}>
-                <span data-g="h1-0" className="block" style={{ color: H.text1 }}>Know the deal</span>
-                <span data-g="h1-1" className="block" style={{ color: H.text2 }}>before you</span>
+                <span data-g="h1-0" className="block" style={{ color: "var(--ds-text-1)" }}>Know the deal</span>
+                <span data-g="h1-1" className="block" style={{ color: "var(--ds-text-2)" }}>before you</span>
                 <span data-g="h1-2" className="block overflow-hidden" style={{ lineHeight: 1.15 }}>
                   <CyclingWord />
                 </span>
@@ -568,7 +583,7 @@ export default function HomePage() {
               {/* Description */}
               <p data-g="hero-sub"
                 className="text-base sm:text-lg leading-relaxed mb-10 mt-7 max-w-md"
-                style={{ color: H.text2 }}>
+                style={{ color: "var(--ds-text-2)" }}>
                 Paste a VIN. Get a Deal Score, fair value range, and a word-for-word negotiation script — in under a minute.
               </p>
 
@@ -576,19 +591,19 @@ export default function HomePage() {
               <div data-g="hero-cta" className="flex gap-3 flex-wrap mb-8">
                 <Link href="/analyze"
                   className="inline-flex items-center gap-2 px-7 py-3.5 rounded-xl text-sm font-bold transition-all duration-200 hover:-translate-y-0.5 hover:brightness-110 active:translate-y-0 cursor-pointer"
-                  style={{ background: H.ctaBg, color: H.ctaText, boxShadow: H.ctaShadow }}>
+                  style={{ background: "var(--ds-cta-bg)", color: "var(--ds-cta-text)", boxShadow: "var(--ds-cta-shadow)" }}>
                   Check a Deal <IconArrow />
                 </Link>
                 <a href="#sample-analyses"
                   className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl text-sm font-medium transition-all duration-200 hover:-translate-y-0.5 cursor-pointer"
-                  style={{ border: `1px solid ${H.ghostBorder}`, color: H.ghostText }}>
+                  style={{ border: "1px solid var(--ds-card-border)", color: "var(--ds-text-2)" }}>
                   See sample results
                 </a>
               </div>
 
               {/* Trust signals */}
               <div data-g="hero-trust" className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs"
-                style={{ color: H.text3 }}>
+                style={{ color: "var(--ds-text-3)" }}>
                 <span className="flex items-center gap-1.5"><IconShield />VIN-verified via NHTSA</span>
                 <span className="hidden sm:inline">·</span>
                 <span>3 checks from $9.99</span>
