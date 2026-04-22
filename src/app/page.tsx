@@ -14,19 +14,19 @@ gsap.registerPlugin(ScrollTrigger);
 
 /* ── Hero dark-section color constants ─────────────────────────────────── */
 const H = {
-  bg:          "#08080A",
+  bg:          "#060C18",
   text1:       "rgba(255,255,255,0.95)",
-  text2:       "rgba(255,255,255,0.62)",
-  text3:       "rgba(255,255,255,0.42)",
-  gold:        "#C8941A",
-  goldBg:      "rgba(200,148,26,0.12)",
-  goldBorder:  "rgba(200,148,26,0.25)",
-  cardBg:      "rgba(255,255,255,0.055)",
-  cardBorder:  "rgba(255,255,255,0.09)",
+  text2:       "rgba(255,255,255,0.60)",
+  text3:       "rgba(255,255,255,0.40)",
+  blue:        "#60A5FA",
+  blueBg:      "rgba(59,130,246,0.12)",
+  blueBorder:  "rgba(59,130,246,0.25)",
+  cardBg:      "rgba(255,255,255,0.04)",
+  cardBorder:  "rgba(59,130,246,0.18)",
   divider:     "rgba(255,255,255,0.07)",
-  ctaBg:       "#EDE9DF",
-  ctaText:     "#0A0908",
-  ctaShadow:   "0 4px 20px rgba(200,148,26,0.30), 0 1px 4px rgba(0,0,0,0.25)",
+  ctaBg:       "#2563EB",
+  ctaText:     "#FFFFFF",
+  ctaShadow:   "0 4px 24px rgba(37,99,235,0.50), 0 1px 4px rgba(0,0,0,0.25)",
   ghostBorder: "rgba(255,255,255,0.16)",
   ghostText:   "rgba(255,255,255,0.65)",
 };
@@ -64,8 +64,8 @@ function CyclingWord() {
   return (
     <span
       ref={ref}
-      className="italic font-editorial"
-      style={{ display: "inline-block", color: H.gold }}
+      className="font-heading font-black"
+      style={{ display: "inline-block", color: H.blue }}
     >
       {word}
     </span>
@@ -142,74 +142,137 @@ function MiniScoreCard({ score, verdict, car, delta }: {
   );
 }
 
-/* ── Large hero score ring ───────────────────────────────────────────────── */
-function HeroScoreRing({ score, verdict, car, delta }: {
-  score: number; verdict: string; car: string; delta: string;
-}) {
+/* ── Animated deal analysis card (hero visual) ───────────────────────── */
+function AnimatedDealCard() {
+  const scoreRef = useRef<HTMLSpanElement>(null);
   const circ   = 2 * Math.PI * 54;
-  const offset = circ - (score / 100) * circ;
-  const numRef = useRef<HTMLSpanElement>(null);
-
-  const cols = {
-    Buy:        { stroke: "#059669", bg: "rgba(5,150,105,0.10)", border: "rgba(5,150,105,0.30)", text: "#059669" },
-    Negotiate:  { stroke: "#d97706", bg: "rgba(217,119,6,0.10)", border: "rgba(217,119,6,0.30)", text: "#d97706" },
-    "Walk Away":{ stroke: "#dc2626", bg: "rgba(220,38,38,0.10)", border: "rgba(220,38,38,0.30)", text: "#dc2626" },
-  } as const;
-  const c = cols[verdict as keyof typeof cols] ?? cols["Negotiate"];
+  const offset = circ - (73 / 100) * circ;
 
   useEffect(() => {
-    if (!numRef.current) return;
+    if (!scoreRef.current) return;
     const obj = { n: 0 };
     const t = gsap.to(obj, {
-      n: score, duration: 1.6, delay: 1.3, ease: "power2.out",
-      onUpdate() { if (numRef.current) numRef.current.textContent = String(Math.round(obj.n)); },
+      n: 73, duration: 1.6, delay: 1.3, ease: "power2.out",
+      onUpdate() { if (scoreRef.current) scoreRef.current.textContent = String(Math.round(obj.n)); },
     });
     return () => { t.kill(); };
-  }, [score]);
+  }, []);
 
   return (
-    <div className="rounded-3xl p-6 flex flex-col items-center"
-      style={{
-        background: H.cardBg,
-        border: `1px solid ${c.border}`,
-        boxShadow: `0 0 60px ${c.bg}`,
-        width: 280,
+    <div style={{ position: "relative", width: 320 }}>
+      {/* Aurora glow orbs behind card */}
+      <div className="orb-float" style={{
+        position: "absolute", top: -30, left: -20, width: 200, height: 200,
+        borderRadius: "50%", pointerEvents: "none",
+        background: "radial-gradient(circle, rgba(37,99,235,0.22) 0%, transparent 70%)",
+        filter: "blur(40px)",
+      }} />
+      <div className="orb-float-r" style={{
+        position: "absolute", bottom: -20, right: -10, width: 160, height: 160,
+        borderRadius: "50%", pointerEvents: "none",
+        background: "radial-gradient(circle, rgba(96,165,250,0.18) 0%, transparent 70%)",
+        filter: "blur(30px)",
+      }} />
+
+      {/* Card */}
+      <div style={{
+        position: "relative",
+        background: "rgba(5, 10, 24, 0.90)",
+        border: "1px solid rgba(59,130,246,0.22)",
+        borderRadius: 24, padding: "28px 28px 24px",
+        backdropFilter: "blur(24px)",
+        overflow: "hidden",
       }}>
-      <span className="text-[10px] font-bold uppercase tracking-[0.2em] mb-4" style={{ color: H.text3 }}>
-        Sample Analysis
-      </span>
-      <div className="relative w-36 h-36 mb-4">
-        <svg viewBox="0 0 128 128" className="w-full h-full -rotate-90">
-          <defs>
-            <filter id="ringGlow">
-              <feGaussianBlur in="SourceGraphic" stdDeviation="4" result="blur"/>
-              <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-            </filter>
-          </defs>
-          <circle cx="64" cy="64" r="54" fill="none" stroke={H.divider} strokeWidth="6"/>
-          <circle
-            cx="64" cy="64" r="54" fill="none"
-            stroke={c.stroke} strokeWidth="7" strokeLinecap="round"
-            strokeDasharray={circ}
-            className="ring-draw"
-            style={{
-              "--full-circ": circ,
-              "--target-offset": offset,
-            } as React.CSSProperties}
-            filter="url(#ringGlow)"
-          />
-        </svg>
-        <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span ref={numRef} className="font-editorial text-5xl font-bold tabular-nums" style={{ color: H.text1 }}>0</span>
-          <span className="text-[10px] uppercase tracking-[0.12em] mt-0.5" style={{ color: H.text3 }}>Score</span>
+        {/* Dot grid texture */}
+        <div className="dot-grid-dark" style={{ position: "absolute", inset: 0, opacity: 0.06, pointerEvents: "none" }} />
+        {/* Top blue shimmer */}
+        <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 80, pointerEvents: "none",
+          background: "linear-gradient(to bottom, rgba(37,99,235,0.10), transparent)" }} />
+
+        <div style={{ position: "relative" }}>
+          {/* Header */}
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+            <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.18em", textTransform: "uppercase", color: "rgba(255,255,255,0.35)" }}>
+              Deal Analysis
+            </span>
+            <span style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 10, fontWeight: 700, color: "#60A5FA", letterSpacing: "0.1em" }}>
+              <span className="live-dot" style={{ width: 6, height: 6, borderRadius: "50%", background: "#60A5FA", flexShrink: 0 }} />
+              LIVE
+            </span>
+          </div>
+
+          {/* Score ring */}
+          <div style={{ position: "relative", width: 120, height: 120, margin: "0 auto 18px" }}>
+            <svg viewBox="0 0 128 128" style={{ width: "100%", height: "100%", transform: "rotate(-90deg)" }}>
+              <defs>
+                <linearGradient id="heroBlueGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#93C5FD"/>
+                  <stop offset="100%" stopColor="#2563EB"/>
+                </linearGradient>
+                <filter id="heroRingGlow">
+                  <feGaussianBlur in="SourceGraphic" stdDeviation="3.5" result="b"/>
+                  <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+                </filter>
+              </defs>
+              <circle cx="64" cy="64" r="54" fill="none" stroke="rgba(255,255,255,0.07)" strokeWidth="6"/>
+              <circle cx="64" cy="64" r="54" fill="none"
+                stroke="url(#heroBlueGrad)" strokeWidth="7" strokeLinecap="round"
+                strokeDasharray={circ}
+                className="ring-draw"
+                style={{ "--full-circ": circ, "--target-offset": offset } as React.CSSProperties}
+                filter="url(#heroRingGlow)"
+              />
+            </svg>
+            <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+              <span ref={scoreRef} className="font-heading" style={{ fontSize: 40, fontWeight: 800, color: "white", lineHeight: 1, tabularNums: true } as React.CSSProperties}>0</span>
+              <span style={{ fontSize: 9, letterSpacing: "0.15em", color: "rgba(255,255,255,0.35)", marginTop: 3, textTransform: "uppercase" }}>Score</span>
+            </div>
+          </div>
+
+          {/* Verdict */}
+          <div style={{ textAlign: "center", marginBottom: 14 }}>
+            <span style={{
+              display: "inline-flex", padding: "3px 14px", borderRadius: 20, fontSize: 12, fontWeight: 700,
+              background: "rgba(217,119,6,0.14)", border: "1px solid rgba(217,119,6,0.28)", color: "#FCD34D",
+            }}>Negotiate</span>
+          </div>
+
+          {/* Vehicle */}
+          <p style={{ fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,0.80)", textAlign: "center", marginBottom: 16 }}>
+            2019 Toyota Camry SE
+          </p>
+
+          {/* Price vs fair value bar */}
+          <div style={{ background: "rgba(255,255,255,0.04)", borderRadius: 12, padding: "12px 14px", marginBottom: 10 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: "rgba(255,255,255,0.35)", marginBottom: 8 }}>
+              <span>Asking vs. fair value</span>
+              <span style={{ color: "#FCA5A5" }}>+$1,400</span>
+            </div>
+            <div style={{ height: 4, background: "rgba(255,255,255,0.07)", borderRadius: 2, overflow: "hidden" }}>
+              <div className="bar-fill-anim" style={{
+                height: "100%", width: "73%", borderRadius: 2,
+                background: "linear-gradient(90deg, #2563EB 0%, #93C5FD 100%)",
+              }} />
+            </div>
+            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: "rgba(255,255,255,0.25)", marginTop: 6 }}>
+              <span>$21,200</span>
+              <span>Fair range</span>
+              <span>$23,800</span>
+            </div>
+          </div>
+
+          {/* Warning row */}
+          <div style={{
+            padding: "8px 12px", borderRadius: 10, display: "flex", alignItems: "center", gap: 7,
+            background: "rgba(220,38,38,0.10)", border: "1px solid rgba(220,38,38,0.22)",
+          }}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="#FCA5A5" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 12, height: 12, flexShrink: 0 }}>
+              <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+            <span style={{ fontSize: 11, color: "#FCA5A5" }}>$1,400 over estimated fair value</span>
+          </div>
         </div>
       </div>
-      <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold mb-3"
-        style={{ background: c.bg, border: `1px solid ${c.border}`, color: c.text }}>
-        {verdict}
-      </span>
-      <p className="text-sm font-semibold mb-1 text-center" style={{ color: H.text1 }}>{car}</p>
-      <p className="text-xs text-center" style={{ color: H.text3 }}>{delta}</p>
     </div>
   );
 }
@@ -321,10 +384,7 @@ export default function HomePage() {
         .fromTo('[data-g="hero-trust"]',{ opacity: 0 }, { opacity: 1, duration: 0.5 }, "-=0.2")
         .fromTo('[data-g="hero-ring"]',
           { x: 50, opacity: 0, scale: 0.92 },
-          { x: 0, opacity: 1, scale: 1, duration: 0.85, ease: "power3.out" }, 0.3)
-        .fromTo('[data-g="hero-cards"] > *',
-          { y: 28, opacity: 0 },
-          { y: 0, opacity: 1, duration: 0.55, stagger: 0.14, ease: "power3.out" }, "-=0.4");
+          { x: 0, opacity: 1, scale: 1, duration: 0.85, ease: "power3.out" }, 0.3);
 
       /* ── 2. Trust bar items — slide in from left ── */
       gsap.from('[data-g="trust-item"]', {
@@ -485,14 +545,14 @@ export default function HomePage() {
 
               {/* Gold eyebrow */}
               <div data-g="eyebrow" className="flex items-center gap-2.5 mb-8">
-                <span className="block w-8 h-px flex-shrink-0" style={{ background: H.gold }} />
-                <span className="text-[11px] font-bold uppercase tracking-[0.28em]" style={{ color: H.gold }}>
+                <span className="block w-8 h-px flex-shrink-0" style={{ background: H.blue }} />
+                <span className="text-[11px] font-bold uppercase tracking-[0.28em]" style={{ color: H.blue }}>
                   Deal Intelligence
                 </span>
               </div>
 
               {/* Headline — massive, Spotify-scale */}
-              <h1 className="font-editorial font-bold tracking-tight leading-[1.02] mb-2"
+              <h1 className="font-heading font-bold tracking-tight leading-[1.02] mb-2"
                 style={{ fontSize: "clamp(3.2rem, 8vw, 7rem)" }}>
                 <span data-g="h1-0" className="block" style={{ color: H.text1 }}>Know the deal</span>
                 <span data-g="h1-1" className="block" style={{ color: H.text2 }}>before you</span>
@@ -533,15 +593,9 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* ── Right: Score ring + mini cards ── */}
-            <div className="flex-shrink-0 flex flex-col items-center gap-3 w-full lg:w-auto">
-              <div data-g="hero-ring">
-                <HeroScoreRing score={73} verdict="Negotiate" car="2019 Toyota Camry SE" delta="$1,400 over est. fair value" />
-              </div>
-              <div data-g="hero-cards" className="grid grid-cols-2 gap-3 w-full" style={{ maxWidth: 280 }}>
-                <MiniScoreCard score={83} verdict="Buy" car="2020 Honda Civic EX" delta="$1.2k under fair value" />
-                <MiniScoreCard score={26} verdict="Walk Away" car="2018 BMW 3 Series" delta="$6.2k over fair value" />
-              </div>
+            {/* ── Right: Animated deal card ── */}
+            <div className="flex-shrink-0 w-full lg:w-auto" data-g="hero-ring">
+              <AnimatedDealCard />
             </div>
 
           </div>
@@ -585,7 +639,7 @@ export default function HomePage() {
                   <span className="block w-6 h-px flex-shrink-0" style={{ background: "var(--ds-gold)" }} />
                   <span className="text-[11px] font-bold uppercase tracking-[0.25em]" style={{ color: "var(--ds-gold)" }}>What you get</span>
                 </div>
-                <h2 className="font-editorial text-4xl sm:text-5xl font-bold leading-[1.08] tracking-tight mb-5"
+                <h2 className="font-heading text-4xl sm:text-5xl font-bold leading-[1.08] tracking-tight mb-5"
                   style={{ color: "var(--ds-text-1)" }}>
                   A number, a verdict,<br />and something to say.
                 </h2>
@@ -601,7 +655,7 @@ export default function HomePage() {
                 <div key={f.title} data-g="feat-row"
                   className="flex items-start gap-5 py-7 transition-colors"
                   style={{ borderTop: "1px solid var(--ds-divider)" }}>
-                  <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5"
+                  <div className="icon-btn w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5"
                     style={{ background: "var(--ds-gold-bg)", border: "1px solid var(--ds-gold-border)", color: "var(--ds-gold)" }}>
                     {f.icon}
                   </div>
@@ -626,7 +680,7 @@ export default function HomePage() {
               <span className="block w-6 h-px flex-shrink-0" style={{ background: "var(--ds-gold)" }} />
               <span className="text-[11px] font-bold uppercase tracking-[0.25em]" style={{ color: "var(--ds-gold)" }}>Example results</span>
             </div>
-            <h2 className="font-editorial text-4xl sm:text-5xl font-bold tracking-tight mb-4"
+            <h2 className="font-heading text-4xl sm:text-5xl font-bold tracking-tight mb-4"
               style={{ color: "var(--ds-text-1)" }}>
               Here&apos;s what a result looks like
             </h2>
@@ -674,7 +728,7 @@ export default function HomePage() {
               <span className="block w-6 h-px flex-shrink-0" style={{ background: "var(--ds-gold)" }} />
               <span className="text-[11px] font-bold uppercase tracking-[0.25em]" style={{ color: "var(--ds-gold)" }}>Early users</span>
             </div>
-            <h2 className="font-editorial text-4xl sm:text-5xl font-bold tracking-tight mb-4"
+            <h2 className="font-heading text-4xl sm:text-5xl font-bold tracking-tight mb-4"
               style={{ color: "var(--ds-text-1)" }}>
               Real deals. Real results.
             </h2>
@@ -720,7 +774,7 @@ export default function HomePage() {
               <span className="block w-6 h-px flex-shrink-0" style={{ background: "var(--ds-gold)" }} />
               <span className="text-[11px] font-bold uppercase tracking-[0.25em]" style={{ color: "var(--ds-gold)" }}>4 steps, under a minute</span>
             </div>
-            <h2 className="font-editorial text-4xl sm:text-5xl font-bold tracking-tight mb-4"
+            <h2 className="font-heading text-4xl sm:text-5xl font-bold tracking-tight mb-4"
               style={{ color: "var(--ds-text-1)" }}>
               How it works
             </h2>
@@ -766,7 +820,7 @@ export default function HomePage() {
                 <span className="block w-6 h-px flex-shrink-0" style={{ background: "var(--ds-gold)" }} />
                 <span className="text-[11px] font-bold uppercase tracking-[0.25em]" style={{ color: "var(--ds-gold)" }}>Data sources</span>
               </div>
-              <h2 className="font-editorial text-4xl sm:text-5xl font-bold tracking-tight" style={{ color: "var(--ds-text-1)" }}>
+              <h2 className="font-heading text-4xl sm:text-5xl font-bold tracking-tight" style={{ color: "var(--ds-text-1)" }}>
                 Where the numbers come from
               </h2>
             </div>
@@ -804,7 +858,7 @@ export default function HomePage() {
               <span className="block w-6 h-px flex-shrink-0" style={{ background: "var(--ds-gold)" }} />
               <span className="text-[11px] font-bold uppercase tracking-[0.25em]" style={{ color: "var(--ds-gold)" }}>Pricing</span>
             </div>
-            <h2 className="font-editorial text-4xl sm:text-5xl font-bold tracking-tight mb-4"
+            <h2 className="font-heading text-4xl sm:text-5xl font-bold tracking-tight mb-4"
               style={{ color: "var(--ds-text-1)" }}>
               Pay as you go.
             </h2>
@@ -964,7 +1018,7 @@ export default function HomePage() {
               <span className="block w-6 h-px flex-shrink-0" style={{ background: "var(--ds-gold)" }} />
               <span className="text-[11px] font-bold uppercase tracking-[0.25em]" style={{ color: "var(--ds-gold)" }}>FAQ</span>
             </div>
-            <h2 className="font-editorial text-4xl sm:text-5xl font-bold tracking-tight"
+            <h2 className="font-heading text-4xl sm:text-5xl font-bold tracking-tight"
               style={{ color: "var(--ds-text-1)" }}>
               Common questions
             </h2>
@@ -997,8 +1051,8 @@ export default function HomePage() {
         <div data-g="cta-inner"
           className="relative z-10 mx-auto max-w-2xl px-6 text-center">
           <p className="text-[11px] font-bold uppercase tracking-[0.28em] mb-5"
-            style={{ color: H.gold }}>One check can save you thousands</p>
-          <h2 className="font-editorial text-5xl sm:text-6xl font-bold tracking-tight mb-5"
+            style={{ color: H.blue }}>One check can save you thousands</p>
+          <h2 className="font-heading text-5xl sm:text-6xl font-bold tracking-tight mb-5"
             style={{ color: H.text1 }}>
             Know the deal<br />before you sign.
           </h2>

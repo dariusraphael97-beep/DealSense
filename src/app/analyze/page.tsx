@@ -273,9 +273,9 @@ function LoadingOverlay() {
           <svg className="w-20 h-20 -rotate-90" viewBox="0 0 64 64" overflow="visible">
             <defs>
               <linearGradient id="progressGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#E8AA20"/>
-                <stop offset="50%" stopColor="#C8941A"/>
-                <stop offset="100%" stopColor="#A87810"/>
+                <stop offset="0%" stopColor="#93C5FD"/>
+                <stop offset="50%" stopColor="#3B82F6"/>
+                <stop offset="100%" stopColor="#1D4ED8"/>
               </linearGradient>
               <filter id="arcGlow" x="-50%" y="-50%" width="200%" height="200%">
                 <feGaussianBlur in="SourceGraphic" stdDeviation="3" result="blur"/>
@@ -313,8 +313,8 @@ function LoadingOverlay() {
               className="absolute rounded-full"
               style={{
                 width: 8, height: 8, top: 2, left: "50%", marginLeft: -4,
-                background: "#E8AA20",
-                boxShadow: "0 0 12px 3px rgba(200,148,26,0.7)",
+                background: "#93C5FD",
+                boxShadow: "0 0 12px 3px rgba(59,130,246,0.7)",
                 opacity: progress > 2 && progress < 98 ? 1 : 0,
                 transition: "opacity 0.3s",
               }}
@@ -590,7 +590,7 @@ export default function AnalyzePage() {
       {/* Background */}
       <div className="fixed inset-0 z-0 pointer-events-none" aria-hidden>
         <EtherealShadow
-          color="rgba(200, 148, 26, 0.9)"
+          color="rgba(37, 99, 235, 0.75)"
           animation={{ scale: 55, speed: 80 }}
           noise={{ opacity: 0.4, scale: 1.1 }}
           sizing="fill"

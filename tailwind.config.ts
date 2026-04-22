@@ -66,7 +66,7 @@ const config: Config = {
       },
       fontFamily: {
         heading:   ["Plus Jakarta Sans", "system-ui", "sans-serif"],
-        editorial: ["Playfair Display", "Georgia", "serif"],
+        editorial: ["Plus Jakarta Sans", "system-ui", "sans-serif"],
         sans:      ["Plus Jakarta Sans", "system-ui", "sans-serif"],
         mono:      ["JetBrains Mono", "monospace"],
       },
