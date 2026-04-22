@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,700&family=Playfair+Display:wght@400;500;600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -74,58 +74,109 @@
 }
 
 .dark {
-  --ds-bg:               #030303;
-  --ds-nav-bg:           rgba(3,3,3,0.75);
-  --ds-nav-border:       rgba(255,255,255,0.06);
-  --ds-card-bg:          rgba(16,16,28,0.97);
-  --ds-card-border:      rgba(255,255,255,0.10);
-  --ds-card-shadow:      inset 0 1px 0 rgba(255,255,255,0.05), 0 4px 24px rgba(0,0,0,0.4);
-  --ds-overlay:          rgba(3,3,3,0.72);
-  --ds-input-bg:         rgba(255,255,255,0.07);
-  --ds-input-border:     rgba(255,255,255,0.13);
-  --ds-input-focus:      rgba(99,102,241,0.60);
-  --ds-input-ring:       rgba(99,102,241,0.12);
-  --ds-text-1:           rgba(255,255,255,0.90);
-  --ds-text-2:           rgba(255,255,255,0.60);
-  --ds-text-3:           rgba(255,255,255,0.40);
-  --ds-text-4:           rgba(255,255,255,0.25);
-  --ds-divider:          rgba(255,255,255,0.05);
-  --ds-grid-dim:         rgba(99,102,241,0.08);
-  --ds-grid-bright:      rgba(99,102,241,0.30);
-  --ds-fade:             #030303;
-  --ds-badge-bg:         rgba(255,255,255,0.04);
-  --ds-badge-border:     rgba(255,255,255,0.10);
-  --ds-dropdown-bg:      #141418;
-  --ds-map-fill:         rgba(99,102,241,0.05);
-  --ds-map-stroke:       rgba(99,102,241,0.15);
-  --ds-orb-indigo:       rgba(99,102,241,0.15);
-  --ds-orb-blue:         rgba(59,130,246,0.10);
-  --ds-success:          #34d399;
-  --ds-success-bg:       rgba(52,211,153,0.15);
-  --ds-success-border:   rgba(52,211,153,0.35);
-  --ds-success-glow:     rgba(52,211,153,0.12);
-  --ds-warn:             #fbbf24;
-  --ds-warn-bg:          rgba(251,191,36,0.15);
-  --ds-accent-glow:      rgba(99,102,241,0.25);
-  --ds-accent-text:      #818cf8;
-  --ds-shadow-heavy:     rgba(0,0,0,0.25);
+  /* ── Core backgrounds ── */
+  --ds-bg:               #080807;
+  --ds-surface:          #0E0E0C;
+  --ds-nav-bg:           rgba(8,8,7,0.80);
+  --ds-nav-border:       rgba(255,255,255,0.07);
+  --ds-fade:             #080807;
+  --ds-overlay:          rgba(8,8,7,0.80);
+
+  /* ── Cards — glassmorphism ── */
+  --ds-card-bg:          rgba(255,255,255,0.035);
+  --ds-card-border:      rgba(255,255,255,0.09);
+  --ds-card-shadow:      inset 0 1px 0 rgba(255,255,255,0.06),
+                         0 8px 32px rgba(0,0,0,0.45),
+                         0 1px 0 rgba(255,255,255,0.04);
+  --ds-card-shadow-lg:   0 32px 80px rgba(0,0,0,0.6),
+                         inset 0 1px 0 rgba(255,255,255,0.08);
+
+  /* ── Inputs ── */
+  --ds-input-bg:         rgba(255,255,255,0.06);
+  --ds-input-border:     rgba(255,255,255,0.12);
+  --ds-input-focus:      rgba(255,255,255,0.35);
+  --ds-input-ring:       rgba(255,255,255,0.07);
+
+  /* ── Text ── */
+  --ds-text-1:           rgba(242,240,235,0.93);
+  --ds-text-2:           rgba(242,240,235,0.56);
+  --ds-text-3:           rgba(242,240,235,0.36);
+  --ds-text-4:           rgba(242,240,235,0.22);
+
+  /* ── Structure ── */
+  --ds-divider:          rgba(255,255,255,0.055);
+  --ds-badge-bg:         rgba(255,255,255,0.05);
+  --ds-badge-border:     rgba(255,255,255,0.09);
+  --ds-dropdown-bg:      #111110;
+
+  /* ── Misc ── */
+  --ds-grid-dim:         rgba(255,255,255,0.04);
+  --ds-grid-bright:      rgba(255,255,255,0.14);
+  --ds-map-fill:         rgba(255,255,255,0.04);
+  --ds-map-stroke:       rgba(255,255,255,0.12);
+  --ds-orb-indigo:       rgba(255,255,255,0.04);
+  --ds-orb-blue:         rgba(255,255,255,0.03);
   --ds-glass-bg:         rgba(255,255,255,0.04);
-  --ds-warn-border:      rgba(251,191,36,0.35);
-  --ds-warn-glow:        rgba(251,191,36,0.12);
+  --ds-shadow-heavy:     rgba(0,0,0,0.35);
+
+  /* ── CTA — warm white, not indigo ── */
+  --ds-cta-bg:           #F0EEE8;
+  --ds-cta-text:         #080807;
+  --ds-cta-hover:        #FFFFFF;
+  --ds-cta-shadow:       0 0 28px rgba(240,238,232,0.12), 0 4px 16px rgba(0,0,0,0.3);
+  --ds-accent-glow:      rgba(240,238,232,0.08);
+  --ds-accent-text:      rgba(242,240,235,0.9);
+
+  /* ── Semantic colors ── */
+  --ds-success:          #34d399;
+  --ds-success-bg:       rgba(52,211,153,0.10);
+  --ds-success-border:   rgba(52,211,153,0.25);
+  --ds-success-glow:     rgba(52,211,153,0.10);
+  --ds-warn:             #fbbf24;
+  --ds-warn-bg:          rgba(251,191,36,0.10);
+  --ds-warn-border:      rgba(251,191,36,0.25);
+  --ds-warn-glow:        rgba(251,191,36,0.10);
   --ds-danger:           #f87171;
-  --ds-danger-bg:        rgba(248,113,113,0.15);
-  --ds-danger-border:    rgba(248,113,113,0.35);
-  --ds-danger-glow:      rgba(248,113,113,0.12);
-  --ds-card-shadow-lg:   0 24px 80px rgba(0,0,0,0.45);
+  --ds-danger-bg:        rgba(248,113,113,0.10);
+  --ds-danger-border:    rgba(248,113,113,0.25);
+  --ds-danger-glow:      rgba(248,113,113,0.10);
 }
 
 @layer base {
   html { scroll-behavior: smooth; -webkit-font-smoothing: antialiased; }
   body { background-color: var(--ds-bg); color: var(--ds-text-1); transition: background-color 0.25s, color 0.25s; }
   h1, h2, h3, h4 { font-family: "Plus Jakarta Sans", system-ui, sans-serif; }
+  /* Playfair for editorial section headings */
+  .font-editorial { font-family: "Playfair Display", Georgia, serif; }
   @media (prefers-reduced-motion: reduce) {
     * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
   }
+}
+
+/* ── Premium dark scrollbar ── */
+.dark ::-webkit-scrollbar { width: 6px; }
+.dark ::-webkit-scrollbar-track { background: transparent; }
+.dark ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 3px; }
+.dark ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.22); }
+
+/* ── Noise grain texture ── */
+.dark body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+  opacity: 0.022;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 200px 200px;
+}
+
+/* ── Glass card helper ── */
+.dark .ds-glass {
+  background: var(--ds-card-bg);
+  border: 1px solid var(--ds-card-border);
+  backdrop-filter: blur(16px) saturate(160%);
+  -webkit-backdrop-filter: blur(16px) saturate(160%);
 }
 
 @layer components {

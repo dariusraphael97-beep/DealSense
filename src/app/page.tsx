@@ -156,7 +156,7 @@ function SampleAnalysisCard({ vehicle, askingPrice, fairValueLow, fairValueHigh,
       {/* Sample label */}
       <div className="flex items-center justify-between mb-4">
         <span className="text-[10px] font-semibold uppercase tracking-[0.15em] px-2 py-0.5 rounded-md"
-          style={{ background: "rgba(99,102,241,0.08)", border: "1px solid rgba(99,102,241,0.15)", color: "var(--ds-text-4)" }}>
+          style={{ background: "var(--ds-badge-bg)", border: "1px solid var(--ds-badge-border)", color: "var(--ds-text-4)" }}>
           Sample Analysis
         </span>
         {/* Mini score ring */}
@@ -304,8 +304,12 @@ export default function HomePage() {
           </div>
           <div className="flex items-center gap-3">
             <Link href="/analyze"
-              className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold transition-all"
-              style={{ boxShadow: "0 0 20px var(--ds-accent-glow), 0 4px 12px var(--ds-shadow-heavy)" }}>
+              className="px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200 hover:-translate-y-px active:translate-y-0 cursor-pointer"
+              style={{
+                background: "var(--ds-cta-bg)",
+                color: "var(--ds-cta-text)",
+                boxShadow: "var(--ds-cta-shadow)",
+              }}>
               Check a Deal
             </Link>
             <UserNav />
@@ -314,57 +318,53 @@ export default function HomePage() {
       </motion.nav>
 
       {/* ── Hero ── */}
-      <section className="relative min-h-[92vh] flex flex-col items-center justify-center overflow-hidden transition-colors"
+      <section className="relative min-h-[92vh] flex flex-col items-center justify-center overflow-hidden"
         style={{ background: "var(--ds-bg)" }}>
-        {/* Ethereal shadow background */}
-        <div className="absolute inset-0 pointer-events-none opacity-30 dark:opacity-50">
-          <EtherealShadow
-            color="rgba(99, 102, 241, 1)"
-            animation={{ scale: 60, speed: 50 }}
-            noise={{ opacity: 0.25, scale: 1 }}
-            sizing="fill"
-          />
+
+        {/* Subtle warm ambient glow — not indigo */}
+        <div className="absolute inset-0 pointer-events-none" aria-hidden>
+          <div className="absolute top-[-20%] left-[10%] w-[60vw] h-[60vw] rounded-full opacity-[0.07]"
+            style={{ background: "radial-gradient(circle, rgba(240,238,232,1) 0%, transparent 70%)", filter: "blur(80px)" }} />
+          <div className="absolute bottom-[-10%] right-[-5%] w-[40vw] h-[40vw] rounded-full opacity-[0.04]"
+            style={{ background: "radial-gradient(circle, rgba(52,211,153,1) 0%, transparent 70%)", filter: "blur(100px)" }} />
         </div>
 
         {/* Content */}
-        <div className="relative z-10 mx-auto max-w-6xl px-4 w-full py-16 flex flex-col items-center text-center">
+        <div className="relative z-10 mx-auto max-w-5xl px-4 w-full py-20 flex flex-col items-center text-center">
 
-          {/* Badge */}
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
+          {/* Overline — minimal, no pill badge */}
+          <motion.p
+            initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.1, ease }}
-            className="inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-medium mb-8 transition-colors"
-            style={{
-              background: "var(--ds-badge-bg)",
-              border: "1px solid var(--ds-badge-border)",
-              color: "var(--ds-text-3)",
-            }}>
-            <IconShield />
-            No dealer affiliation &mdash; ever
-          </motion.div>
+            transition={{ duration: 0.55, delay: 0.05, ease }}
+            className="text-[11px] font-semibold uppercase tracking-[0.22em] mb-8"
+            style={{ color: "var(--ds-text-4)" }}
+          >
+            No dealer affiliation &nbsp;·&nbsp; AI-powered analysis
+          </motion.p>
 
-          {/* Headline */}
-          <h1 className="font-heading text-5xl sm:text-7xl md:text-8xl font-bold tracking-tight leading-[1.15] mb-6">
+          {/* Headline — clean, no colorful gradient */}
+          <h1 className="font-heading text-5xl sm:text-7xl md:text-[88px] font-bold tracking-[-0.03em] leading-[1.1] mb-7">
             {[["Know the deal"], ["before you sign."]].map((line, lineIdx) =>
               line.map((phrase) => (
                 <span key={lineIdx} className="block">
                   {phrase.split(" ").map((word, wordIdx) => (
                     <motion.span
                       key={`${lineIdx}-${wordIdx}`}
-                      initial={{ y: 80, opacity: 0 }}
+                      initial={{ y: 70, opacity: 0 }}
                       animate={{ y: 0, opacity: 1 }}
                       transition={{
-                        delay: lineIdx * 0.22 + wordIdx * 0.08,
+                        delay: lineIdx * 0.18 + wordIdx * 0.07,
                         type: "spring",
-                        stiffness: 160,
-                        damping: 22,
+                        stiffness: 180,
+                        damping: 24,
                       }}
-                      className={`inline-block mr-[0.25em] last:mr-0 pb-[0.15em] bg-clip-text text-transparent ${
-                        lineIdx === 0
-                          ? "bg-gradient-to-b from-slate-900 to-slate-600 dark:from-white dark:to-white/75"
-                          : "bg-gradient-to-r from-blue-500 via-indigo-500 to-violet-500 dark:from-blue-400 dark:via-indigo-300 dark:to-violet-400"
-                      }`}
+                      className="inline-block mr-[0.22em] last:mr-0 pb-[0.12em] bg-clip-text text-transparent"
+                      style={{
+                        backgroundImage: lineIdx === 0
+                          ? "linear-gradient(180deg, rgba(242,240,235,0.95) 0%, rgba(242,240,235,0.68) 100%)"
+                          : "linear-gradient(180deg, rgba(242,240,235,0.95) 30%, rgba(242,240,235,0.45) 100%)",
+                      }}
                     >
                       {word}
                     </motion.span>
@@ -375,56 +375,53 @@ export default function HomePage() {
           </h1>
 
           <motion.p
-            initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.7, ease }}
-            className="text-lg leading-relaxed mb-10 max-w-lg"
-            style={{ color: "var(--ds-text-2)" }}
+            initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.62, ease }}
+            className="text-lg leading-relaxed mb-10 max-w-md"
+            style={{ color: "var(--ds-text-3)" }}
           >
             Paste a VIN. Know if the price is fair. Walk in ready to negotiate.
           </motion.p>
 
           <motion.div
-            initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.85, ease }}
+            initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.55, delay: 0.76, ease }}
             className="flex gap-3 flex-col sm:flex-row mb-16"
           >
-            <div className="inline-block group relative rounded-2xl p-px"
+            {/* Primary CTA — warm white, not indigo */}
+            <Link href="/analyze"
+              className="inline-flex items-center gap-2 px-7 py-3.5 rounded-2xl text-sm font-semibold transition-all duration-200 hover:-translate-y-0.5 hover:brightness-105 active:translate-y-0 cursor-pointer"
               style={{
-                background: "linear-gradient(135deg, rgba(99,102,241,0.6), rgba(139,92,246,0.4))",
-                boxShadow: "0 0 28px rgba(99,102,241,0.25)",
+                background: "var(--ds-cta-bg)",
+                color: "var(--ds-cta-text)",
+                boxShadow: "var(--ds-cta-shadow)",
               }}>
-              <Link href="/analyze"
-                className="inline-flex items-center gap-2 px-7 py-3.5 rounded-[0.9rem] text-white text-sm font-semibold transition-all group-hover:-translate-y-0.5 duration-200"
-                style={{
-                  background: "linear-gradient(135deg, #4f46e5, #6366f1)",
-                }}>
-                Paste a VIN <IconArrow />
-              </Link>
-            </div>
+              Paste a VIN <IconArrow />
+            </Link>
             <a href="#sample-analyses"
-              className="inline-flex items-center justify-center px-7 py-3.5 rounded-2xl text-sm font-semibold transition-all hover:brightness-95 active:scale-[0.98] backdrop-blur-sm"
+              className="inline-flex items-center justify-center px-7 py-3.5 rounded-2xl text-sm font-medium transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 cursor-pointer"
               style={{
                 background: "var(--ds-badge-bg)",
                 border: "1px solid var(--ds-badge-border)",
-                color: "var(--ds-text-2)",
+                color: "var(--ds-text-3)",
               }}>
               See sample results
             </a>
           </motion.div>
 
-          {/* Score cards — clearly labeled as illustrative */}
+          {/* Score cards */}
           <motion.p
             initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-            transition={{ duration: 0.4, delay: 0.95, ease }}
-            className="text-[10px] uppercase tracking-[0.2em] font-medium mb-3"
+            transition={{ duration: 0.4, delay: 0.9, ease }}
+            className="text-[10px] uppercase tracking-[0.22em] font-medium mb-4"
             style={{ color: "var(--ds-text-4)" }}
           >
             Illustrative examples
           </motion.p>
           <motion.div
-            className="grid grid-cols-3 gap-3 w-full max-w-2xl"
+            className="grid grid-cols-3 gap-3 w-full max-w-xl"
             initial="hidden" animate="show"
-            variants={staggerContainer(0.12, 1.0)}
+            variants={staggerContainer(0.1, 0.95)}
           >
             {[
               { score: 83, verdict: "Buy",        car: "2020 Honda Civic EX",  delta: "$1.2k under est. fair value" },
@@ -460,7 +457,8 @@ export default function HomePage() {
         <div className="grid lg:grid-cols-[1fr_1.4fr] gap-16 items-center">
           {/* Left — statement */}
           <ScrollSection>
-            <motion.span variants={fadeUp} className="inline-block text-xs font-semibold uppercase tracking-[0.2em] mb-5 text-indigo-600 dark:text-indigo-400/70">
+            <motion.span variants={fadeUp} className="inline-block text-[11px] font-semibold uppercase tracking-[0.22em] mb-5"
+              style={{ color: "var(--ds-text-4)" }}>
               What you get
             </motion.span>
             <motion.h2 variants={fadeUp} className="font-heading text-3xl sm:text-4xl font-bold leading-tight mb-5">
@@ -482,10 +480,11 @@ export default function HomePage() {
                   borderTop: i === 0 ? "1px solid var(--ds-divider)" : undefined,
                   borderBottom: "1px solid var(--ds-divider)",
                 }}>
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center text-indigo-500 dark:text-indigo-300 flex-shrink-0 mt-0.5"
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5"
                   style={{
-                    background: "rgba(99,102,241,0.10)",
-                    border: "1px solid rgba(99,102,241,0.18)",
+                    background: "var(--ds-badge-bg)",
+                    border: "1px solid var(--ds-badge-border)",
+                    color: "var(--ds-text-2)",
                   }}>
                   {f.icon}
                 </div>
@@ -505,7 +504,7 @@ export default function HomePage() {
       <section id="sample-analyses" className="py-14 transition-colors" style={{ borderTop: "1px solid var(--ds-divider)" }}>
         <div className="mx-auto max-w-6xl px-4">
           <ScrollSection className="text-center mb-12">
-            <motion.span variants={fadeUp} className="inline-block text-xs font-semibold uppercase tracking-[0.2em] mb-4 text-indigo-600 dark:text-indigo-400/70">
+            <motion.span variants={fadeUp} className="inline-block text-[11px] font-semibold uppercase tracking-[0.22em] mb-4" style={{ color: "var(--ds-text-4)" }}>
               Example Results
             </motion.span>
             <motion.h2 variants={fadeUp} className="font-heading text-3xl sm:text-4xl font-bold mb-3">
@@ -568,7 +567,7 @@ export default function HomePage() {
       <section className="py-14 transition-colors" style={{ borderTop: "1px solid var(--ds-divider)" }}>
         <div className="mx-auto max-w-6xl px-4">
           <ScrollSection className="text-center mb-10">
-            <motion.span variants={fadeUp} className="inline-block text-xs font-semibold uppercase tracking-[0.2em] mb-4 text-indigo-600 dark:text-indigo-400/70">
+            <motion.span variants={fadeUp} className="inline-block text-[11px] font-semibold uppercase tracking-[0.22em] mb-4" style={{ color: "var(--ds-text-4)" }}>
               Early users
             </motion.span>
             <motion.h2 variants={fadeUp} className="font-heading text-3xl sm:text-4xl font-bold mb-3">
@@ -628,7 +627,7 @@ export default function HomePage() {
       <section id="how-it-works" className="py-14 transition-colors" style={{ borderTop: "1px solid var(--ds-divider)" }}>
         <div className="mx-auto max-w-2xl px-4">
           <ScrollSection className="text-center mb-14">
-            <motion.span variants={fadeUp} className="inline-block text-xs font-semibold uppercase tracking-[0.2em] mb-4 text-indigo-600 dark:text-indigo-400/70">
+            <motion.span variants={fadeUp} className="inline-block text-[11px] font-semibold uppercase tracking-[0.22em] mb-4" style={{ color: "var(--ds-text-4)" }}>
               4 steps, under a minute
             </motion.span>
             <motion.h2 variants={fadeUp} className="font-heading text-3xl sm:text-4xl font-bold mb-3">
@@ -642,14 +641,14 @@ export default function HomePage() {
               <motion.li key={i} variants={slideLeft} className="flex gap-5 items-start list-none relative">
                 {/* Connecting line */}
                 <div className="flex flex-col items-center flex-shrink-0">
-                  <div className="w-10 h-10 rounded-xl flex items-center justify-center text-base font-extrabold text-white"
-                    style={{ background: "linear-gradient(135deg, #4f46e5, #6366f1)", boxShadow: "0 0 20px var(--ds-accent-glow)" }}>
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center text-base font-extrabold"
+                    style={{ background: "var(--ds-badge-bg)", border: "1px solid var(--ds-badge-border)", color: "var(--ds-text-1)" }}>
                     {i + 1}
                   </div>
                   {i < steps.length - 1 && (
                     <div className="flex flex-col items-center gap-1 py-2">
                       {Array.from({ length: 4 }).map((_, d) => (
-                        <div key={d} className="w-0.5 h-1.5 rounded-full" style={{ background: "rgba(99,102,241,0.25)" }} />
+                        <div key={d} className="w-0.5 h-1.5 rounded-full" style={{ background: "var(--ds-divider)" }} />
                       ))}
                     </div>
                   )}
@@ -686,10 +685,11 @@ export default function HomePage() {
                 variants={cardVariant}
                 className={`p-6 flex flex-col gap-3 ${i < trustSources.length - 1 ? "border-b sm:border-b-0 sm:border-r border-[var(--ds-divider)]" : ""}`}
               >
-                <div className="w-9 h-9 rounded-xl flex items-center justify-center text-indigo-500 dark:text-indigo-300"
+                <div className="w-9 h-9 rounded-xl flex items-center justify-center"
                   style={{
-                    background: "rgba(99,102,241,0.10)",
-                    border: "1px solid rgba(99,102,241,0.18)",
+                    background: "var(--ds-badge-bg)",
+                    border: "1px solid var(--ds-badge-border)",
+                    color: "var(--ds-text-2)",
                   }}>
                   {s.icon}
                 </div>
@@ -714,7 +714,7 @@ export default function HomePage() {
       <section id="pricing" className="py-14 transition-colors" style={{ borderTop: "1px solid var(--ds-divider)" }}>
         <div className="mx-auto max-w-6xl px-4">
           <ScrollSection className="text-center mb-10">
-            <motion.span variants={fadeUp} className="inline-block text-xs font-semibold uppercase tracking-[0.2em] mb-4 text-indigo-600 dark:text-indigo-400/70">
+            <motion.span variants={fadeUp} className="inline-block text-[11px] font-semibold uppercase tracking-[0.22em] mb-4" style={{ color: "var(--ds-text-4)" }}>
               Pricing
             </motion.span>
             <motion.h2 variants={fadeUp} className="font-heading text-3xl sm:text-4xl font-bold mb-3">
@@ -752,16 +752,16 @@ export default function HomePage() {
               <p className="text-xs italic mb-4" style={{ color: "var(--ds-text-4)" }}>Best for: checking one car</p>
               <button onClick={() => setCheckoutPlan("starter")}
                 className="w-full py-2.5 rounded-xl text-sm font-semibold text-center transition-all hover:brightness-110 active:scale-[0.98] text-white"
-                style={{ background:"linear-gradient(135deg, #4f46e5, #6366f1)", boxShadow:"0 0 20px var(--ds-accent-glow)" }}>
+                style={{ background:"var(--ds-cta-bg)", color:"var(--ds-cta-text)", boxShadow:"var(--ds-cta-shadow)" }}>
                 Get Started
               </button>
             </motion.div>
 
             {/* Standard */}
             <motion.div variants={cardVariant} className="relative rounded-2xl p-6 flex flex-col"
-              style={{ background: "rgba(99,102,241,0.04)", border: "1px solid rgba(99,102,241,0.18)" }}>
+              style={{ background: "var(--ds-card-bg)", border: "1px solid var(--ds-card-border)", boxShadow: "var(--ds-card-shadow)" }}>
               <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 rounded-full px-3 py-0.5 text-xs font-semibold whitespace-nowrap"
-                style={{ background:"rgba(99,102,241,0.15)", border:"1px solid rgba(99,102,241,0.28)", color: "var(--ds-text-4)" }}>
+                style={{ background:"var(--ds-badge-bg)", border:"1px solid var(--ds-badge-border)", color: "var(--ds-text-3)" }}>
                 Most popular
               </div>
               <p className="text-xs font-semibold uppercase tracking-[0.15em] mb-4" style={{ color: "var(--ds-text-4)" }}>Standard</p>
@@ -773,8 +773,8 @@ export default function HomePage() {
               <ul className="space-y-2.5 mb-7 flex-1">
                 {["Everything in Starter","Better value per check","Save and track cars","Analysis history"].map(item => (
                   <li key={item} className="flex items-center gap-2.5 text-sm" style={{ color: "var(--ds-text-2)" }}>
-                    <span className="w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0 text-indigo-500 dark:text-indigo-300"
-                      style={{ background:"rgba(99,102,241,0.10)", border:"1px solid rgba(99,102,241,0.22)" }}>
+                    <span className="w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0"
+                      style={{ background:"var(--ds-success-bg)", border:"1px solid var(--ds-success-border)", color: "var(--ds-success)" }}>
                       <IconCheck />
                     </span>
                     {item}
@@ -784,7 +784,7 @@ export default function HomePage() {
               <p className="text-xs italic mb-4" style={{ color: "var(--ds-text-4)" }}>Best for: comparing a few options</p>
               <button onClick={() => setCheckoutPlan("standard")}
                 className="w-full py-2.5 rounded-xl text-sm font-semibold text-center transition-all hover:brightness-110 active:scale-[0.98] text-white"
-                style={{ background:"linear-gradient(135deg, #4f46e5, #6366f1)", boxShadow:"0 0 20px var(--ds-accent-glow)" }}>
+                style={{ background:"var(--ds-cta-bg)", color:"var(--ds-cta-text)", boxShadow:"var(--ds-cta-shadow)" }}>
                 Buy Standard
               </button>
             </motion.div>
@@ -816,7 +816,7 @@ export default function HomePage() {
               <p className="text-xs italic mb-4" style={{ color: "var(--ds-text-4)" }}>Best for: actively shopping multiple cars</p>
               <button onClick={() => setCheckoutPlan("pro")}
                 className="w-full py-2.5 rounded-xl text-sm font-semibold text-center transition-all hover:brightness-110 active:scale-[0.98] text-white"
-                style={{ background:"linear-gradient(135deg, #4f46e5, #6366f1)", boxShadow:"0 0 20px var(--ds-accent-glow)" }}>
+                style={{ background:"var(--ds-cta-bg)", color:"var(--ds-cta-text)", boxShadow:"var(--ds-cta-shadow)" }}>
                 Buy Pro
               </button>
             </motion.div>
@@ -825,7 +825,7 @@ export default function HomePage() {
             <motion.div variants={cardVariant} className="relative rounded-2xl p-6 flex flex-col"
               style={{ background: "var(--ds-card-bg)", border: "1px solid var(--ds-card-border)", boxShadow: "var(--ds-card-shadow)", opacity: 0.55 }}>
               <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 rounded-full px-3 py-0.5 text-xs font-semibold whitespace-nowrap"
-                style={{ background:"rgba(139,92,246,0.12)", border:"1px solid rgba(139,92,246,0.25)", color: "rgba(167,139,250,0.7)" }}>
+                style={{ background:"var(--ds-badge-bg)", border:"1px solid var(--ds-badge-border)", color: "var(--ds-text-4)" }}>
                 Coming Soon
               </div>
               <p className="text-xs font-semibold uppercase tracking-[0.15em] mb-1" style={{ color: "var(--ds-text-4)" }}>Full Report</p>
@@ -881,7 +881,7 @@ export default function HomePage() {
       <section id="faq" className="py-14 transition-colors" style={{ borderTop: "1px solid var(--ds-divider)" }}>
         <div className="mx-auto max-w-2xl px-4">
           <ScrollSection className="text-center mb-12">
-            <motion.span variants={fadeUp} className="inline-block text-xs font-semibold uppercase tracking-[0.2em] mb-4 text-indigo-600 dark:text-indigo-400/70">FAQ</motion.span>
+            <motion.span variants={fadeUp} className="inline-block text-[11px] font-semibold uppercase tracking-[0.22em] mb-4" style={{ color: "var(--ds-text-4)" }}>FAQ</motion.span>
             <motion.h2 variants={fadeUp} className="font-heading text-3xl font-bold">
               <GlassHeading>Common questions</GlassHeading>
             </motion.h2>
@@ -911,8 +911,9 @@ export default function HomePage() {
             <Link href="/analyze"
               className="inline-flex items-center gap-2 rounded-xl px-8 py-4 text-base font-semibold text-white transition-all hover:brightness-110 active:scale-[0.98]"
               style={{
-                background: "linear-gradient(135deg, #4f46e5, #6366f1)",
-                boxShadow: "0 0 32px var(--ds-accent-glow), 0 4px 20px var(--ds-shadow-heavy), inset 0 1px 0 rgba(255,255,255,0.12)",
+                background: "var(--ds-cta-bg)",
+                color: "var(--ds-cta-text)",
+                boxShadow: "var(--ds-cta-shadow)",
               }}>
               Check a deal <IconArrow />
             </Link>
