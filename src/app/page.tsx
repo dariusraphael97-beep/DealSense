@@ -363,6 +363,13 @@ const faqs = [
 export default function HomePage() {
   const pageRef   = useRef<HTMLDivElement>(null);
   const [checkoutPlan, setCheckoutPlan] = useState<CheckoutPlan | null>(null);
+  const [navScrolled, setNavScrolled] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setNavScrolled(window.scrollY > window.innerHeight * 0.8);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   useEffect(() => {
     const ctx = gsap.context(() => {
@@ -491,8 +498,8 @@ export default function HomePage() {
       ══════════════════════════════════════════════════════════════════ */}
       <nav
         data-g="nav"
-        className="sticky top-0 z-50"
-        style={{ background: H.bg + "dd", borderBottom: `1px solid ${H.divider}`, backdropFilter: "blur(20px)" }}
+        className={`sticky top-0 z-50 transition-colors duration-300 ${navScrolled ? "nav-scrolled" : "nav-over-hero"}`}
+        style={{ backdropFilter: "blur(20px)" }}
       >
         <div className="mx-auto max-w-6xl px-4 py-3.5 flex items-center justify-between">
           <div className="flex items-center gap-8">
@@ -500,10 +507,7 @@ export default function HomePage() {
             <div className="hidden md:flex items-center gap-1">
               {(["How it works", "Pricing", "FAQ"] as const).map((label, i) => (
                 <a key={label} href={`#${["how-it-works","pricing","faq"][i]}`}
-                  className="px-3 py-1.5 text-sm rounded-lg transition-colors cursor-pointer"
-                  style={{ color: "rgba(255,255,255,0.50)" }}
-                  onMouseEnter={e => (e.currentTarget.style.color = "rgba(255,255,255,0.88)")}
-                  onMouseLeave={e => (e.currentTarget.style.color = "rgba(255,255,255,0.50)")}>
+                  className="nav-link px-3 py-1.5 text-sm rounded-lg transition-colors cursor-pointer">
                   {label}
                 </a>
               ))}

@@ -387,3 +387,17 @@ html.no-transitions * {
   .live-dot { animation: none; }
 }
 
+/* ── Scroll-aware nav ── */
+.nav-over-hero {
+  background: rgba(6,12,24,0.87);
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+}
+.nav-scrolled {
+  background: var(--ds-nav-bg);
+  border-bottom: 1px solid var(--ds-nav-border);
+}
+.nav-over-hero .nav-link { color: rgba(255,255,255,0.50); }
+.nav-over-hero .nav-link:hover { color: rgba(255,255,255,0.90); }
+.nav-scrolled .nav-link { color: var(--ds-text-3); }
+.nav-scrolled .nav-link:hover { color: var(--ds-text-1); }
+
