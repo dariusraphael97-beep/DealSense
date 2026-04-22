@@ -339,7 +339,7 @@ export default function HomePage() {
             <div className="hidden md:flex items-center gap-1">
               {["How it works", "Pricing", "FAQ"].map((label, i) => (
                 <a key={label} href={`#${["how-it-works","pricing","faq"][i]}`}
-                  className="px-3 py-1.5 text-sm rounded-lg transition-colors text-slate-500 hover:text-slate-900 hover:bg-slate-100 dark:text-white/45 dark:hover:text-white/85 dark:hover:bg-white/[0.04]">
+                  className="px-3 py-1.5 text-sm rounded-lg transition-colors cursor-pointer text-slate-500 hover:text-slate-900 hover:bg-slate-100 dark:text-white/45 dark:hover:text-white/85 dark:hover:bg-white/[0.04]">
                   {label}
                 </a>
               ))}
@@ -584,16 +584,18 @@ export default function HomePage() {
       </section>
 
       {/* ── Testimonials ── */}
-      <section className="py-14 transition-colors" style={{ borderTop: "1px solid var(--ds-divider)" }}>
-        <div className="mx-auto max-w-6xl px-4">
-          <ScrollSection className="text-center mb-10">
-            <motion.span variants={fadeUp} className="inline-block text-[11px] font-semibold uppercase tracking-[0.22em] mb-4" style={{ color: "var(--ds-text-4)" }}>
-              Early users
-            </motion.span>
-            <motion.h2 variants={fadeUp} className="font-heading text-3xl sm:text-4xl font-bold mb-3">
-              <GlassHeading>Real deals. Real results.</GlassHeading>
+      <section className="py-16 transition-colors" style={{ borderTop: "1px solid var(--ds-divider)" }}>
+        <div className="mx-auto max-w-6xl px-6">
+          <ScrollSection className="mb-10">
+            <motion.div variants={fadeUp} className="flex items-center gap-2.5 mb-5">
+              <span className="block w-6 h-px flex-shrink-0" style={{ background: "var(--ds-gold)" }} />
+              <span className="text-[11px] font-bold uppercase tracking-[0.25em]" style={{ color: "var(--ds-gold)" }}>Early users</span>
+            </motion.div>
+            <motion.h2 variants={fadeUp} className="font-editorial text-4xl sm:text-5xl font-bold tracking-tight mb-4"
+              style={{ color: "var(--ds-text-1)" }}>
+              Real deals. Real results.
             </motion.h2>
-            <motion.p variants={fadeUp} className="text-sm max-w-md mx-auto" style={{ color: "var(--ds-text-3)" }}>
+            <motion.p variants={fadeUp} className="text-base max-w-md" style={{ color: "var(--ds-text-3)" }}>
               What early users say about checking deals with DealSense.
             </motion.p>
           </ScrollSection>
@@ -779,7 +781,7 @@ export default function HomePage() {
               </ul>
               <p className="text-xs italic mb-4" style={{ color: "var(--ds-text-4)" }}>Best for: checking one car</p>
               <button onClick={() => setCheckoutPlan("starter")}
-                className="w-full py-2.5 rounded-xl text-sm font-semibold text-center transition-all hover:brightness-110 active:scale-[0.98] text-white"
+                className="w-full py-2.5 rounded-xl text-sm font-semibold text-center transition-all hover:brightness-110 active:scale-[0.98] cursor-pointer"
                 style={{ background:"var(--ds-cta-bg)", color:"var(--ds-cta-text)", boxShadow:"var(--ds-cta-shadow)" }}>
                 Get Started
               </button>
@@ -811,7 +813,7 @@ export default function HomePage() {
               </ul>
               <p className="text-xs italic mb-4" style={{ color: "var(--ds-text-4)" }}>Best for: comparing a few options</p>
               <button onClick={() => setCheckoutPlan("standard")}
-                className="w-full py-2.5 rounded-xl text-sm font-semibold text-center transition-all hover:brightness-110 active:scale-[0.98] text-white"
+                className="w-full py-2.5 rounded-xl text-sm font-semibold text-center transition-all hover:brightness-110 active:scale-[0.98] cursor-pointer"
                 style={{ background:"var(--ds-cta-bg)", color:"var(--ds-cta-text)", boxShadow:"var(--ds-cta-shadow)" }}>
                 Buy Standard
               </button>
@@ -843,7 +845,7 @@ export default function HomePage() {
               </ul>
               <p className="text-xs italic mb-4" style={{ color: "var(--ds-text-4)" }}>Best for: actively shopping multiple cars</p>
               <button onClick={() => setCheckoutPlan("pro")}
-                className="w-full py-2.5 rounded-xl text-sm font-semibold text-center transition-all hover:brightness-110 active:scale-[0.98] text-white"
+                className="w-full py-2.5 rounded-xl text-sm font-semibold text-center transition-all hover:brightness-110 active:scale-[0.98] cursor-pointer"
                 style={{ background:"var(--ds-cta-bg)", color:"var(--ds-cta-text)", boxShadow:"var(--ds-cta-shadow)" }}>
                 Buy Pro
               </button>
@@ -885,18 +887,14 @@ export default function HomePage() {
           <ScrollSection>
             <motion.div variants={fadeIn} className="flex flex-wrap items-center justify-center gap-2 mt-8">
               {[
-                { emoji: "⏰", label: "Credits never expire" },
-                { emoji: "🔒", label: "Secure checkout via Stripe" },
-                { emoji: "🛑", label: "No subscription" },
-              ].map(({ emoji, label }) => (
+                { icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5 flex-shrink-0"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>, label: "Credits never expire" },
+                { icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5 flex-shrink-0"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>, label: "Secure checkout via Stripe" },
+                { icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5 flex-shrink-0"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>, label: "No subscription" },
+              ].map(({ icon, label }) => (
                 <span key={label}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-colors"
-                  style={{
-                    background: "var(--ds-badge-bg)",
-                    border: "1px solid var(--ds-badge-border)",
-                    color: "var(--ds-text-3)",
-                  }}>
-                  <span>{emoji}</span>
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium"
+                  style={{ background: "var(--ds-badge-bg)", border: "1px solid var(--ds-badge-border)", color: "var(--ds-text-3)" }}>
+                  {icon}
                   {label}
                 </span>
               ))}

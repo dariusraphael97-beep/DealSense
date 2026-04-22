@@ -65,9 +65,10 @@ const config: Config = {
         },
       },
       fontFamily: {
-        heading: ["Plus Jakarta Sans", "system-ui", "sans-serif"],
-        sans:    ["Inter", "system-ui", "sans-serif"],
-        mono:    ["JetBrains Mono", "monospace"],
+        heading:   ["Plus Jakarta Sans", "system-ui", "sans-serif"],
+        editorial: ["Playfair Display", "Georgia", "serif"],
+        sans:      ["Plus Jakarta Sans", "system-ui", "sans-serif"],
+        mono:      ["JetBrains Mono", "monospace"],
       },
       boxShadow: {
         card:   "0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04)",
