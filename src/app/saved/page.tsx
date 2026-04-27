@@ -1061,7 +1061,7 @@ export default function SavedCarsPage() {
             className="text-center text-xs mt-8"
             style={{ color: "var(--ds-text-4)" }}
           >
-            Fair value estimates from VinAudit, Auto.dev, and MarketCheck. We track estimate movement — not live dealer listing prices. Asking price shown is the original you saved.
+            Fair value estimates powered by ClearVin. We track estimate movement — not live dealer listing prices. Asking price shown is the original you saved.
           </motion.p>
         )}
       </div>

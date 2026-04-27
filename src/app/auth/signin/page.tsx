@@ -374,6 +374,14 @@ function AuthForm() {
             className="w-full py-3.5 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-60 text-white font-semibold text-sm transition-all duration-200 flex items-center justify-center gap-2 mt-2 shadow-lg shadow-blue-600/25">
             {loading ? (<><IconLoader />{mode === "signin" ? "Signing in…" : "Creating account…"}</>) : (mode === "signin" ? "Sign in" : "Create account")}
           </motion.button>
+          {mode === "signup" && (
+            <p className="text-[11px] leading-snug text-center mt-2" style={{ color: "rgba(255,255,255,0.35)" }}>
+              By creating an account you agree to our{" "}
+              <a href="/terms" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 hover:text-white/60">Terms</a>{" "}
+              and{" "}
+              <a href="/privacy" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 hover:text-white/60">Privacy Policy</a>.
+            </p>
+          )}
         </form>
 
         <div className="mt-6 pt-5 border-t border-white/10">

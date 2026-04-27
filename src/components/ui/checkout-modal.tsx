@@ -243,6 +243,29 @@ export function CheckoutModal({ plan, onClose }: Props) {
                 </p>
               </div>
 
+              {/* ── NMVTIS + Terms disclaimer ── */}
+              <div
+                className="mx-5 mt-3 rounded-lg px-3 py-2.5 text-[10.5px] leading-snug"
+                style={{
+                  background: "rgba(255,255,255,0.025)",
+                  border: "1px solid rgba(255,255,255,0.06)",
+                  color: "rgba(255,255,255,0.45)",
+                }}
+              >
+                Vehicle history reports are <span style={{ color: "rgba(255,255,255,0.7)" }}>not</span> NMVTIS
+                Vehicle History Reports and are not approved by the U.S. Department of Justice.{" "}
+                <a href="https://vehiclehistory.bja.ojp.gov" target="_blank" rel="noopener noreferrer"
+                  className="underline underline-offset-2" style={{ color: "rgba(255,255,255,0.65)" }}>
+                  vehiclehistory.bja.ojp.gov
+                </a>. By continuing you agree to our{" "}
+                <a href="/terms" target="_blank" rel="noopener noreferrer"
+                  className="underline underline-offset-2" style={{ color: "rgba(255,255,255,0.65)" }}>Terms</a>
+                {" "}and{" "}
+                <a href="/privacy" target="_blank" rel="noopener noreferrer"
+                  className="underline underline-offset-2" style={{ color: "rgba(255,255,255,0.65)" }}>Privacy Policy</a>.
+                Reports are licensed for your personal, internal use only and may not be resold or redistributed.
+              </div>
+
               {/* ── Stripe form area ── */}
               <div className="px-5 pt-3 pb-5" style={{ minHeight: 220 }}>
 

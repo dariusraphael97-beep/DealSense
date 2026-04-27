@@ -347,7 +347,7 @@ const steps: [string, string][] = [
 ];
 
 const trustSources = [
-  { icon: <IconDatabase />, title: "NHTSA VIN decode", desc: "Decoded against the US government's official vehicle database. Exact trim, drivetrain, and body style — no guessing." },
+  { icon: <IconDatabase />, title: "ClearVin VIN decode", desc: "Every VIN decoded and verified through ClearVin's vehicle database. Exact trim, drivetrain, and body style — no guessing." },
   { icon: <IconTrendingUp />, title: "Real market data", desc: "Value estimates from active dealer listings and transaction data — calibrated by vehicle category, not a one-size-fits-all formula." },
   { icon: <IconMapPin />, title: "Your ZIP code", desc: "Pricing pulled from listings near you. The same car can be worth meaningfully more or less depending on regional demand." },
 ];
@@ -632,7 +632,7 @@ export default function HomePage() {
         style={{ borderTop: "1px solid var(--ds-divider)", borderBottom: "1px solid var(--ds-divider)", background: "var(--ds-card-bg)" }}>
         <div className="mx-auto max-w-6xl px-4 flex flex-wrap items-center justify-center gap-x-8 gap-y-1.5 text-xs font-medium tracking-wide">
           {[
-            <><IconShield />VIN decoded via NHTSA</>,
+            <><IconShield />Vehicle history powered by ClearVin</>,
             <>No dealer affiliation</>,
             <>Estimates based on real listing data</>,
             <>Your data is never sold</>,
@@ -1090,12 +1090,22 @@ export default function HomePage() {
           FOOTER
       ══════════════════════════════════════════════════════════════════ */}
       <footer className="py-8 transition-colors" style={{ borderTop: `1px solid ${H.divider}`, background: H.bg }}>
-        <div className="mx-auto max-w-6xl px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <Logo variant="full" size={22} />
-          <span className="text-xs tracking-wide" style={{ color: H.text3 }}>
-            Data: NHTSA · Auto.dev · MarketCheck · VinAudit. Estimates only — not financial advice.
-          </span>
-          <span className="text-xs" style={{ color: H.text3 }}>&copy; {new Date().getFullYear()}</span>
+        <div className="mx-auto max-w-6xl px-4 space-y-3">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <Logo variant="full" size={22} />
+            <div className="flex items-center gap-5 text-xs">
+              <Link href="/terms" className="transition-opacity hover:opacity-70" style={{ color: H.text3 }}>Terms</Link>
+              <Link href="/privacy" className="transition-opacity hover:opacity-70" style={{ color: H.text3 }}>Privacy</Link>
+              <a href="mailto:support@dealsense.app" className="transition-opacity hover:opacity-70" style={{ color: H.text3 }}>Contact</a>
+            </div>
+            <span className="text-xs" style={{ color: H.text3 }}>&copy; {new Date().getFullYear()} DealSense</span>
+          </div>
+          <p className="text-[11px] leading-relaxed text-center sm:text-left" style={{ color: H.text3 }}>
+            Vehicle history reports powered by ClearVin. Estimates only — not financial advice.
+            {" "}Vehicle history reports are <strong>not</strong> NMVTIS Vehicle History Reports and are not approved by the U.S. Department of Justice.
+            {" "}For an official NMVTIS report visit{" "}
+            <a href="https://vehiclehistory.bja.ojp.gov" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2" style={{ color: H.text3 }}>vehiclehistory.bja.ojp.gov</a>.
+          </p>
         </div>
       </footer>
 

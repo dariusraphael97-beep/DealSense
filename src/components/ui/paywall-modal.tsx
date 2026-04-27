@@ -165,6 +165,12 @@ export function PaywallModal({ open, onClose }: PaywallModalProps) {
               <p className="text-center text-xs" style={{ color: "rgba(255,255,255,0.18)" }}>
                 🔒 Secure checkout via Stripe · Credits never expire
               </p>
+              <p className="text-center text-[10.5px] mt-2 leading-snug" style={{ color: "rgba(255,255,255,0.28)" }}>
+                By continuing you agree to our{" "}
+                <a href="/terms" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 hover:opacity-80">Terms</a>{" "}
+                and{" "}
+                <a href="/privacy" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 hover:opacity-80">Privacy Policy</a>.
+              </p>
             </motion.div>
           </motion.div>
         )}
