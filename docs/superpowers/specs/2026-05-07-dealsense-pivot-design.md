@@ -140,6 +140,23 @@ Target users already exist in communities discussing this exact problem:
 
 ---
 
+## Budget Constraints
+
+**Zero budget available.** All decisions must reflect this:
+
+- All building done with Claude Code — no hired developers
+- Brand identity with Sumon is paused — revisit when first revenue comes in
+- All services must use free tiers until transactions generate income
+- Stripe Identity ($1.50/check) is the only real variable cost — absorbed from transaction fees, not paid upfront
+- No paid advertising or marketing spend
+
+**Free tier limits to watch:**
+- Supabase free: 500MB storage, 50,000 MAU — sufficient for MVP
+- Vercel free: 100GB bandwidth, serverless functions — sufficient for MVP
+- Stripe: No monthly fee, 2.9% + $0.30 per transaction + Stripe Connect fee
+
+---
+
 ## What Carries Forward From Old DealSense
 
 - DealSense LLC (Gina Santangelo, Member)
@@ -147,7 +164,7 @@ Target users already exist in communities discussing this exact problem:
 - Next.js / Supabase / Stripe setup
 - Terms of Service and Privacy Policy (need updates for new model)
 - NMVTIS compliance work
-- Brand identity (Sumon Yousuf — in progress, $500, delivery May 15)
+- Brand identity paused (Sumon Yousuf conversation on hold until revenue)
 
 ---
 
