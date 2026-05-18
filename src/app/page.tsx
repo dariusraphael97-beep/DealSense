@@ -604,7 +604,7 @@ export default function HomePage() {
               {/* Trust signals */}
               <div data-g="hero-trust" className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs"
                 style={{ color: "var(--ds-text-3)" }}>
-                <span className="flex items-center gap-1.5"><IconShield />VIN-verified via NHTSA</span>
+                <span className="flex items-center gap-1.5"><IconShield />VIN-verified via ClearVin</span>
                 <span className="hidden sm:inline">·</span>
                 <span>3 checks from $9.99</span>
                 <span className="hidden sm:inline">·</span>
