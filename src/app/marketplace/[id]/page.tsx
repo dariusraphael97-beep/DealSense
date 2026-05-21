@@ -3,8 +3,10 @@ import { cookies } from 'next/headers';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import type { Listing } from '@/types/listing';
+import { VerifiedBadge } from '@/components/marketplace/VerifiedBadge';
+import { ContactSellerButton } from '@/components/marketplace/ContactSellerButton';
 
-async function getListing(id: string): Promise<Listing | null> {
+async function getListing(id: string) {
   const cookieStore = cookies();
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -18,13 +20,27 @@ async function getListing(id: string): Promise<Listing | null> {
     }
   );
 
-  const { data } = await supabase
+  const { data: listing } = await supabase
     .from('listings')
     .select('*, listing_vehicles(*)')
     .eq('id', id)
     .single();
 
-  return data ?? null;
+  if (!listing) return null;
+
+  const { data: verification } = await supabase
+    .from('identity_verifications')
+    .select('status')
+    .eq('user_id', listing.seller_id)
+    .single();
+
+  const { data: { user } } = await supabase.auth.getUser();
+
+  return {
+    listing: listing as Listing,
+    sellerVerified: verification?.status === 'verified',
+    currentUserId: user?.id ?? null,
+  };
 }
 
 function getPhotoUrl(path: string): string {
@@ -44,9 +60,10 @@ export default async function ListingPage({
 }: {
   params: { id: string };
 }) {
-  const listing = await getListing(params.id);
-  if (!listing) notFound();
+  const result = await getListing(params.id);
+  if (!result) notFound();
 
+  const { listing, sellerVerified, currentUserId } = result;
   const vehicle = listing.listing_vehicles;
 
   return (
@@ -85,8 +102,12 @@ export default async function ListingPage({
                 )}
               </>
             ) : (
-              <div className="aspect-[4/3] rounded-2xl bg-white/5 flex items-center justify-center text-white/20 text-5xl">
-                📷
+              <div className="aspect-[4/3] rounded-2xl bg-white/5 flex items-center justify-center">
+                <svg viewBox="0 0 24 24" fill="none" className="w-16 h-16 text-white/10">
+                  <rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" strokeWidth="1.5"/>
+                  <circle cx="8.5" cy="8.5" r="1.5" stroke="currentColor" strokeWidth="1.5"/>
+                  <path d="M21 15l-5-5L5 21" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                </svg>
               </div>
             )}
           </div>
@@ -94,9 +115,12 @@ export default async function ListingPage({
           <div className="space-y-6">
             <div>
               <h1 className="text-2xl font-bold leading-tight">{listing.title}</h1>
-              <p className="text-white/40 text-sm mt-1">
-                {listing.location_city}, {listing.location_state}
-              </p>
+              <div className="flex items-center gap-2 mt-1">
+                <p className="text-white/40 text-sm">
+                  {listing.location_city}, {listing.location_state}
+                </p>
+                {sellerVerified && <VerifiedBadge />}
+              </div>
             </div>
 
             <div className="text-4xl font-bold text-indigo-400">
@@ -137,17 +161,10 @@ export default async function ListingPage({
               </div>
             )}
 
-            <div className="rounded-xl bg-indigo-600/10 border border-indigo-500/20 p-4 space-y-3">
-              <p className="text-sm text-white/60">
-                Interested? Contact the seller through DealSense for a protected transaction.
-              </p>
-              <button
-                disabled
-                className="w-full py-3 rounded-xl bg-indigo-600 text-white font-semibold opacity-50 cursor-not-allowed"
-              >
-                Contact seller (coming soon)
-              </button>
-            </div>
+            <ContactSellerButton
+              listingId={listing.id}
+              isOwner={currentUserId === listing.seller_id}
+            />
           </div>
         </div>
       </div>
